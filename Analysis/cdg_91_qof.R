@@ -36,22 +36,23 @@ f__91 <- function(
 
     cat("INFO: bWriteCSV =", bWriteCSV, "\n")
 
+    if (qof_period %in% c("1516", "1617")) {
+
+        qof_root <- paste("qof", qof_period, sep = "-")
+
+    } else {
+        cat("WARNING: qof period", qof_period, "unknown ...", "\n")
+
+        return(FALSE)
+    }
+
     #
     # COUNTS - Load QOF data ####
     #
 
-    f__load <- function(qof_period) {
+    f__load <- function() {
 
         cat("INFO: q91: loading data ...", "\n")
-
-        if (qof_period %in% c("1516", "1617")) {
-
-            qof_root <- paste("qof", qof_period, sep = "-")
-        } else {
-            cat("WARNING: qof period", qof_period, "unknown ...", "\n")
-
-            return(FALSE)
-        }
 
         qof.orgref <- fread(file = paste0("./Data/", qof_root, "-csv/ORGANISATION_REFERENCE.csv")) %>% setnames.clean()
         qof.indmap <- fread(file = paste0("./Data/", qof_root, "-csv/INDICATOR_MAPPINGS.csv")) %>% setnames.clean()
@@ -70,7 +71,7 @@ f__91 <- function(
         ))
     }
 
-    qof <- f__load(qof_period)
+    qof <- f__load()
 
     #~ process lookups ####
 
@@ -207,6 +208,20 @@ f__91 <- function(
 
     lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
 
+    #~ Calculate performance measures ####
+
+    lu_measures <- fread(strip.white = TRUE, input = "
+m.type,      m.name,        m.stat,      i.num, i.den, i.exc
+performance, achievement,   numerator,   1,     0,     0
+performance, achievement,   denominator, 0,     1,     0
+performance, treatment,     numerator,   1,     0,     0
+performance, treatment,     denominator, 0,     1,     1
+performance, exceptions,    numerator,   0,     0,     1
+performance, exceptions,    denominator, 0,     1,     1
+prevalence,  qofprevalence, numerator,   1,     0,     NA
+prevalence,  qofprevalence, denominator, 0,     1,     NA
+")
+
     #
     # MEASURES - QOF indicators ####
     #
@@ -257,20 +272,6 @@ f__91 <- function(
             , qof$ind %>% filter(ccg_code %in% lu.orgs.ccgs.local)
         ) %>%
             rbindlist(use.names = TRUE)
-
-        #~ Calculate performance measures ####
-
-        lu_measures <- fread(strip.white = TRUE, input = "
-m.type,      m.name,        m.stat,      i.num, i.den, i.exc
-performance, achievement,   numerator,   1,     0,     0
-performance, achievement,   denominator, 0,     1,     0
-performance, treatment,     numerator,   1,     0,     0
-performance, treatment,     denominator, 0,     1,     1
-performance, exceptions,    numerator,   0,     0,     1
-performance, exceptions,    denominator, 0,     1,     1
-prevalence,  qofprevalence, numerator,   1,     0,     NA
-prevalence,  qofprevalence, denominator, 0,     1,     NA
-")
 
         q.ind.measures <- q.ind.combined %>%
             filter(!is.na(value)) %>%
