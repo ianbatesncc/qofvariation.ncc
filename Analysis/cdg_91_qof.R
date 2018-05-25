@@ -81,7 +81,7 @@ f__91 <- function(
 
         #~~ orgref - organisation lookups ####
 
-        qof$orgref %>% filter(FALSE) %>% str()
+        #qof$orgref %>% filter(FALSE) %>% str()
         # Classes ‘data.table’ and 'data.frame':	7619 obs. of  13 variables:
         # $ practice_code           : chr  "B82007" "B82020" "B82028" "B82053" ...
         # $ practice_name           : chr  "TOWNHEAD SURGERY" "CROSSHILLS GROUP PRACTICE" "FISHER MEDICAL CENTRE" "DYNELEY HOUSE SURGERY" ...
@@ -104,7 +104,7 @@ f__91 <- function(
 
         #~~ indmap - qof indicator lookups ####
 
-        qof$indmap %>% filter(FALSE) %>% str()
+        #qof$indmap %>% filter(FALSE) %>% str()
         # Classes ‘data.table’ and 'data.frame':	78 obs. of  8 variables:
         # $ indicator_code             : chr  "AF001" "AF006" "AF007" "AST001" ...
         # $ indicator_description      : chr  "The contractor establishes and maintains a register of patients with atrial fibrillation" "The percentage of patients with atrial fibrillation in whom stroke risk has been assessed using the CHA2DS2-VASc score risk str"| __truncated__ "In those patients with atrial fibrillation with a record of a CHA2DS2-VASc score of 2 or more, the percentage of patients who a"| __truncated__ "The contractor establishes and maintains a register of patients with asthma, excluding patients with asthma who have been presc"| __truncated__ ...
@@ -123,7 +123,7 @@ f__91 <- function(
         # Tag CCG
         # Find register indicators
 
-        qof$ind %>% filter(FALSE) %>% str()
+        #qof$ind %>% filter(FALSE) %>% str()
         # Classes ‘data.table’ and 'data.frame':	1956549 obs. of  4 variables:
         # $ practice_code : chr  "A81001" "A81001" "A81001" "A81001" ...
         # $ indicator_code: chr  "AF001" "AF001" "AF006" "AF006" ...
@@ -163,7 +163,7 @@ f__91 <- function(
         # prev - qof registers and list sizes
         # Tag CCG
 
-        qof$prev %>% filter(FALSE) %>% str()
+        #qof$prev %>% filter(FALSE) %>% str()
         # Classes ‘data.table’ and 'data.frame':	159999 obs. of  5 variables:
         # $ practice_code       : chr  "A81001" "A81001" "A81001" "A81001" ...
         # $ indicator_group_code: chr  "AF" "AST" "CAN" "CHD" ...
@@ -302,7 +302,7 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
             cat("INFO: cdg_91_qof: NOT saving qof.ind.combined ...", "\n")
         }
 
-        q.ind.measures %>% filter(FALSE) %>% str()
+        #q.ind.measures %>% filter(FALSE) %>% str()
         # Classes ‘data.table’ and 'data.frame':	51714 obs. of  9 variables:
         #  $ indicator_group_code: chr  "AF" "AF" "AF" "AF" ...
         #  $ indicator_code      : chr  "AF006" "AF006" "AF006" "AF006" ...
@@ -465,7 +465,7 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         #     qof.prev.measures <- fread(file = this.file)
         # }
 
-        qof_measures$prev$org.type %>% unique() %>% print()
+        #qof_measures$prev$org.type %>% unique() %>% print()
         # [1] "ccg, practice" "ccg"           ""england"
 
         #~~ All that is not England ####
@@ -558,9 +558,9 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         #this.file <- paste0("./Results/", qof_root, "_ind__eng_ccg_prac__measure_ndv.csv")
         #qof.ind.combined <- fread(file = this.file)
 
-        print(unique(qof_measures$ind[, org.type]))
+        #print(unique(qof_measures$ind[, org.type]))
         # [1] "ccg, practice" "ccg"           "england"
-        print(unique(qof_measures$ind[, m.name]))
+        #print(unique(qof_measures$ind[, m.name]))
         # [1] "achievement" "treatment"
 
         #~~ All that is not England ####
