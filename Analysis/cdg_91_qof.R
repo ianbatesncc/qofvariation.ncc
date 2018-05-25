@@ -142,7 +142,7 @@ f__91 <- function(
 
         # filter out non-register indicators via join with indmap
         q.ind <- qof$ind %>%
-            filter(!(indicator_code %in% (qof.indmap %>% filter(is.register == TRUE) %>% .$indicator_code)))
+            filter(!(indicator_code %in% (q.indmap %>% filter(is.register == TRUE) %>% .$indicator_code)))
 
         # lowercase measure
         # remove points
@@ -269,7 +269,7 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         q.ind.combined <- list(
             q.ind.eng
             , q.ind.ccgs
-            , qof$ind %>% filter(ccg_code %in% lu.orgs.ccgs.local)
+            , q.ind %>% filter(ccg_code %in% lu.orgs.ccgs.local)
         ) %>%
             rbindlist(use.names = TRUE)
 
