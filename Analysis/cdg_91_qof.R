@@ -664,11 +664,17 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 
     }
 
+    qof_compare <- f__compare(qof_measures)
+
     return(list(
-        qof.ind = qof.ind
-        , qof.prev = qof.prev
-        , qof.ind.comp = qof.prev.comp
-        , qof.prev.comp = qof.prev.comp
+        ind = qof$ind
+        , prev = qof$prev
+        , ind.measures = qof_measures$ind
+        , prev.measures = qof_measures$ind
+        , ind.comp = qof_compare$ind
+        , prev.comp = qof_compare$prev
+        , orgref = qof$orgref
+        , indmap = qof$indmap
     ))
 }
 
