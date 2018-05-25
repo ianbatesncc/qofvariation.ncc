@@ -442,7 +442,9 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 
         cat("INFO: q91: processing statistical significance comparison ...", "\n")
 
-        source("./Analysis/aphoci.R")
+        #source("./Analysis/aphoci.R")
+        source("./Analysis/calcci.R")
+        source("./Analysis/testci.R")
 
         ##
         ## QOF
@@ -530,11 +532,19 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 
         cat("INFO: q91: calculating confidence intervals ...", "\n")
 
+        if (FALSE) {
         qof.prev.comp <- list(tmp.nat, tmp.ccg) %>%
             rbindlist(use.names = TRUE) %>%
-            mutate(c('cilo', 'cihi') := vaphoci_gen(numerator, denominator, multiplier = 100, ci.type = 'proportion')) %>%
+            .[, c('cilo', 'cihi') := vaphoci_gen(numerator, denominator, multiplier = 100, ci.type = 'proportion')] %>%
             .[, statsig := vtestci_s(value.ref, transpose(list(cilo, cihi)))] %>%
             .[, c('cilo', 'cihi') :=  NULL]
+        } else {
+        qof.prev.comp <- list(tmp.nat, tmp.ccg) %>%
+            rbindlist(use.names = TRUE) %>%
+            .[, c('cilo', 'cihi') := aphoci_gen(numerator, denominator, multiplier = 100, ci.type = "proportion", bTransposeResults = TRUE)] %>%
+            .[, statsig := testci_hilo_s(value.ref, transpose(list(cilo, cihi)))] %>%
+            .[, c('cilo', 'cihi') :=  NULL]
+        }
 
         #~ save ####
 
@@ -615,11 +625,22 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         # qof.ind.comp[, statsig := vtestci_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = TRUE)]
         # qof.ind.comp[, c('cilo', 'cihi') :=  NULL]
 
+        cat("INFO: q91: calculating confidence intervals ...", "\n")
+
+        if (FALSE) {
         qof.ind.comp <- list(tmp.nat, tmp.ccg) %>%
             rbindlist(use.names = TRUE) %>%
             .[, c('cilo', 'cihi') := vaphoci_gen(numerator, denominator, multiplier = 100, ci.type = 'proportion')] %>%
             .[, statsig := vtestci_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = TRUE)] %>%
             .[, c('cilo', 'cihi') :=  NULL]
+        } else {
+        qof.ind.comp <- list(tmp.nat, tmp.ccg) %>%
+            rbindlist(use.names = TRUE) %>%
+            .[, c('cilo', 'cihi') := aphoci_gen(numerator, denominator, multiplier = 100, ci.type = 'proportion', bTransposeResults = TRUE)] %>%
+            .[!(m.name %in% "exceptions"), statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = TRUE)] %>%
+            .[(m.name %in% "exceptions"), statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = FALSE)] %>%
+            .[, c('cilo', 'cihi') :=  NULL]
+        }
 
         #~ save ####
 
