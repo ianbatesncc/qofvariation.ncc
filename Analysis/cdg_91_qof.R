@@ -488,15 +488,17 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 
         #~~ National reference ####
 
-        q.prev.ref.cast <- qof_measures$prev %>%
-            filter(org.type == 'england', m.stat %in% c('value')) %>%
-            select(indicator_group_code, org.type, m.stat, value) %>%
-            dcast(... ~ m.stat, value.var = 'value')
 
-        tmp.nat <- qof.prev.var.cast %>%
-            merge(qof.prev.ref.cast
-                  , by = c('indicator_group_code')
-                  , all.x = TRUE, suffixes = c('.var', '.ref'))
+        tmp.nat <- merge(
+            q.prev.var.cast
+            # qof.prev.ref.cast
+            , qof_measures$prev %>%
+                filter(org.type == 'england', m.stat %in% c('value')) %>%
+                select(indicator_group_code, org.type, m.stat, value) %>%
+                dcast(... ~ m.stat, value.var = 'value')
+            , by = c('indicator_group_code')
+            , all.x = TRUE, suffixes = c('.var', '.ref')
+        )
 
         #~~ ccg reference ####
 
@@ -506,14 +508,14 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         #                                       , m.stat, value)]
         # qof.prev.ref.cast <- dcast(qof.prev.ref, ... ~ m.stat, value.var = 'value')
 
-        qof.prev.ref.cast <- qof_measures$prev %>%
-            filter(org.type == 'ccg', m.stat %in% c('value')) %>%
-            select(indicator_group_code, org.type, ccg_code, m.stat, value) %>%
-            dcast(... ~ m.stat, value.var = 'value')
 
         tmp.ccg <- merge(
-            qof.prev.var.cast
-            , qof.prev.ref.cast
+            q.prev.var.cast
+            # qof.prev.ref.cast
+            , qof_measures$prev %>%
+                filter(org.type == 'ccg', m.stat %in% c('value')) %>%
+                select(indicator_group_code, org.type, ccg_code, m.stat, value) %>%
+                dcast(... ~ m.stat, value.var = 'value')
             , by = c('indicator_group_code', 'ccg_code')
             , all.x = TRUE, suffixes = c('.var', '.ref')
         )
@@ -575,44 +577,41 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 
         #~~ All that is not England ####
 
-        qof.ind.var.cast <- qof_measures$ind[
-            (org.type != "england") & (m.stat %in% c('value', 'numerator', 'denominator'))
-            , .(indicator_group_code, indicator_code
-                , org.type, ccg_code, practice_code
-                , m.name, m.stat, value)
-            ] %>%
+        q.ind.var.cast <- qof_measures$ind %>%
+            filter(org.type != "england", m.stat %in% c('value', 'numerator', 'denominator')) %>%
+            select(indicator_group_code, indicator_code
+                   , org.type, ccg_code, practice_code
+                   , m.name, m.stat, value) %>%
             dcast(... ~ m.stat, value.var = 'value')
 
         #~~ National reference ####
 
-        qof.ind.ref.cast <- qof_measures$ind[
-            (org.type == 'england') & (m.stat %in% c('value'))
-            , .(indicator_group_code, indicator_code
-                , org.type
-                , m.name, m.stat, value)
-            ] %>%
-            dcast(... ~ m.stat, value.var = 'value')
 
         tmp.nat <- merge(
-            qof.ind.var.cast
-            , qof.ind.ref.cast
+            q.ind.var.cast
+            # qof.ind.ref.cast
+            , qof_measures$ind %>%
+                filter(org.type == 'england', m.stat %in% c('value')) %>%
+                select(indicator_group_code, indicator_code
+                       , org.type
+                       , m.name, m.stat, value) %>%
+                dcast(... ~ m.stat, value.var = 'value')
             , by = c('indicator_group_code', 'indicator_code', 'm.name')
             , all.x = TRUE, suffixes = c('.var', '.ref')
         )
 
         #~~ ccg reference ####
 
-        qof.ind.ref.cast <- qof_measures$ind[
-            (org.type == 'ccg') & (m.stat %in% c('value'))
-            , .(indicator_group_code, indicator_code
-                , org.type, ccg_code
-                , m.name, m.stat, value)
-            ] %>%
-            dcast(... ~ m.stat, value.var = 'value')
 
         tmp.ccg <- merge(
-            qof.ind.var.cast
-            , qof.ind.ref.cast
+            q.ind.var.cast
+            # q.ind.ref.cast
+            , qof_measures$ind %>%
+                filter(org.type == 'ccg', m.stat %in% c('value')) %>%
+                select(indicator_group_code, indicator_code
+                       , org.type, ccg_code
+                       , m.name, m.stat, value) %>%
+                dcast(... ~ m.stat, value.var = 'value')
             , by = c('indicator_group_code', 'indicator_code', 'ccg_code', 'm.name')
             , all.x = TRUE, suffixes = c('.var', '.ref')
         )
