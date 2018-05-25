@@ -2,6 +2,8 @@
 # Main
 #
 
+options(warn = 1)
+
 source("./Analysis/cdg_91_qof.R")
 
 main <- function(
