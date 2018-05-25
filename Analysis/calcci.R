@@ -255,7 +255,10 @@ aphoci_gen <- function(num, den, multiplier = 1, level = 0.95, ci.type = "poisso
         # cols(vec2xn) ... Default _gen routines is to return list of n (vectors
         # length 2) ... bTransposeResults to change this ... lapply scans across
         # each column and returns all the rows
-        ci <- array_aslist(ci, bTransposeResults = !bTransposeResults)
+        #ci <- array_aslist(ci, bTransposeResults = !bTransposeResults)
+        if (!bTransposeResults) # odd ... but true
+            ci <- t(ci)
+        ci <- lapply(seq(1, dim(ci)[1]), function(i, v){v[i, ]}, ci)
     } else {
         ci <- calcci(num, den, multiplier, level, ci.type)
     }
