@@ -459,6 +459,8 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         # Melted on statistic.  Extract England, spin both up on m.stat, tag England,
         # do stat. compare, remove uneeded columns, spin back down
 
+        cat("INFO: q91: creating reference lookups ...", "\n")
+
         #qof.prev.measures <- qof_measures$prev
 
         # if (!exists("qof.prev.measures")) {
@@ -574,6 +576,8 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         # [1] "ccg, practice" "ccg"           "england"
         #print(unique(qof_measures$ind[, m.name]))
         # [1] "achievement" "treatment"
+
+        cat("INFO: q91: creating reference lookups ...", "\n")
 
         #~~ All that is not England ####
 
