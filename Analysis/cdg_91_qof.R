@@ -61,7 +61,7 @@ f__91 <- function(
         this.file <- paste0("./Data/", qof_root, "-csv/ACHIEVEMENT_EXCEPTIONS.csv")
         if (!(file.exists(this.file)))
             this.file <- paste0("./Data/", qof_root, "-csv/ACHIEVEMENT.csv")
-        qof.ind <- fread(file = paste0("./Data/", qof_root, "-csv/ACHIEVEMENT_EXCEPTIONS.csv")) %>% setnames.clean()
+        qof.ind <- fread(file = this.file) %>% setnames.clean()
 
         return(list(
             orgref = qof.orgref
