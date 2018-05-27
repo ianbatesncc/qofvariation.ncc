@@ -10,7 +10,6 @@
 # - CDG level achievement (?treatment) and stat. sig. relative to England.
 #
 
-
 cat("INFO: cdg_91_qof: starting...", "\n")
 
 #
@@ -340,8 +339,8 @@ performance, suboptimal,    denominator, 0,     1,     1
     #  $ value               : num  389 389 104 104 171 171 316 316 204 204 ...
 
     # return
-    return(list(ind = q.ind.measures))
 
+    return(list(ind = q.ind.measures))
 }
 
 #qof.ind.measures <- f__measures_ind(qof)[[1]]
@@ -466,8 +465,8 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
     }
 
     # return
-    return(list(prev = q.prev.measures))
 
+    return(list(prev = q.prev.measures))
 }
 
 #'
@@ -538,7 +537,6 @@ f__91__compare <- function(
         dcast(... ~ m.stat, value.var = 'value')
 
     #~~ National reference ####
-
 
     tmp.nat <- merge(
         q.prev.var.cast
