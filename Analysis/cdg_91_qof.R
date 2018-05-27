@@ -54,10 +54,14 @@ f__91__load_raw <- function(
     # return
 
     return(list(
-        orgref = qof.orgref
-        , indmap = qof.indmap
-        , prev = qof.prev
-        , ind = qof.ind
+        reference = list(
+            orgref = qof.orgref
+            , indmap = qof.indmap
+        )
+        , data = list(
+            prev = qof.prev
+            , ind = qof.ind
+        )
     ))
 }
 
@@ -92,7 +96,7 @@ f__91__preprocess <- function(
     # $ revised_maximum_points  : int  559 559 559 559 559 559 559 559 559 559 ...
 
     # drop uneeded columns
-    q.orgref <- qof$orgref %>%
+    q.orgref <- qof$reference$orgref %>%
         select(starts_with("practice"), starts_with("ccg"))
 
     #~~ indmap - qof indicator lookups ####
@@ -125,24 +129,26 @@ f__91__preprocess <- function(
 
     ## Remove register-type indicators
     # add an 'is.register' flag to the indicator map
-    q.indmap <- qof$indmap %>%
+    q.indmap <- qof$reference$indmap %>%
         mutate(is.register = (indicator_code %in% (
-            qof$ind %>%
+            qof$data$ind %>%
                 filter(measure == "REGISTER") %>%
                 .$indicator_code %>%
                 unique()
         )))
 
     # filter out non-register indicators via join with indmap
-    q.ind <- qof$ind %>%
+    q.ind <- qof$data$ind %>%
         filter(!(indicator_code %in% (q.indmap %>% filter(is.register == TRUE) %>% .$indicator_code))) %>%
         # lowercase measure
         # remove points
         # tag ccg, indicator group
         mutate(measure = tolower(measure)) %>%
         filter(!(measure == tolower("ACHIEVED_POINTS"))) %>%
+        # tag ccg
         merge(q.orgref %>% select(practice_code, ccg_code)
               , by = "practice_code") %>%
+        # filter non-register AND tag indicator_group_code
         merge(q.indmap %>% filter(is.register == FALSE) %>%
                   select(indicator_code, indicator_group_code)
               , by = "indicator_code")
@@ -164,12 +170,21 @@ f__91__preprocess <- function(
 
     # tag ccg
     # practice age list sizes, convenience
+    # ... add 'indicator code' too , for consistency
+    # ... can lose 'patient_list_type' too
     # spin down (register, patient_list_size) on measure
 
-    q.prev <- qof$prev %>%
+    q.prev <- qof$data$prev %>%
         merge(q.orgref %>% select(practice_code, ccg_code)
               , by = "practice_code") %>%
         mutate(org.type = "ccg, practice")
+        select(-patient_list_type) %>%
+        # tag on indicator_code
+        merge(q.indmap %>%
+                  filter(is.register == TRUE) %>%
+                  select(indicator_group_code, indicator_code)
+              , by = "indicator_group_code"
+        )
 
     # q.prev.praclists <- q.prev %>%
     #     select(practice_code, patient_list_type, patient_list_size) %>%
@@ -197,11 +212,14 @@ f__91__preprocess <- function(
     # return
 
     return(list(
-        orgref = q.orgref
-        , indmap = q.indmap
-        , ind = q.ind
-        , prev = q.prev
-        , prev.melt = q.prev.melt
+        reference = list(
+            orgref = q.orgref
+            , indmap = q.indmap
+        )
+        , data = list(
+            ind = q.ind
+            , prev = q.prev
+            , prev.melt = q.prev.melt
     ))
 
 }
@@ -240,19 +258,19 @@ f__91__measures_ind <- function(
 
     #~ Practice level ####
 
-    q.ind <- qof$ind %>%
+    q.ind <- qof$data$ind %>%
         mutate(org.type = "ccg, practice")
 
     #~ England ####
 
-    q.ind.eng <- qof$ind %>%
+    q.ind.eng <- qof$data$ind %>%
         group_by(indicator_group_code, indicator_code, measure) %>%
         summarise(value = sum(value)) %>%
         mutate(ccg_code = "eng", practice_code = "eng", org.type = "england")
 
     #~ Local CCGs ####
 
-    q.ind.ccgs <- qof$ind %>%
+    q.ind.ccgs <- qof$data$ind %>%
         filter(ccg_code %in% lu.orgs.ccgs.local) %>%
         group_by(ccg_code, indicator_group_code, indicator_code, measure) %>%
         summarise(value = sum(value)) %>%
@@ -321,7 +339,7 @@ performance, suboptimal,    denominator, 0,     1,     1
 
     # return
 
-    return(list(ind = q.ind.measures))
+    return(q.ind.measures)
 }
 
 #qof.ind.measures <- f__measures_ind(qof)[[1]]
@@ -357,7 +375,7 @@ f__91__measures_prev <- function(
 
     # spin down on measure, ignore missing values, tag as England
 
-    q.prev.eng <- qof$prev.melt %>%
+    q.prev.eng <- qof$data$prev.melt %>%
         group_by(indicator_group_code, patient_list_type, measure) %>%
         summarise(value = sum(value, na.rm = TRUE)) %>%
         mutate(ccg_code = "eng", practice_code = "eng", org.type = "england")
@@ -366,7 +384,7 @@ f__91__measures_prev <- function(
 
     # spin down on measure, ignore missing values, tag as ccg
 
-    q.prev.ccgs <- qof$prev.melt %>%
+    q.prev.ccgs <- qof$data$prev.melt %>%
         filter(ccg_code %in% lu.orgs.ccgs.local) %>%
         group_by(ccg_code, indicator_group_code, patient_list_type, measure) %>%
         summarise(value = sum(value, na.rm = TRUE)) %>%
@@ -379,7 +397,9 @@ f__91__measures_prev <- function(
     qof.prev.combined <- list(
         q.prev.eng
         , q.prev.ccgs
-        , qof$prev.melt %>% filter(ccg_code %in% lu.orgs.ccgs.local)
+        , qof$data$prev.melt %>%
+            filter(ccg_code %in% lu.orgs.ccgs.local) %>%
+            mutate(org.type = "ccg, practice")
     ) %>%
         rbindlist(use.names = TRUE)
 
@@ -447,7 +467,24 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 
     # return
 
-    return(list(prev = q.prev.measures))
+    return(q.prev.measures)
+}
+
+#'
+#'
+#'
+f__91__measures <- function(
+    qof
+    , bWriteCSV = FALSE
+    , qof_root
+    , file_suffix = "__eng_ccg_prac__measure_ndv"
+) {
+    m.ind <- f__91__measures_ind(qof, bWriteCSV, qof_root, file_suffix)
+    m.prev <- f__91__measures_prev(qof, bWriteCSV, qof_root, file_suffix)
+browser()
+    # return
+
+    return(list(m.ind, m.prev) %>% rbindlist(use.names = TRUE))
 }
 
 #'
