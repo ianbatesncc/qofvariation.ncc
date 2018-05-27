@@ -732,7 +732,6 @@ f__91__process__reference_measures_compare <- function(
     }
 
     qof <- f__91__load_raw(qof_root) %>%
-        #~ process lookups
         f__91__preprocess()
 
     qof %>% f__91__save_reference(qof_root, bWriteCSV = bWriteCSV)
