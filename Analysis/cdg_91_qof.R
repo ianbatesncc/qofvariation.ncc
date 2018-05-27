@@ -702,9 +702,9 @@ f__91__load_compare <- function(
 #' Laod raw data and produce measures and compare aginst england.
 #'
 #'
-f__91__process_all <- function(
     bWriteCSV = FALSE
     , qof_period = "1516" # "1617"
+f__91__process__reference_measures_compare <- function(
 ) {
 
 
@@ -758,7 +758,7 @@ f__91__process_all <- function(
 #'
 #'
 #'
-f__91__load_measures_compare <- function(
+f__91__load__reference_measures_compare <- function(
     qof_period = "1516" # "1617"
 ) {
 

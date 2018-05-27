@@ -12,8 +12,8 @@ main <- function(
     , bProcessRaw = FALSE
 ) {
     if (bProcessRaw == TRUE) {
-        retval <- f__91__process_all(bWriteCSV, qof_period)
+        retval <- f__91__process__reference_measures_compare(qof_period, bWriteCSV)
     } else {
-        retval <- f__91__load_measures_compare(qof_period)
+        retval <- f__91__load__reference_measures_compare(qof_period)
     }
 }
