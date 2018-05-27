@@ -743,28 +743,27 @@ f__91__load_compare <- function(
     return(list(prev = q.prev, ind = q.ind))
 }
 
+# EXPORT routines that string these together ####
+
 #' process all
 #'
-#' Laod raw data and produce measures and compare aginst england.
+#' Load raw data and produce measures and compare against england.
 #'
+#' @export
 #'
-    bWriteCSV = FALSE
-    , qof_period = "1516" # "1617"
 f__91__process__reference_measures_compare <- function(
+    qof_period = "1516" # "1617"
+    , bWriteCSV = FALSE
 ) {
-
 
     # Config ####
 
     cat("INFO: bWriteCSV =", bWriteCSV, "\n")
 
     if (qof_period %in% c("1516", "1617")) {
-
         qof_root <- paste("qof", qof_period, sep = "-")
-
     } else {
         cat("WARNING: qof period", qof_period, "unknown ...", "\n")
-
         return(FALSE)
     }
 
@@ -778,31 +777,29 @@ f__91__process__reference_measures_compare <- function(
 
     #~ Calculate performance measures ####
 
-    qof_measures <- list(
-        f__91__measures_ind(qof, bWriteCSV, qof_root)
-        , f__91__measures_prev(qof, bWriteCSV, qof_root)
-    ) %>% rbindlist(use.names = TRUE)
-    #qof_measures <- f__91__load_measures(qof_root)
+    qof_measures <- f__91__measures(qof, bWriteCSV, qof_root)
 
     qof_compare <- f__91__compare(qof_measures, bWriteCSV, qof_root)
-    #qof_compare <- f__91__load_compare(qof_root)
 
     # return
 
     return(list(
-        ind = qof$ind %>% filter(ccg_code %in% lu.orgs.ccgs.local)
-        , prev = qof$prev %>% filter(ccg_code %in% lu.orgs.ccgs.local)
-        , ind.measures = qof_measures$ind
-        , prev.measures = qof_measures$ind
-        , ind.comp = qof_compare$ind
-        , prev.comp = qof_compare$prev
-        , orgref = qof$orgref
-        , indmap = qof$indmap
+        data = list(
+            ind = qof$ind %>% filter(ccg_code %in% lu.orgs.ccgs.local)
+            , prev = qof$prev %>% filter(ccg_code %in% lu.orgs.ccgs.local)
+        )
+        , reference = list(
+            orgref = qof$orgref
+            , indmap = qof$indmap
+        )
+        , measures = qof_measures
+        , compare = qof_compare
     ))
 }
 
+#' load processed
 #'
-#'
+#' @export
 #'
 f__91__load__reference_measures_compare <- function(
     qof_period = "1516" # "1617"
@@ -822,16 +819,16 @@ f__91__load__reference_measures_compare <- function(
 
     lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
 
+    qof_reference <- f__91__load_reference(qof_root)
     qof_measures <- f__91__load_measures(qof_root)
     qof_compare <- f__91__load_compare(qof_root)
 
     # return
 
     return(list(
-        ind.measures = qof_measures$ind
-        , prev.measures = qof_measures$ind
-        , ind.comp = qof_compare$ind
-        , prev.comp = qof_compare$prev
+        reference = qof_reference
+        , measures = qof_measures
+        , compare = qof_compare
     ))
 }
 
