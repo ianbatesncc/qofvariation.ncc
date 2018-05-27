@@ -749,7 +749,7 @@ f__91__process__reference_measures_compare <- function(
         , lu.orgs.ccgs.local = lu.orgs.ccgs.local
     )
 
-    qof_compare <- f__91__compare(qof_measures, bWriteCSV, qof_root)
+    qof_compare <- f__91__compare(qof_measures, bWriteCSV = bWriteCSV, qof_root)
 
     # return
 
