@@ -17,16 +17,52 @@ cat("INFO: cdg_91_qof: starting...", "\n")
 # COUNTS - Load QOF data ####
 #
 
+#'
+#'
+#'
+f__91__load_reference_raw <- function(qof_root) {
+    qof.orgref <- fread(file = paste0("./Data/", qof_root, "-csv/ORGANISATION_REFERENCE.csv")) %>% setnames.clean()
+    qof.indmap <- fread(file = paste0("./Data/", qof_root, "-csv/INDICATOR_MAPPINGS.csv")) %>% setnames.clean()
+
+    # return
+
+    return(list(
+        orgref = qof.orgref
+        , indmap = qof.indmap
+    ))
+}
+
+#'
+#'
+#'
+f__91__load_data_raw <- function(qof_root) {
+    qof.prev <- fread(file = paste0("./Data/", qof_root, "-csv/PREVALENCE.csv")) %>% setnames.clean()
+
+    this.file <- paste0("./Data/", qof_root, "-csv/ACHIEVEMENT_EXCEPTIONS.csv")
+    if (!(file.exists(this.file)))
+        this.file <- paste0("./Data/", qof_root, "-csv/ACHIEVEMENT.csv")
+    qof.ind <- fread(file = this.file) %>% setnames.clean()
+
+    # return
+
+    return(list(
+        prev = qof.prev
+        , ind = qof.ind
+    ))
+}
+
 f__91__load_raw <- function(
     qof_root
 ) {
 
     cat("INFO: q91: loading data ...", "\n")
 
+    #q.ref <- f__91__load_reference_raw(qof_root)
     qof.orgref <- fread(file = paste0("./Data/", qof_root, "-csv/ORGANISATION_REFERENCE.csv")) %>% setnames.clean()
     qof.indmap <- fread(file = paste0("./Data/", qof_root, "-csv/INDICATOR_MAPPINGS.csv")) %>% setnames.clean()
     qof.prev <- fread(file = paste0("./Data/", qof_root, "-csv/PREVALENCE.csv")) %>% setnames.clean()
 
+    #q.dat <- f__91__load_data_raw(qof_root)
     this.file <- paste0("./Data/", qof_root, "-csv/ACHIEVEMENT_EXCEPTIONS.csv")
     if (!(file.exists(this.file)))
         this.file <- paste0("./Data/", qof_root, "-csv/ACHIEVEMENT.csv")
