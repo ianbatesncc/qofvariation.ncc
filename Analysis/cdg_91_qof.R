@@ -587,7 +587,8 @@ f__91__compare <- function(
 
     #~~ All that is not England ####
 
-    q.prev.var.cast <- qof_measures$prev %>%
+    q.prev.var.cast <- qof_measures %>%
+        filter(m.type == "prevalence") %>%
         filter(org.type != "england"
                , m.stat %in% c('value', 'numerator', 'denominator')) %>%
         select(indicator_group_code
@@ -600,7 +601,8 @@ f__91__compare <- function(
     tmp.nat <- merge(
         q.prev.var.cast
         # qof.prev.ref.cast
-        , qof_measures$prev %>%
+        , qof_measures %>%
+            filter(m.type == "prevalence") %>%
             filter(org.type == 'england', m.stat %in% c('value')) %>%
             select(indicator_group_code, org.type, m.stat, value) %>%
             dcast(... ~ m.stat, value.var = 'value')
@@ -613,7 +615,8 @@ f__91__compare <- function(
     tmp.ccg <- merge(
         q.prev.var.cast
         # qof.prev.ref.cast
-        , qof_measures$prev %>%
+        , qof_measures %>%
+            filter(m.type == "prevalence") %>%
             filter(org.type == 'ccg', m.stat %in% c('value')) %>%
             select(indicator_group_code, org.type, ccg_code, m.stat, value) %>%
             dcast(... ~ m.stat, value.var = 'value')
