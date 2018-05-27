@@ -17,3 +17,13 @@ main <- function(
         retval <- f__91__load__reference_measures_compare(qof_period)
     }
 }
+
+test_main() {
+    v1 <- main(qof_period = "1516", bProcessRaw = TRUE, bWriteCSV = TRUE)
+    v2 <- main(qof_period = "1516", bProcessRaw = FALSE)
+
+    v3 <- main(qof_period = "1617", bProcessRaw = TRUE, bWriteCSV = TRUE)
+    v4 <- main(qof_period = "1617", bProcessRaw = FALSE)
+
+    return(TRUE)
+}
