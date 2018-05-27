@@ -42,10 +42,13 @@ f__91__load_raw <- function(
 
 #' preprocess
 #'
+#' optionally save tweaked reference data
 #'
 #'
-#'
-f__91__preprocess <- function(qof) {
+f__91__preprocess <- function(
+    qof
+    , bWriteCSV = FALSE
+) {
 
     cat("INFO: q91: processing lookups ...", "\n")
 
@@ -157,6 +160,20 @@ f__91__preprocess <- function(qof) {
         melt(measure.vars = c("register", "patient_list_size")
              , variable.name = "measure", variable.factor = FALSE
              , value.name = "value")
+
+    # intermediate save for reference data
+
+    if (bWriteCSV == TRUE) {
+        cat("INFO: saving refrence data ...", "\n")
+
+        this.file <- paste0("./Results/", qof_root, "_orgref", "__processed", ".csv")
+        fwrite(q.orgref, file = this.file)
+
+        this.file <- paste0("./Results/", qof_root, "_indmap", "__processed", ".csv")
+        fwrite(q.indmap, file = this.file)
+    }
+
+    # return
 
     return(list(
         orgref = q.orgref
