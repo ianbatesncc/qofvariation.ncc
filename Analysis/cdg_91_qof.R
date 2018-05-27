@@ -754,14 +754,8 @@ f__91__process__reference_measures_compare <- function(
     # return
 
     return(list(
-        data = list(
-            ind = qof$ind %>% filter(ccg_code %in% lu.orgs.ccgs.local)
-            , prev = qof$prev %>% filter(ccg_code %in% lu.orgs.ccgs.local)
-        )
-        , reference = list(
-            orgref = qof$orgref
-            , indmap = qof$indmap
-        )
+        data = qof$data %>% lapply(filter, ccg_code %in% lu.orgs.ccgs.local)
+        , reference = qof$reference
         , measures = qof_measures
         , compare = qof_compare
     ))
