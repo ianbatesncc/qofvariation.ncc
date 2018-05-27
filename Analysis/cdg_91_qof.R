@@ -149,9 +149,13 @@ f__91__preprocess <- function(
         merge(q.orgref %>% select(practice_code, ccg_code)
               , by = "practice_code") %>%
         # filter non-register AND tag indicator_group_code
-        merge(q.indmap %>% filter(is.register == FALSE) %>%
-                  select(indicator_code, indicator_group_code)
-              , by = "indicator_code")
+        merge(
+            q.indmap %>%
+                filter(is.register == FALSE) %>%
+                select(indicator_code, indicator_group_code)
+            , by = "indicator_code"
+        )
+
 
     #~ process prevalence  ####
 
@@ -446,30 +450,6 @@ f__91__measures_prev <- function(
 
     #~ Calculate measures ####
 
-    # # spin up numerator, denominator, exceptions
-    # # Oops - need Larwood somehow but is not in QOF.  Filter out for now.
-    # tmp <- qof.prev.combined %>% filter(!is.na(value)) %>%
-    #     dcast(... ~ measure, sum, value.var = "value")
-    # # cross join measures and combine
-    # # NOTE: merge.data.table does not seem to do the cross join - use merge.data.frame
-    # tmp2 <- setDT(merge(setDF(tmp), setDF(lu_measures[m.type == "prevalence"]))
-    #               )[, value := sum(i.num * register, i.den * patient_list_size)
-    #                 , .(indicator_group_code, org.type, ccg_code, practice_code, m.type, m.name, m.stat)
-    #                 ][, c("register", "patient_list_size", "i.num", "i.den", "i.exc") := NULL]
-    #
-    # # spin up m.numerator, m.denominator and calculate m.value, ensure numerator and denominator are double
-    # tmp3 <- dcast(tmp2, ... ~ m.stat, sum, value.var = "value"
-    #               )[, c("numerator", "denominator") := list(as.double(numerator), as.double(denominator))
-    #                 ][, value := 100 * numerator / denominator]
-    # # melt down numerator, denominator and value on m.stat
-    # tmp4 <- melt(tmp3
-    #              , measure.vars = c("numerator", "denominator", "value")
-    #              , variable.name = "m.stat", variable.factor = FALSE
-    #              , value.name = "value")
-    #
-    # qof.prev.combined <- tmp4
-    # rm(tmp, tmp2, tmp3, tmp4)
-
     lu_measures <- fread(strip.white = TRUE, input = "
 m.type,      m.name,        m.stat,      i.num, i.den, i.exc
 prevalence,  qofprevalence, numerator,   1,     0,     NA
@@ -492,7 +472,6 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         melt(measure.vars = c("numerator", "denominator", "value")
              , variable.name = "m.stat", variable.factor = FALSE
              , value.name = "value")
-
 
     #~ Save ####
 
@@ -589,8 +568,7 @@ f__91__compare <- function(
 
     q.prev.var.cast <- qof_measures %>%
         filter(m.type == "prevalence") %>%
-        filter(org.type != "england"
-               , m.stat %in% c('value', 'numerator', 'denominator')) %>%
+        filter(org.type != "england", m.stat %in% c('value', 'numerator', 'denominator')) %>%
         select(indicator_group_code
                , org.type, ccg_code, practice_code
                , m.stat, value) %>%
@@ -743,11 +721,7 @@ f__91__compare <- function(
 
     # return
 
-    return(list(
-        prev = qof.prev.comp
-        , ind = qof.ind.comp
-    ))
-
+    return(list(prev = qof.prev.comp, ind = qof.ind.comp))
 }
 
 #'
