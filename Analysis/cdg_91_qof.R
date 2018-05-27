@@ -283,8 +283,11 @@ f__91__measures_ind <- function(
     , bWriteCSV = FALSE
     , qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
+    , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
 ) {
     cat("INFO: f__91__measures_ind: processing indicator measures ...", "\n")
+
+    cat("INFO: - local ccgs = (", paste(lu.orgs.ccgs.local, sep = ", "), ")", "\n")
 
     #
     # To do: practice level prevalence, achievement / treatment
@@ -404,9 +407,11 @@ f__91__measures_prev <- function(
     , bWriteCSV = FALSE
     , qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
+    , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
 ) {
     cat("INFO: f__91__measures_prev: processing prevalence measures ...", "\n")
 
+    cat("INFO: - local ccgs = (", paste(lu.orgs.ccgs.local, sep = ", "), ")", "\n")
 
     # England, CCG, CDG, Practice level
 
@@ -501,10 +506,26 @@ f__91__measures <- function(
     , bWriteCSV = FALSE
     , qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
+    , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
 ) {
     cat("INFO: f__91__measures: processing ...", "\n")
-    m.ind <- f__91__measures_ind(qof, bWriteCSV, qof_root, file_suffix)
-    m.prev <- f__91__measures_prev(qof, bWriteCSV, qof_root, file_suffix)
+
+    cat("INFO: - local ccgs = (", paste(lu.orgs.ccgs.local, sep = ", "), ")", "\n")
+
+    m.ind <- f__91__measures_ind(
+        qof
+        , bWriteCSV = bWriteCSV
+        , qof_root, file_suffix
+        , lu.orgs.ccgs.local = lu.orgs.ccgs.local
+    )
+
+    m.prev <- f__91__measures_prev(
+        qof
+        , bWriteCSV = bWriteCSV
+        , qof_root, file_suffix
+        , lu.orgs.ccgs.local = lu.orgs.ccgs.local
+    )
+
 browser()
     # return
 
@@ -685,6 +706,7 @@ f__91__load_compare <- function(
 #'
 f__91__process__reference_measures_compare <- function(
     qof_period = "1516" # "1617"
+    , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
     , bWriteCSV = FALSE
 ) {
     cat("INFO: f__91__process__reference_measures_compare: processing ...", "\n")
@@ -705,11 +727,15 @@ f__91__process__reference_measures_compare <- function(
 
     # Localisation
 
-    lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
+    #lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
 
     #~ Calculate performance measures ####
 
-    qof_measures <- f__91__measures(qof, bWriteCSV, qof_root)
+    qof_measures <- f__91__measures(
+        qof
+        , bWriteCSV = bWriteCSV, qof_root
+        , lu.orgs.ccgs.local = lu.orgs.ccgs.local
+    )
 
     qof_compare <- f__91__compare(qof_measures, bWriteCSV, qof_root)
 
@@ -750,11 +776,11 @@ f__91__load__reference_measures_compare <- function(
 
     # Localisation
 
-    lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
-
     qof_reference <- f__91__load_reference(qof_root)
     qof_measures <- f__91__load_measures(qof_root)
     qof_compare <- f__91__load_compare(qof_root)
+
+    lu.orgs.ccgs.local <- qof_measures$ind$ccg_code %>% unique()
 
     # return
 
