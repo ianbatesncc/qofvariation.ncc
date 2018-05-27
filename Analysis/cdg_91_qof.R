@@ -40,7 +40,7 @@ setnames.clean <- function(x) {setnames(x, make.names(tolower(colnames(x))))}
 f__91__load_raw <- function(
     qof_root
 ) {
-    cat("INFO: q91: loading data ...", "\n")
+    cat("INFO: f__91__load_raw: loading data ...", "\n")
 
     qof.orgref <- fread(file = paste0("./Data/", qof_root, "-csv/ORGANISATION_REFERENCE.csv")) %>% setnames.clean()
     qof.indmap <- fread(file = paste0("./Data/", qof_root, "-csv/INDICATOR_MAPPINGS.csv")) %>% setnames.clean()
@@ -74,8 +74,7 @@ f__91__preprocess <- function(
     qof
     , bWriteCSV = FALSE
 ) {
-
-    cat("INFO: q91: processing lookups ...", "\n")
+    cat("INFO: f__91__preprocess: processing lookups ...", "\n")
 
     #~~ orgref - organisation lookups ####
 
@@ -114,7 +113,7 @@ f__91__preprocess <- function(
 
     #~ process indicators ####
 
-    cat("INFO: q91: processing indicators ...", "\n")
+    cat("INFO: f__91__preprocess: processing indicators ...", "\n")
 
     # ind - qof indicator counts
     # Tag CCG
@@ -159,7 +158,7 @@ f__91__preprocess <- function(
 
     #~ process prevalence  ####
 
-    cat("INFO: q91: processing prevalence ...", "\n")
+    cat("INFO: f__91__preprocess: processing prevalence ...", "\n")
 
     # prev - qof registers and list sizes
     # Tag CCG
@@ -235,6 +234,7 @@ f__91__load_reference <- function(
     qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
 ) {
+    cat("INFO: f__91__load_reference: loading ...", "\n")
 
     this.file <- paste0("./Results/", qof_root, "_orgref", file_suffix, ".csv")
     q.orgref <- fread(file = this.file)
@@ -253,6 +253,7 @@ f__91__load_reference <- function(
 f__91__load_data <- function(
     qof_period
 ) {
+    cat("INFO: f__91__load_data: loading ...", "\n")
 
     if (qof_period %in% c("1516", "1617")) {
         qof_root <- paste("qof", qof_period, sep = "-")
@@ -283,7 +284,7 @@ f__91__measures_ind <- function(
     , qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
 ) {
-    cat("INFO: q91: processing indicator measures ...", "\n")
+    cat("INFO: f__91__measures_ind: processing indicator measures ...", "\n")
 
     #
     # To do: practice level prevalence, achievement / treatment
@@ -404,8 +405,8 @@ f__91__measures_prev <- function(
     , qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
 ) {
+    cat("INFO: f__91__measures_prev: processing prevalence measures ...", "\n")
 
-    cat("INFO: q91: processing prevalence measures ...", "\n")
 
     # England, CCG, CDG, Practice level
 
@@ -501,6 +502,7 @@ f__91__measures <- function(
     , qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
 ) {
+    cat("INFO: f__91__measures: processing ...", "\n")
     m.ind <- f__91__measures_ind(qof, bWriteCSV, qof_root, file_suffix)
     m.prev <- f__91__measures_prev(qof, bWriteCSV, qof_root, file_suffix)
 browser()
@@ -516,6 +518,7 @@ f__91__load_measures <- function(
     qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
 ) {
+    cat("INFO: f__91__load_measures: loading ...", "\n")
 
     this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
     q.ind <- fread(file = this.file)
@@ -542,7 +545,7 @@ f__91__compare <- function(
     , file_suffix = "__eng_ccg_prac__measure_ndv__comp_eng_ccg"
     ) {
 
-    cat("INFO: q91: processing statistical significance comparison ...", "\n")
+    cat("INFO: f__91__compare: processing statistical significance comparison ...", "\n")
 
     #source("./Analysis/aphoci.R")
     source("./Analysis/calcci.R")
@@ -561,7 +564,7 @@ f__91__compare <- function(
     # Melted on statistic.  Extract England, spin both up on m.stat, tag England,
     # do stat. compare, remove uneeded columns, spin back down
 
-    cat("INFO: q91: creating reference lookups ...", "\n")
+    cat("INFO: f__91__compare: creating reference lookups ...", "\n")
 
     #qof_measures$prev$org.type %>% unique() %>% print()
     # [1] "ccg, practice" "ccg"           ""england"
@@ -610,7 +613,7 @@ f__91__compare <- function(
 
     #~~ compare ####
 
-    cat("INFO: q91: calculating confidence intervals ... (combined)", "\n")
+    cat("INFO: f__91__compare: calculating confidence intervals ... (combined)", "\n")
 
     qof.comp <- qof.combined %>%
         status("INFO: - aphoci_gen ...") %>%
@@ -659,6 +662,7 @@ f__91__load_compare <- function(
     qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv__comp_eng_ccg"
 ) {
+    cat("INFO: f__91__load_compare: loading ...", "\n")
 
     this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
     q.ind <- fread(file = this.file)
@@ -683,7 +687,7 @@ f__91__process__reference_measures_compare <- function(
     qof_period = "1516" # "1617"
     , bWriteCSV = FALSE
 ) {
-
+    cat("INFO: f__91__process__reference_measures_compare: processing ...", "\n")
     # Config ####
 
     cat("INFO: bWriteCSV =", bWriteCSV, "\n")
@@ -732,6 +736,7 @@ f__91__process__reference_measures_compare <- function(
 f__91__load__reference_measures_compare <- function(
     qof_period = "1516" # "1617"
 ) {
+    cat("INFO: f__91__load__reference_measures_compare: loading ...", "\n")
 
     require("data.table")
     require("dplyr")
