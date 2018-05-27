@@ -568,161 +568,88 @@ f__91__compare <- function(
 
     #~~ All that is not England ####
 
-    q.prev.var.cast <- qof_measures %>%
-        filter(m.type == "prevalence") %>%
-        filter(org.type != "england", m.stat %in% c('value', 'numerator', 'denominator')) %>%
-        select(indicator_group_code
-               , org.type, ccg_code, practice_code
-               , m.stat, value) %>%
-        dcast(... ~ m.stat, value.var = 'value')
-
-    q.ind.var.cast <- qof_measures %>%
-        filter(m.type == "performance") %>%
+    q.var.cast <- qof_measures %>%
         filter(org.type != "england", m.stat %in% c('value', 'numerator', 'denominator')) %>%
         select(indicator_group_code, indicator_code
                , org.type, ccg_code, practice_code
-               , m.name, m.stat, value) %>%
+               , m.type, m.name, m.stat, value) %>%
         dcast(... ~ m.stat, value.var = 'value')
 
     #~~ National reference ####
 
-    prev.nat <- merge(
-        q.prev.var.cast
-        # qof.prev.ref.cast
+    tmp.nat <- merge(
+        q.var.cast
         , qof_measures %>%
-            filter(m.type == "prevalence") %>%
-            filter(org.type == 'england', m.stat %in% c('value')) %>%
-            select(indicator_group_code, org.type, m.stat, value) %>%
-            dcast(... ~ m.stat, value.var = 'value')
-        , by = c('indicator_group_code')
-        , all.x = TRUE, suffixes = c('.var', '.ref')
-    )
-
-    ind.nat <- merge(
-        q.ind.var.cast
-        # qof.ind.ref.cast
-        , qof_measures %>%
-            filter(m.type == "performance") %>%
             filter(org.type == 'england', m.stat %in% c('value')) %>%
             select(indicator_group_code, indicator_code
                    , org.type
-                   , m.name, m.stat, value) %>%
+                   , m.type, m.name, m.stat, value) %>%
             dcast(... ~ m.stat, value.var = 'value')
-        , by = c('indicator_group_code', 'indicator_code', 'm.name')
+        , by = c('indicator_group_code', 'indicator_code', "m.type", 'm.name')
         , all.x = TRUE, suffixes = c('.var', '.ref')
     )
 
     #~~ ccg reference ####
 
-    prev.ccg <- merge(
-        q.prev.var.cast
-        # qof.prev.ref.cast
+    tmp.ccg <- merge(
+        q.var.cast
         , qof_measures %>%
-            filter(m.type == "prevalence") %>%
-            filter(org.type == 'ccg', m.stat %in% c('value')) %>%
-            select(indicator_group_code, org.type, ccg_code, m.stat, value) %>%
-            dcast(... ~ m.stat, value.var = 'value')
-        , by = c('indicator_group_code', 'ccg_code')
-        , all.x = TRUE, suffixes = c('.var', '.ref')
-    )
-
-    ind.ccg <- merge(
-        q.ind.var.cast
-        # q.ind.ref.cast
-        , qof_measures %>%
-            filter(m.type == "performance") %>%
             filter(org.type == 'ccg', m.stat %in% c('value')) %>%
             select(indicator_group_code, indicator_code
                    , org.type, ccg_code
-                   , m.name, m.stat, value) %>%
+                   , m.type, m.name, m.stat, value) %>%
             dcast(... ~ m.stat, value.var = 'value')
-        , by = c('indicator_group_code', 'indicator_code', 'ccg_code', 'm.name')
+        , by = c('indicator_group_code', 'indicator_code', 'ccg_code', "m.type", 'm.name')
         , all.x = TRUE, suffixes = c('.var', '.ref')
     )
 
     #~~ combine ####
 
-    qof.prev.combined <- list(prev.nat, prev.ccg) %>%
-        rbindlist(use.names = TRUE)
-
-    qof.ind.combined <- list(ind.nat, ind.ccg) %>%
+    qof.combined <- list(tmp.nat, tmp.ccg) %>%
         rbindlist(use.names = TRUE)
 
     #~~ compare ####
 
-    cat("INFO: q91: calculating confidence intervals ... (prev)", "\n")
+    cat("INFO: q91: calculating confidence intervals ... (combined)", "\n")
 
-    qof.prev.comp <- qof.prev.combined %>%
-        .[, c('cilo', 'cihi') := aphoci_gen(numerator, denominator, multiplier = 100, ci.type = "proportion", bTransposeResults = TRUE)] %>%
-        .[, statsig := testci_hilo_s(value.ref, transpose(list(cilo, cihi)))] %>%
-        .[, c('cilo', 'cihi') :=  NULL]
-
-    cat("INFO: q91: calculating confidence intervals ... (ind)", "\n")
-
-    qof.ind.comp <- qof.ind.combined %>%
+    qof.comp <- qof.combined %>%
+        status("INFO: - aphoci_gen ...") %>%
         .[, c('cilo', 'cihi') := aphoci_gen(numerator, denominator, multiplier = 100, ci.type = 'proportion', bTransposeResults = TRUE)] %>%
-        .[!(m.name %in% "exceptions"), statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = TRUE)] %>%
-        .[(m.name %in% "exceptions"), statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = FALSE)] %>%
-        .[, c('cilo', 'cihi') :=  NULL]
-
+        status("INFO: - prevalence ...") %>%
+        .[(m.type == "prevalence"), statsig := testci_hilo_s(value.ref, transpose(list(cilo, cihi)))] %>%
+        status("INFO: - exceptions ...") %>%
+        .[(m.type == "performance") & (m.name %in% "exceptions"), statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = FALSE)] %>%
+        status("INFO: - remaining ...") %>%
+        .[(m.type == "performance") & !(m.name %in% "exceptions"), statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = TRUE)] %>%
+        status("INFO: - cleaning ...") %>%
+        .[, c('cilo', 'cihi') :=  NULL] %>%
+        status("INFO: done.")
 
     #~ save ####
 
     if (bWriteCSV) {
+        cat("INFO: saving qof.comp ...", "\n")
+
+        this.file <- paste0("./Results/", qof_root, "_all", file_suffix, ".csv")
+        fwrite(qof.comp, file = this.file)
+
         cat("INFO: saving qof.prev.comp ...", "\n")
 
         this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
-        fwrite(qof.prev.comp, file = this.file)
-    } else {
-        cat("INFO: NOT saving qof.prev.comp ...", "\n")
-    }
+        fwrite(qof.comp %>% filter(m.type == "prevalence"), file = this.file)
 
-    if (bWriteCSV) {
         cat("INFO: saving qof.ind.comp ...", "\n")
 
         this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
-        fwrite(qof.ind.comp, file = this.file)
+        fwrite(qof.comp %>% filter(m.type == "performance"), file = this.file)
 
     } else {
-        cat("INFO: NOT saving qof.ind.comp ...", "\n")
+        cat("INFO: NOT saving qof.comp ...", "\n")
     }
-
-    #~ Indicators ####
-
-    # Melted on statistic.  Extract England, spin both up on m.stat, tag England,
-    # do stat. compare, remove uneeded columns, spin back down
-
-    # qof.ind.combined <- qof_measures$ind
-
-    #this.file <- paste0("./Results/", qof_root, "_ind__eng_ccg_prac__measure_ndv.csv")
-    #qof.ind.combined <- fread(file = this.file)
-
-    #print(unique(qof_measures$ind[, org.type]))
-    # [1] "ccg, practice" "ccg"           "england"
-    #print(unique(qof_measures$ind[, m.name]))
-    # [1] "achievement" "treatment"
-
-    # cat("INFO: q91: creating reference lookups ...", "\n")
-
-    #~~ All that is not England ####
-
-    #~~ National reference ####
-
-    #~~ ccg reference ####
-
-    #~ combine ####
-
-    # qof.ind.comp <- list(tmp.nat, tmp.ccg) %>% rbindlist(use.names = TRUE)
-    #
-    # qof.ind.comp[, c('cilo', 'cihi') := vaphoci_gen(numerator, denominator, multiplier = 100, ci.type = 'proportion')]
-    # qof.ind.comp[, statsig := vtestci_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = TRUE)]
-    # qof.ind.comp[, c('cilo', 'cihi') :=  NULL]
-
-    #~ save ####
 
     # return
 
-    return(list(prev = qof.prev.comp, ind = qof.ind.comp))
+    return(qof.comp)
 }
 
 #'
