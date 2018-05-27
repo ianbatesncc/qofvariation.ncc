@@ -7,7 +7,7 @@
 #
 # Require certain disease areas
 # - practice level prevalnce and stat. sig. relative to England
-# - CDG level achievement (?treatemtn) and stat. sig. relative to England.
+# - CDG level achievement (?treatment) and stat. sig. relative to England.
 #
 
 
