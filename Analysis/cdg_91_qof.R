@@ -230,6 +230,10 @@ f__91__preprocess <- function(
 #
 # MEASURES - QOF indicators ####
 #
+
+#'
+#'
+#'
 f__91__measures_ind <- function(
     qof
     , bWriteCSV = FALSE
@@ -335,6 +339,7 @@ performance, suboptimal,    denominator, 0,     1,     1
     #  $ m.stat              : chr  "numerator" "numerator" "numerator" "numerator" ...
     #  $ value               : num  389 389 104 104 171 171 316 316 204 204 ...
 
+    # return
     return(list(ind = q.ind.measures))
 
 }
@@ -345,6 +350,9 @@ performance, suboptimal,    denominator, 0,     1,     1
 # PREVALENCE ####
 #
 
+#'
+#'
+#'
 f__91__measures_prev <- function(
     qof
     , bWriteCSV = FALSE
@@ -457,6 +465,7 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         cat("INFO: cdg_91_qof: NOT saving qof.prev.combined ...", "\n")
     }
 
+    # return
     return(list(prev = q.prev.measures))
 
 }
@@ -475,6 +484,8 @@ f__91__load_measures <- function(
     this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
     q.prev <- fread(file = this.file)
 
+    # return
+
     return(list(prev = q.prev, ind = q.ind))
 }
 
@@ -482,6 +493,9 @@ f__91__load_measures <- function(
 # COMPARE - Add England comparator and significance test ####
 #
 
+#'
+#'
+#'
 f__91__compare <- function(
     qof_measures
     , bWriteCSV = TRUE
@@ -706,6 +720,8 @@ f__91__compare <- function(
         cat("INFO: NOT saving qof.ind.comp ...", "\n")
     }
 
+    # return
+
     return(list(
         prev = qof.prev.comp
         , ind = qof.ind.comp
@@ -726,6 +742,8 @@ f__91__load_compare <- function(
 
     this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
     q.prev <- fread(file = this.file)
+
+    # return
 
     return(list(prev = q.prev, ind = q.ind))
 }
@@ -787,6 +805,8 @@ f__91__process_all <- function(
     qof_compare <- f__91__compare(qof_measures, bWriteCSV, qof_root)
     #qof_compare <- f__91__load_compare(qof_root)
 
+    # return
+
     return(list(
         ind = qof$ind %>% filter(ccg_code %in% lu.orgs.ccgs.local)
         , prev = qof$prev %>% filter(ccg_code %in% lu.orgs.ccgs.local)
@@ -799,6 +819,9 @@ f__91__process_all <- function(
     ))
 }
 
+#'
+#'
+#'
 f__91__load_measures_compare <- function(
     qof_period = "1516" # "1617"
 ) {
