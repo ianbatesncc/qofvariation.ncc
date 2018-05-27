@@ -181,7 +181,7 @@ f__91__preprocess <- function(
     q.prev <- qof$data$prev %>%
         merge(q.orgref %>% select(practice_code, ccg_code)
               , by = "practice_code") %>%
-        mutate(org.type = "ccg, practice")
+        #mutate(org.type = "ccg, practice") %>%
         select(-patient_list_type) %>%
         # tag on indicator_code
         merge(q.indmap %>%
@@ -224,7 +224,9 @@ f__91__preprocess <- function(
             ind = q.ind
             , prev = q.prev
             , prev.melt = q.prev.melt
+        )
     ))
+}
 
 #'
 #'
@@ -646,7 +648,6 @@ f__91__compare <- function(
     qof.ind.combined <- list(ind.nat, ind.ccg) %>%
         rbindlist(use.names = TRUE)
 
-    cat("INFO: q91: calculating confidence intervals ...", "\n")
     #~~ compare ####
 
     cat("INFO: q91: calculating confidence intervals ... (prev)", "\n")
@@ -740,7 +741,7 @@ f__91__load_compare <- function(
 
     # return
 
-    return(list(prev = q.prev, ind = q.ind))
+    return(list(prev = q.prev, ind = q.ind) %>% rbindlist(use.names = TRUE))
 }
 
 # EXPORT routines that string these together ####
