@@ -242,7 +242,7 @@ f__91__save_reference <- function(
 #'
 f__91__load_reference <- function(
     qof_root
-    , file_suffix = "__eng_ccg_prac__measure_ndv"
+    , file_suffix = "__processed"
 ) {
     cat("INFO: f__91__load_reference: loading ...", "\n")
 
@@ -254,7 +254,7 @@ f__91__load_reference <- function(
 
     # return
 
-    return(reference = list(orgref = q.orgref, indmap = q.indmap) %>% rbindlist(use.names = TRUE))
+    return(reference = list(orgref = q.orgref, indmap = q.indmap))
 }
 
 #'
