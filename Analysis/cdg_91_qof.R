@@ -197,10 +197,10 @@ f__91__preprocess <- function(
              , variable.name = "measure", variable.factor = FALSE
              , value.name = "value")
 
-    # intermediate save for reference data
+    # intermediate save for reference data ####
 
     if (bWriteCSV == TRUE) {
-        cat("INFO: saving refrence data ...", "\n")
+        cat("INFO: saving reference data ...", "\n")
 
         this.file <- paste0("./Results/", qof_root, "_orgref", "__processed", ".csv")
         fwrite(q.orgref, file = this.file)
@@ -222,8 +222,47 @@ f__91__preprocess <- function(
             , prev.melt = q.prev.melt
     ))
 
+#'
+#'
+#'
+f__91__load_reference <- function(
+    qof_root
+    , file_suffix = "__eng_ccg_prac__measure_ndv"
+) {
+
+    this.file <- paste0("./Results/", qof_root, "_orgref", file_suffix, ".csv")
+    q.orgref <- fread(file = this.file)
+
+    this.file <- paste0("./Results/", qof_root, "_indmap", file_suffix, ".csv")
+    q.indmap <- fread(file = this.file)
+
+    # return
+
+    return(reference = list(orgref = q.orgref, indmap = q.indmap) %>% rbindlist(use.names = TRUE))
 }
 
+#'
+#'
+#'
+f__91__load_data <- function(
+    qof_period
+) {
+
+    if (qof_period %in% c("1516", "1617")) {
+        qof_root <- paste("qof", qof_period, sep = "-")
+    } else {
+        cat("WARNING: qof period", qof_period, "unknown ...", "\n")
+        return(FALSE)
+    }
+
+    qof <- f__91__load_raw(qof_root) %>%
+        #~ process lookups
+        f__91__preprocess()
+
+    # return
+
+    return(data = qof$data)
+}
 
 #
 # MEASURES - QOF indicators ####
