@@ -231,7 +231,10 @@ f__91__preprocess <- function(
 # MEASURES - QOF indicators ####
 #
 f__91__measures_ind <- function(
-    qof, bWriteCSV = FALSE, qof_root
+    qof
+    , bWriteCSV = FALSE
+    , qof_root
+    , file_suffix = "__eng_ccg_prac__measure_ndv"
 ) {
     cat("INFO: q91: processing indicator measures ...", "\n")
 
@@ -313,7 +316,7 @@ performance, suboptimal,    denominator, 0,     1,     1
     if (bWriteCSV) {
         cat("INFO: cdg_91_qof: saving qof.ind.combined ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_ind__eng_ccg_prac__measure_ndv.csv")
+        this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
         fwrite(q.ind.measures, file = this.file)
 
     } else {
@@ -343,7 +346,10 @@ performance, suboptimal,    denominator, 0,     1,     1
 #
 
 f__91__measures_prev <- function(
-    qof, bWriteCSV = FALSE, qof_root
+    qof
+    , bWriteCSV = FALSE
+    , qof_root
+    , file_suffix = "__eng_ccg_prac__measure_ndv"
 ) {
 
     cat("INFO: q91: processing prevalence measures ...", "\n")
@@ -444,7 +450,7 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
     if (bWriteCSV) {
         cat("INFO: cdg_91_qof: saving qof.prev.combined ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_prev__eng_ccg_prac__measure_ndv.csv")
+        this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
         fwrite(q.prev.measures, file = this.file)
 
     } else {
@@ -458,12 +464,15 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 #'
 #'
 #'
-f__91__load_measures <- function(qof_root) {
+f__91__load_measures <- function(
+    qof_root
+    , file_suffix = "__eng_ccg_prac__measure_ndv"
+) {
 
-    this.file <- paste0("./Results/", qof_root, "_ind__eng_ccg_prac__measure_ndv.csv")
-    q.int <- fread(file = this.file)
+    this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
+    q.ind <- fread(file = this.file)
 
-    this.file <- paste0("./Results/", qof_root, "_prev__eng_ccg_prac__measure_ndv.csv")
+    this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
     q.prev <- fread(file = this.file)
 
     return(list(prev = q.prev, ind = q.ind))
@@ -474,7 +483,10 @@ f__91__load_measures <- function(qof_root) {
 #
 
 f__91__compare <- function(
-    qof_measures, bWriteCSV = TRUE, qof_root
+    qof_measures
+    , bWriteCSV = TRUE
+    , qof_root
+    , file_suffix = "__eng_ccg_prac__measure_ndv__comp_eng_ccg"
     ) {
 
     cat("INFO: q91: processing statistical significance comparison ...", "\n")
@@ -592,7 +604,7 @@ f__91__compare <- function(
     if (bWriteCSV) {
         cat("INFO: saving qof.prev.comp ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_prev__eng_ccg_prac__measure_ndv__comp_eng_ccg.csv")
+        this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
         fwrite(qof.prev.comp, file = this.file)
     } else {
         cat("INFO: NOT saving qof.prev.comp ...", "\n")
@@ -687,7 +699,7 @@ f__91__compare <- function(
     if (bWriteCSV) {
         cat("INFO: saving qof.ind.comp ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_ind__eng_ccg_prac__measure_ndv__comp_eng_ccg.csv")
+        this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
         fwrite(qof.ind.comp, file = this.file)
 
     } else {
@@ -704,12 +716,15 @@ f__91__compare <- function(
 #'
 #'
 #'
-f__91__load_compare <- function(qof_root) {
+f__91__load_compare <- function(
+    qof_root
+    , file_suffix = "__eng_ccg_prac__measure_ndv__comp_eng_ccg"
+) {
 
-    this.file <- paste0("./Results/", qof_root, "_ind__eng_ccg_prac__measure_ndv__comp_eng_ccg.csv")
-    q.int <- fread(file = this.file)
+    this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
+    q.ind <- fread(file = this.file)
 
-    this.file <- paste0("./Results/", qof_root, "_prev__eng_ccg_prac__measure_ndv__comp_eng_ccg.csv")
+    this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
     q.prev <- fread(file = this.file)
 
     return(list(prev = q.prev, ind = q.ind))
