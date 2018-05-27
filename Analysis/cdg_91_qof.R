@@ -303,7 +303,7 @@ f__91__measures_ind <- function(
     #~ England ####
 
     q.ind.eng <- qof$data$ind %>%
-        group_by(indicator_group_code, indicator_code, measure) %>%
+        group_by_at(vars(-value, -ccg_code, -practice_code)) %>%
         summarise(value = sum(value)) %>%
         mutate(ccg_code = "eng", practice_code = "eng", org.type = "england")
 
@@ -311,7 +311,7 @@ f__91__measures_ind <- function(
 
     q.ind.ccgs <- qof$data$ind %>%
         filter(ccg_code %in% lu.orgs.ccgs.local) %>%
-        group_by(ccg_code, indicator_group_code, indicator_code, measure) %>%
+        group_by_at(vars(-value, -practice_code)) %>%
         summarise(value = sum(value)) %>%
         mutate(practice_code = "ccg", org.type = "ccg")
 
@@ -323,6 +323,8 @@ f__91__measures_ind <- function(
         , q.ind %>% filter(ccg_code %in% lu.orgs.ccgs.local)
     ) %>%
         rbindlist(use.names = TRUE)
+
+    #~ Calculate measures ####
 
     lu_measures <- fread(strip.white = TRUE, input = "
 m.type,      m.name,        m.stat,      i.num, i.den, i.exc
@@ -415,7 +417,7 @@ f__91__measures_prev <- function(
     # spin down on measure, ignore missing values, tag as England
 
     q.prev.eng <- qof$data$prev.melt %>%
-        group_by(indicator_group_code, patient_list_type, measure) %>%
+        group_by_at(vars(-value, -ccg_code, -practice_code)) %>%
         summarise(value = sum(value, na.rm = TRUE)) %>%
         mutate(ccg_code = "eng", practice_code = "eng", org.type = "england")
 
@@ -425,7 +427,7 @@ f__91__measures_prev <- function(
 
     q.prev.ccgs <- qof$data$prev.melt %>%
         filter(ccg_code %in% lu.orgs.ccgs.local) %>%
-        group_by(ccg_code, indicator_group_code, patient_list_type, measure) %>%
+        group_by_at(vars(-value, -practice_code)) %>%
         summarise(value = sum(value, na.rm = TRUE)) %>%
         mutate(practice_code = "ccg", org.type = "ccg")
 
