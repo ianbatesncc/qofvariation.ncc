@@ -200,18 +200,6 @@ f__91__preprocess <- function(
              , variable.name = "measure", variable.factor = FALSE
              , value.name = "value")
 
-    # intermediate save for reference data ####
-
-    if (bWriteCSV == TRUE) {
-        cat("INFO: saving reference data ...", "\n")
-
-        this.file <- paste0("./Results/", qof_root, "_orgref", "__processed", ".csv")
-        fwrite(q.orgref, file = this.file)
-
-        this.file <- paste0("./Results/", qof_root, "_indmap", "__processed", ".csv")
-        fwrite(q.indmap, file = this.file)
-    }
-
     # return
 
     return(list(
@@ -225,6 +213,28 @@ f__91__preprocess <- function(
             , prev.melt = q.prev.melt
         )
     ))
+}
+
+#'
+#'
+#'
+f__91__save_reference <- function(
+    qof
+    , qof_root
+    , file_suffix = "__processed"
+    , bWriteCSV = TRUE
+) {
+    cat("INFO: f__91__save_reference: saving ...", "\n")
+
+    if (bWriteCSV == TRUE) {
+        cat("INFO: f__91__save_reference: saving reference data ...", "\n")
+
+        this.file <- paste0("./Results/", qof_root, "_orgref", file_suffix, ".csv")
+        fwrite(qof$reference$orgref, file = this.file)
+
+        this.file <- paste0("./Results/", qof_root, "_indmap", file_suffix, ".csv")
+        fwrite(qof$reference$indmap, file = this.file)
+    }
 }
 
 #'
@@ -724,6 +734,8 @@ f__91__process__reference_measures_compare <- function(
     qof <- f__91__load_raw(qof_root) %>%
         #~ process lookups
         f__91__preprocess()
+
+    qof %>% f__91__save_reference(qof_root, bWriteCSV = bWriteCSV)
 
     # Localisation
 
