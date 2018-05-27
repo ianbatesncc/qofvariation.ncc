@@ -13,6 +13,23 @@
 cat("INFO: cdg_91_qof: starting...", "\n")
 
 #
+# Helpers ####
+#
+
+require("data.table")
+require("dplyr")
+
+# progress with a pipe
+status <- function(x, ...){cat(..., "\n");invisible(x)}
+
+# For use in e.g. dcast to ignore NAs
+sum.rmna <- function(x) return(sum(x, na.rm = TRUE))
+
+# to clean table/frame names
+setnames.clean <- function(x) {setnames(x, make.names(tolower(colnames(x))))}
+
+
+#
 # COUNTS - Load QOF data ####
 #
 
@@ -449,7 +466,7 @@ f__91__load_measures <- function(
 
     # return
 
-    return(list(prev = q.prev, ind = q.ind))
+    return(list(prev = q.prev, ind = q.ind) %>% rbindlist(use.names = TRUE))
 }
 
 #
@@ -690,19 +707,6 @@ f__91__process_all <- function(
     , qof_period = "1516" # "1617"
 ) {
 
-    #
-    # Set environment ####
-    #
-
-    require("data.table")
-    require("dplyr")
-
-    # For use in e.g. dcast to ignore NAs
-    sum.rmna <- function(x) return(sum(x, na.rm = TRUE))
-    # to clean table/frame names
-    setnames.clean <- function(x) {
-        setnames(x, make.names(tolower(colnames(x))))
-    }
 
     # Config ####
 
@@ -728,10 +732,10 @@ f__91__process_all <- function(
 
     #~ Calculate performance measures ####
 
-    qof_measures <- c(
+    qof_measures <- list(
         f__91__measures_ind(qof, bWriteCSV, qof_root)
         , f__91__measures_prev(qof, bWriteCSV, qof_root)
-    )
+    ) %>% rbindlist(use.names = TRUE)
     #qof_measures <- f__91__load_measures(qof_root)
 
     qof_compare <- f__91__compare(qof_measures, bWriteCSV, qof_root)
