@@ -730,7 +730,12 @@ f__91__load_compare <- function(
     return(list(prev = q.prev, ind = q.ind))
 }
 
-f__91__process_ <- function(
+#' process all
+#'
+#' Laod raw data and produce measures and compare aginst england.
+#'
+#'
+f__91__process_all <- function(
     bWriteCSV = FALSE
     , qof_period = "1516" # "1617"
 ) {
@@ -791,6 +796,37 @@ f__91__process_ <- function(
         , prev.comp = qof_compare$prev
         , orgref = qof$orgref
         , indmap = qof$indmap
+    ))
+}
+
+f__91__load_measures_compare <- function(
+    qof_period = "1516" # "1617"
+) {
+
+    require("data.table")
+    require("dplyr")
+
+    if (qof_period %in% c("1516", "1617")) {
+        qof_root <- paste("qof", qof_period, sep = "-")
+    } else {
+        cat("WARNING: qof period", qof_period, "unknown ...", "\n")
+        return(FALSE)
+    }
+
+    # Localisation
+
+    lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
+
+    qof_measures <- f__91__load_measures(qof_root)
+    qof_compare <- f__91__load_compare(qof_root)
+
+    # return
+
+    return(list(
+        ind.measures = qof_measures$ind
+        , prev.measures = qof_measures$ind
+        , ind.comp = qof_compare$ind
+        , prev.comp = qof_compare$prev
     ))
 }
 
