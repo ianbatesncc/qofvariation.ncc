@@ -524,25 +524,11 @@ f__91__compare <- function(
 
     cat("INFO: q91: creating reference lookups ...", "\n")
 
-    #qof.prev.measures <- qof_measures$prev
-
-    # if (!exists("qof.prev.measures")) {
-    #     this.file <- paste0("./Results/", qof_root, "_prev__eng_ccg_prac__measure_ndv.csv")
-    #
-    #     qof.prev.measures <- fread(file = this.file)
-    # }
-
     #qof_measures$prev$org.type %>% unique() %>% print()
     # [1] "ccg, practice" "ccg"           ""england"
 
     #~~ All that is not England ####
 
-    # qof.prev.var <- qof.prev.combined[(org.type != "england")
-    #                                   & (m.stat %in% c('value', 'numerator', 'denominator'))
-    #                                   , .(indicator_group_code
-    #                                       , org.type, ccg_code, practice_code
-    #                                       , m.stat, value)]
-    # qof.prev.var.cast <- dcast(qof.prev.var, ... ~ m.stat, value.var = 'value')
     q.prev.var.cast <- qof_measures$prev %>%
         filter(org.type != "england"
                , m.stat %in% c('value', 'numerator', 'denominator')) %>%
@@ -567,13 +553,6 @@ f__91__compare <- function(
 
     #~~ ccg reference ####
 
-    # qof.prev.ref <- qof.prev.combined[(org.type == 'ccg') & (m.stat %in% c('value'))
-    #                                   , .(indicator_group_code
-    #                                       , org.type, ccg_code
-    #                                       , m.stat, value)]
-    # qof.prev.ref.cast <- dcast(qof.prev.ref, ... ~ m.stat, value.var = 'value')
-
-
     tmp.ccg <- merge(
         q.prev.var.cast
         # qof.prev.ref.cast
@@ -587,15 +566,6 @@ f__91__compare <- function(
 
     #~~ combine ####
 
-    # qof.prev.comp <- list(tmp.nat, tmp.ccg) %>%
-    #     rbindlist(use.names = TRUE)
-    #
-    # cat("INFO: q91: calculating confidence intervals ...", "\n")
-    #
-    # qof.prev.comp <- qof.prev.comp %>%
-    #     mutate(c('cilo', 'cihi') := vaphoci_gen(numerator, denominator, multiplier = 100, ci.type = 'proportion'))
-    # qof.prev.comp[, statsig := vtestci_s(value.ref, transpose(list(cilo, cihi)))]
-    # qof.prev.comp[, c('cilo', 'cihi') :=  NULL]
 
     cat("INFO: q91: calculating confidence intervals ...", "\n")
 
