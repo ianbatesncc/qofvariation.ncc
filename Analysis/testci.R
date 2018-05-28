@@ -230,6 +230,12 @@ transpose <- function(l) {
     ftranspose(l)
 }
 
+#' check if package is installed
+#'
+#'
+is.installed <- function(p) {
+    is.element(p, utils::installed.packages()[, 1])
+}
 testing__spc <- function() {
     require("dplyr")
 

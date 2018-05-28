@@ -267,6 +267,18 @@ aphoci_gen <- function(
     }
 
     return(ci)
+
+    # return
+
+    if (return.type == "data.table" & !is.installed("data.table"))
+        return.type = "data.frame"
+
+    return(switch(
+        return.type
+        , data.frame = dat
+        , data.table = data.table::setDT(dat)
+        , ci
+    ))
 }
 
 #
