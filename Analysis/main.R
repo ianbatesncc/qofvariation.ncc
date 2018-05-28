@@ -5,6 +5,8 @@
 options(warn = 1)
 
 source("./Analysis/cdg_91_qof.R")
+source("./Analysis/calcci.R")
+source("./Analysis/testci.R")
 
 main <- function(
     qof_period = "1516"
