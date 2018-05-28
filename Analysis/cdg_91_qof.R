@@ -652,7 +652,7 @@ f__91__compare <- function(
     benchmark.level <- 0.95
 
     qof.comp.bench <- copy(qof.combined) %>%
-        status("INFO: - confidence intervals ...") %>%
+        status("INFO: - confidence intervals (", benchmark.level, ") ...") %>%
         .[, c('cilo', 'cihi') := aphoci_gen(
             numerator, denominator, multiplier = 100
             , ci.type = 'proportion', level = benchmark.level
@@ -676,7 +676,7 @@ f__91__compare <- function(
     spc.sd <- 3
 
     qof.comp.spc.3 <- copy(qof.combined) %>%
-        status("INFO: - control limits ...") %>%
+        status("INFO: - control limits (", spc.sd, ") ...") %>%
         .[, statsig := testspc_hilo_s(
             value.var, value.ref, denominator.var = denominator, multiplier = 100
             , ci.type = "proportion", sd = spc.sd
@@ -688,7 +688,7 @@ f__91__compare <- function(
     spc.sd <- 2
 
     qof.comp.spc.2 <- copy(qof.combined) %>%
-        status("INFO: - control limits ...") %>%
+        status("INFO: - control limits (", spc.sd, ") ...") %>%
         .[, statsig := testspc_hilo_s(
             value.var, value.ref, denominator.var = denominator, multiplier = 100
             , ci.type = "proportion", sd = spc.sd
