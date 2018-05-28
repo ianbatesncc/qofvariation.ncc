@@ -13,8 +13,8 @@
 #' @name testci
 NULL
 
-#DEBUG_TESTCI <- TRUE
-DEBUG_TESTCI <- FALSE
+DEBUG_TESTCI <- TRUE
+#DEBUG_TESTCI <- FALSE
 
 #
 # Generic test routine ####
@@ -78,8 +78,8 @@ DEBUG_TESTCI <- FALSE
 testci_gen <- function(ci.ref, ci.var, bAsString = FALSE, bSenseHigherisBetter = NA) {
 
     if (DEBUG_TESTCI) {
-        cat("DEBUG: testci_gen:", "ci.ref =", ci.ref, "\n")
-        cat("DEBUG: testci_gen:", "ci.var =", ci.var, "\n")
+        cat("DEBUG: testci_gen:", "ci.ref =", paste(ci.ref), "\n")
+        cat("DEBUG: testci_gen:", "ci.var =", paste(ci.var), "\n")
         cat("DEBUG: testci_gen:", "bAsString =", bAsString, "\n")
         cat("DEBUG: testci_gen:", "bSenseHigherisBetter =", bSenseHigherisBetter, "\n")
     }
