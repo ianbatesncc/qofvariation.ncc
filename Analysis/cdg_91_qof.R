@@ -566,7 +566,9 @@ f__91__load_measures <- function(
 # COMPARE - Add England comparator and significance test ####
 #
 
+#' Compare routines
 #'
+#' Benchmark against reference value e.g. England - CI overlap with reference
 #'
 #'
 f__91__compare <- function(
@@ -646,18 +648,39 @@ f__91__compare <- function(
 
     cat("INFO: f__91__compare: calculating confidence intervals ... (combined)", "\n")
 
-    qof.comp <- qof.combined %>%
-        status("INFO: - aphoci_gen ...") %>%
-        .[, c('cilo', 'cihi') := aphoci_gen(numerator, denominator, multiplier = 100, ci.type = 'proportion', bTransposeResults = TRUE)] %>%
+    benchmark.level <- 0.95
+
+    qof.comp.bench <- copy(qof.combined) %>%
+        status("INFO: - confidence intervals ...") %>%
+        .[, c('cilo', 'cihi') := aphoci_gen(
+            numerator, denominator, multiplier = 100
+            , ci.type = 'proportion', level = benchmark.level
+            , bTransposeResults = TRUE
+        )] %>%
         status("INFO: - prevalence ...") %>%
-        .[(m.type == "prevalence"), statsig := testci_hilo_s(value.ref, transpose(list(cilo, cihi)))] %>%
+        .[(m.type == "prevalence")
+          , statsig := testci_hilo_s(value.ref, transpose(list(cilo, cihi)))] %>%
         status("INFO: - exceptions ...") %>%
-        .[(m.type == "performance") & (m.name %in% "exceptions"), statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = FALSE)] %>%
+        .[(m.type == "performance") & (m.name %in% "exceptions")
+          , statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = FALSE)] %>%
         status("INFO: - remaining ...") %>%
-        .[(m.type == "performance") & !(m.name %in% "exceptions"), statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = TRUE)] %>%
+        .[(m.type == "performance") & !(m.name %in% "exceptions")
+          , statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = TRUE)] %>%
         status("INFO: - cleaning ...") %>%
         .[, c('cilo', 'cihi') :=  NULL] %>%
+        mutate(compare.type = "benchmark", compare.param = benchmark.level) %>%
+        #select(-ends_with("ator"), -starts_with("value"))
         status("INFO: done.")
+        status("INFO: done.")
+
+    qof.comp <- list(
+        qof.comp.bench
+    ) %>% rbindlist(use.names = TRUE) %>%
+        # drop values and counts - can join with measures or raw if needed.
+        select(
+            -starts_with("value")
+            , -ends_with("ator")
+        )
 
     #~ save ####
 
