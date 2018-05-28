@@ -205,6 +205,42 @@ transpose <- function(l) {
     ftranspose(l)
 }
 
+testing__spc <- function() {
+    require("dplyr")
+
+    n <- 16
+    xn <- runif(n, 10, 90)
+    yn <- xn + runif(n, 100, 900)
+    multiplier = 1000
+    ci.type = "poisson"
+    level = 0.95
+
+    dat <- data.frame(
+        num = xn, den = yn, multiplier, ci.type, level
+        , stringsAsFactors = FALSE
+    )
+
+    calc1 <- dat %>% mutate(ci.var = aphoci_gen(num, den, multiplier, level, ci.type))
+
+    value.var = xn * multiplier / yn
+    value.ref = median(value.var)
+    sd = 3
+
+    calc2 <- calc1 %>% mutate(
+        value.var = value.var
+        , value.ref = value.ref
+        , ci.ref = aphoci_gen(value.ref * den / multiplier, den, multiplier, level, ci.type)
+    )
+
+    retval_comp <- testci_gen(calc2$ci.ref, calc2$value.var)
+
+    calc3 <- calc2 %>%
+        mutate(retval_comp = testci_gen(ci.ref, value.var))
+
+    retval <- testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd)
+
+}
+
 #
 # Instances of the generic routine ####
 #
