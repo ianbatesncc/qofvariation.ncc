@@ -75,7 +75,11 @@ DEBUG_TESTCI <- TRUE
 #' @md
 #' @export
 #'
-testci_gen <- function(ci.ref, ci.var, bAsString = FALSE, bSenseHigherisBetter = NA) {
+testci_gen <- function(
+    ci.ref, ci.var
+    , bAsString = FALSE, bSenseHigherisBetter = NA
+    , return.type = "minimal" # "data.frame" "data.table"
+) {
 
     if (DEBUG_TESTCI) {
         cat("DEBUG: testci_gen:", "ci.ref =", paste(ci.ref), "\n")
@@ -161,7 +165,17 @@ testci_gen <- function(ci.ref, ci.var, bAsString = FALSE, bSenseHigherisBetter =
     else
         retval <- dat$comp
 
-    return(retval)
+    # return
+
+    if (return.type == "data.table" & !is.installed("data.table"))
+        return.type = "data.frame"
+
+    return(switch(
+        return.type
+        , data.frame = dat
+        , data.table = data.table::setDT(dat)
+        , retval
+    ))
 }
 
 #' Test variation with SPC methods
@@ -180,6 +194,7 @@ testspc_gen <- function(
     , denominator.var, multiplier = 1
     , ci.type = "poisson", sd = 3
     , bAsString = FALSE
+    , return.type = "minimal" # "data.frame" "data.table"
 ) {
     level = 2 * pnorm(sd) - 1
 
@@ -196,7 +211,17 @@ testspc_gen <- function(
         )) %>%
         mutate(comp = testci_hilo(ci.ref, value.var, bAsString = bAsString))
 
-    return(dat$comp)
+    # return
+
+    if (return.type == "data.table" & !is.installed("data.table"))
+        return.type = "data.frame"
+
+    return(switch(
+        return.type
+        , data.frame = dat
+        , data.table = data.table::setDT(dat)
+        , dat$comp
+    ))
 }
 
 transpose <- function(l) {

@@ -180,8 +180,11 @@ prop_wilson.test <- function(x, n, conf.level = 0.95) {
 #'
 #' @export
 #'
-aphoci_gen <- function(num, den, multiplier = 1, level = 0.95, ci.type = "poisson"
-                       , bTransposeResults = FALSE) {
+aphoci_gen <- function(
+    num, den, multiplier = 1, level = 0.95, ci.type = "poisson"
+    , bTransposeResults = FALSE
+    , return.type = "minimal" # "data.frame"
+) {
     ci <- c(NA, NA)
     #cat("DEBUG: aphoci_gen: (num, den) = (", num, ", ", den, ")", "\n")
 
