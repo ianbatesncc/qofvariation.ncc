@@ -255,10 +255,20 @@ testing__spc <- function() {
     ci.type = "poisson"
     level = 0.95
 
+
+    cat("INFO: setting up data frame ...", "\n")
+
     dat <- data.frame(
         num = xn, den = yn, multiplier, ci.type, level
         , stringsAsFactors = FALSE
     )
+
+    cat("INFO: aphoci_gen OUTSIDE data frame ...", "\n")
+
+    ci <- aphoci_gen(xn, yn, multiplier, level, ci.type)
+    cit <- aphoci_gen(xn, yn, multiplier, level, ci.type, bTransposeResults = TRUE)
+
+    cat("INFO: aphoci_gen WITHIN data frame ...", "\n")
 
     calc1 <- dat %>% mutate(ci.var = aphoci_gen(num, den, multiplier, level, ci.type))
 
@@ -266,19 +276,62 @@ testing__spc <- function() {
     value.ref = median(value.var)
     sd = 3
 
+    cat("INFO: aphoci_gen WITHIN data frame ...", "\n")
+
     calc2 <- calc1 %>% mutate(
         value.var = value.var
         , value.ref = value.ref
         , ci.ref = aphoci_gen(value.ref * den / multiplier, den, multiplier, level, ci.type)
     )
 
-    retval_comp <- testci_gen(calc2$ci.ref, calc2$value.var)
+    cat("INFO: testci_gen OUTSIDE data frame ... (minimal)", "\n")
+
+    retval_minimal <- testci_gen(calc2$ci.ref, calc2$value.var)
+
+    cat("INFO: testci_gen OUTSIDE data frame ... (data.frame)", "\n")
+
+    retval_data.frame <- testci_gen(
+        calc2$ci.ref, calc2$value.var, return.type = "data.frame"
+    )
+
+    cat("INFO: testci_gen OUTSIDE data frame ... (data.table)", "\n")
+
+    retval_data.table <- testci_gen(
+        calc2$ci.ref, calc2$value.var, return.type = "data.table"
+    )
+
+    cat("INFO: testci_gen WITHIN data frame ... (minimal)", "\n")
 
     calc3 <- calc2 %>%
         mutate(retval_comp = testci_gen(ci.ref, value.var))
 
-    retval <- testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd)
+    cat("INFO: testspc_gen OUTSIDE data frame ... ", "\n")
 
+    retval <- testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd)
+    retval.df <- testspc_gen(
+        value.var, value.ref, yn, multiplier, ci.type, sd
+        , return.type = "data.frame"
+    )
+    retval.str.df <- testspc_gen(
+        value.var, value.ref, yn, multiplier, ci.type, sd
+        , bAsString = TRUE, return.type = "data.frame"
+    )
+
+    cat("INFO: testspc_gen WITHIN data frame ... ", "\n")
+
+    calc4 <- calc3 %>%
+        mutate(comp.spc = testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd))
+
+    calc4.string <- calc3 %>%
+        mutate(comp.spc = testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd, bAsString = TRUE))
+
+    return(list(
+        calc4 = calc4
+        , calc4.string = calc4.string
+        , retval = retval
+        , retval.df = retval.df
+        , retval.str.df = retval.str.df
+    ))
 }
 
 #
