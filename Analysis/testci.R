@@ -75,33 +75,28 @@ DEBUG_TESTCI <- FALSE
 #' @md
 #' @export
 #'
-testci_gen <- function(ci.ref, ci.var, bAsString = FALSE, bSenseHigherisBetter = NA) {
+testci_gen <- function(
+    ci.ref, ci.var
+    , bAsString = FALSE, bSenseHigherisBetter = NA
+    , return.type = "minimal" # "data.frame" "data.table"
+) {
 
     if (DEBUG_TESTCI) {
-        cat("DEBUG: testci_gen:", "ci.ref =", ci.ref, "\n")
-        cat("DEBUG: testci_gen:", "ci.var =", ci.var, "\n")
+        cat("DEBUG: testci_gen:", "ci.ref =", paste(ci.ref), "\n")
+        cat("DEBUG: testci_gen:", "ci.var =", paste(ci.var), "\n")
         cat("DEBUG: testci_gen:", "bAsString =", bAsString, "\n")
         cat("DEBUG: testci_gen:", "bSenseHigherisBetter =", bSenseHigherisBetter, "\n")
     }
 
     # simple compare overlap
-    hilo <- function(l_ci_ref, l_ci_var) {
-        # prepare parameters
-        ensure_length2_sorted <- function(x) {
-            if (length(x) == 1)
-                x <- rep(x, 2)
-            return(sort(x[1:2], na.last = FALSE))
-        }
-        l_ci_ref <- ensure_length2_sorted(l_ci_ref)
-        l_ci_var <- ensure_length2_sorted(l_ci_var)
-
+    hilo <- function(cilo.ref, cihi.ref, cilo.var, cihi.var) {
         # compare
         retval <- NA
-        if (!any(is.na(c(l_ci_var, l_ci_ref)))) {
+        if (!any(is.na(c(cilo.ref, cihi.ref, cilo.var, cihi.var)))) {
             retval <- 0
-            if (l_ci_var[1] > l_ci_ref[2]) {
+            if (cilo.var > cihi.ref) {
                 retval <- 1
-            } else if (l_ci_var[2] < l_ci_ref[1]) {
+            } else if (cihi.var < cilo.ref) {
                 retval <- -1
             }
         }
@@ -131,36 +126,210 @@ testci_gen <- function(ci.ref, ci.var, bAsString = FALSE, bSenseHigherisBetter =
         return(strs[comp])
     }
 
-    comp <- NA
-
     # Compare
 
-    if (!(any(sapply(list(ci.ref, ci.var, bSenseHigherisBetter), typeof) == "list"))) {
-        # simple case - all NOT list
+    # play with inputs - to get cilo, cihi for .ref and .var
 
-        comp <- hilo(ci.ref, ci.var)
-        comp <- apply_sense(comp, bSenseHigherisBetter)
+    if (class(ci.ref) == "list") {
+        if (length(ci.ref) > 2)
+            ci.ref <- transpose(ci.ref)
+        names(ci.ref)[1:2] <- c("cilo.ref", "cihi.ref")
     } else {
-        # some lists involved
-
-        # ensure all as list
-        ensure_list <- function(x) {
-            if (typeof(x) != "list") list(x)
-            else x
-        }
-        ci.ref <- ensure_list(ci.ref)
-        ci.var <- ensure_list(ci.var)
-
-        comp <- mapply(hilo, ci.ref, ci.var)
-        comp <- mapply(apply_sense, comp, bSenseHigherisBetter)
+        ci.ref = list(cilo.ref = ci.ref, cihi.ref = ci.ref)
     }
 
-    if (!is.na(bAsString) & bAsString)
-        retval <- as_string(comp)
-    else
-        retval <- comp
+    if (class(ci.var) == "list") {
+        if (length(ci.var) > 2)
+            ci.var <- transpose(ci.var)
+        names(ci.var)[1:2] <- c("cilo.var", "cihi.var")
+    } else {
+        ci.var = list(cilo.var = ci.var, cihi.var = ci.var)
+    }
 
-    return(retval)
+    dat <- data.frame(
+        ci.ref, ci.var
+        , bAsString, bSenseHigherisBetter
+        , stringsAsFactors = FALSE
+    ) %>% mutate(
+        comp = mapply(hilo, cilo.ref, cihi.ref, cilo.var, cihi.var)
+        , comp_sense = mapply(apply_sense, comp, bSenseHigherisBetter)
+        , comp_string = mapply(as_string, comp_sense)
+    )
+
+    if (!is.na(bAsString) & bAsString)
+        retval <- dat$comp_string
+    else if (!is.na(bSenseHigherisBetter))
+        retval <- dat$comp_sense
+    else
+        retval <- dat$comp
+
+    # return
+
+    if (return.type == "data.table" & !is.installed("data.table"))
+        return.type = "data.frame"
+
+    return(switch(
+        return.type
+        , data.frame = dat
+        , data.table = data.table::setDT(dat)
+        , retval
+    ))
+}
+
+#' Test variation with SPC methods
+#'
+#' special cause variation detection using SPC methods
+#' Variable value is compared to control limits around a reference value
+#'
+#' @param sd sds to consider for limit.  2 corresponds to level 95.44997%, 3 to 99.73002%.
+#'
+#' @return c(-1, 0, 1)
+#' @return c("Lower", "Similar", "Higher")
+#'
+#'
+testspc_gen <- function(
+    value.var, value.ref
+    , denominator.var, multiplier = 1
+    , ci.type = "poisson", sd = 3
+    , bAsString = FALSE
+    , return.type = "minimal" # "data.frame" "data.table"
+) {
+
+    dat <- data.frame(
+        value.var, value.ref, denominator.var
+        , ci.type, sd
+        #, bAsString
+        , stringsAsFactors = FALSE) %>%
+        mutate(
+            numerator = denominator.var * value.ref / multiplier
+            , level.spc = 2 * pnorm(sd) - 1
+        ) %>%
+        mutate(ci.ref = aphoci_gen(
+            numerator, denominator.var, multiplier, level.spc, ci.type
+        )) %>%
+        mutate(comp = testci_gen(ci.ref, value.var, bAsString = bAsString))
+
+    # return
+
+    if (return.type == "data.table" & !is.installed("data.table"))
+        return.type = "data.frame"
+
+    return(switch(
+        return.type
+        , data.frame = dat
+        , data.table = data.table::setDT(dat)
+        , dat$comp
+    ))
+}
+
+#' Tranpose a list of vectors
+#'
+#' Wrapper around transpose routines.  data.table or purrr.  No 'native' yet.
+#'
+transpose <- function(l) {
+    #ftranspose <- purrr::transpose
+    ftranspose <- data.table::transpose
+
+    ftranspose(l)
+}
+
+#' check if package is installed
+#'
+#'
+is.installed <- function(p) {
+    is.element(p, utils::installed.packages()[, 1])
+}
+
+#' Test routine for testspc_gen
+#'
+#'
+testing__spc <- function() {
+    require("dplyr")
+
+    n <- 16
+    xn <- runif(n, 10, 90)
+    yn <- xn + runif(n, 100, 900)
+    multiplier = 1000
+    ci.type = "poisson"
+    level = 0.95
+
+
+    cat("INFO: setting up data frame ...", "\n")
+
+    dat <- data.frame(
+        num = xn, den = yn, multiplier, ci.type, level
+        , stringsAsFactors = FALSE
+    )
+
+    cat("INFO: aphoci_gen OUTSIDE data frame ...", "\n")
+
+    ci <- aphoci_gen(xn, yn, multiplier, level, ci.type)
+    cit <- aphoci_gen(xn, yn, multiplier, level, ci.type, bTransposeResults = TRUE)
+
+    cat("INFO: aphoci_gen WITHIN data frame ...", "\n")
+
+    calc1 <- dat %>% mutate(ci.var = aphoci_gen(num, den, multiplier, level, ci.type))
+
+    value.var = xn * multiplier / yn
+    value.ref = median(value.var)
+    sd = 3
+
+    cat("INFO: aphoci_gen WITHIN data frame ...", "\n")
+
+    calc2 <- calc1 %>% mutate(
+        value.var = value.var
+        , value.ref = value.ref
+        , ci.ref = aphoci_gen(value.ref * den / multiplier, den, multiplier, level, ci.type)
+    )
+
+    cat("INFO: testci_gen OUTSIDE data frame ... (minimal)", "\n")
+
+    retval_minimal <- testci_gen(calc2$ci.ref, calc2$value.var)
+
+    cat("INFO: testci_gen OUTSIDE data frame ... (data.frame)", "\n")
+
+    retval_data.frame <- testci_gen(
+        calc2$ci.ref, calc2$value.var, return.type = "data.frame"
+    )
+
+    cat("INFO: testci_gen OUTSIDE data frame ... (data.table)", "\n")
+
+    retval_data.table <- testci_gen(
+        calc2$ci.ref, calc2$value.var, return.type = "data.table"
+    )
+
+    cat("INFO: testci_gen WITHIN data frame ... (minimal)", "\n")
+
+    calc3 <- calc2 %>%
+        mutate(retval_comp = testci_gen(ci.ref, value.var))
+
+    cat("INFO: testspc_gen OUTSIDE data frame ... ", "\n")
+
+    retval <- testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd)
+    retval.df <- testspc_gen(
+        value.var, value.ref, yn, multiplier, ci.type, sd
+        , return.type = "data.frame"
+    )
+    retval.str.df <- testspc_gen(
+        value.var, value.ref, yn, multiplier, ci.type, sd
+        , bAsString = TRUE, return.type = "data.frame"
+    )
+
+    cat("INFO: testspc_gen WITHIN data frame ... ", "\n")
+
+    calc4 <- calc3 %>%
+        mutate(comp.spc = testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd))
+
+    calc4.string <- calc3 %>%
+        mutate(comp.spc = testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd, bAsString = TRUE))
+
+    return(list(
+        calc4 = calc4
+        , calc4.string = calc4.string
+        , retval = retval
+        , retval.df = retval.df
+        , retval.str.df = retval.str.df
+    ))
 }
 
 #

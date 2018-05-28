@@ -180,8 +180,11 @@ prop_wilson.test <- function(x, n, conf.level = 0.95) {
 #'
 #' @export
 #'
-aphoci_gen <- function(num, den, multiplier = 1, level = 0.95, ci.type = "poisson"
-                       , bTransposeResults = FALSE) {
+aphoci_gen <- function(
+    num, den, multiplier = 1, level = 0.95, ci.type = "poisson"
+    , bTransposeResults = FALSE
+    , return.type = "minimal" # "data.frame"
+) {
     ci <- c(NA, NA)
     #cat("DEBUG: aphoci_gen: (num, den) = (", num, ", ", den, ")", "\n")
 
@@ -240,30 +243,40 @@ aphoci_gen <- function(num, den, multiplier = 1, level = 0.95, ci.type = "poisso
         return(ci)
     }
 
-    #cat("DEBUG: length(num, den, multiplier, level, ci.type) = ("
-    #    , length(num), length(den), length(multiplier), length(level), length(ci.type),
-    #    ")", "\n")
-
-    # If there are vector arguments then mapply otherwise call direct the worker
-    # routine.
-    if (max(sapply(list(num, den, multiplier, level, ci.type), length)) > 1) {
-        ci <- mapply(calcci, num, den, multiplier, level, ci.type)
-        # mapply returns a matrix(rowx2, colxn).  Observations are in each
-        # column with (cilo, cihi) in rows 1 and 2.
-        #
-        # Choose which way to present - list of rows (vecnx2) or list of
-        # cols(vec2xn) ... Default _gen routines is to return list of n (vectors
-        # length 2) ... bTransposeResults to change this ... lapply scans across
-        # each column and returns all the rows
-        #ci <- array_aslist(ci, bTransposeResults = !bTransposeResults)
-        if (!bTransposeResults) # odd ... but true
-            ci <- t(ci)
-        ci <- lapply(seq(1, dim(ci)[1]), function(i, v){v[i, ]}, ci)
-    } else {
-        ci <- calcci(num, den, multiplier, level, ci.type)
+    #' Convert  2d matrix to a lsit of vectors, optionally transposing along the way
+    #'
+    #' to convert output of mapply to use with data.frame objects
+    #'
+    mat2list <- function(m, bTranspose = FALSE) {
+        if (!bTranspose)
+            m <- t(m)
+        lapply(seq_len(dim(m)[1]), function(i){m[i, ]})
     }
 
-    return(ci)
+#browser()
+    dat <- data.frame(
+        num, den, multiplier, level, ci.type
+        , stringsAsFactors = FALSE
+    ) %>%
+        mutate(ci = mat2list(
+            mapply(calcci, num, den, multiplier, level, ci.type)
+        ))
+
+    ci <- dat$ci
+    if (bTransposeResults)
+        ci <- transpose(ci)
+
+    # return
+
+    if (return.type == "data.table" & !is.installed("data.table"))
+        return.type = "data.frame"
+
+    return(switch(
+        return.type
+        , data.frame = dat
+        , data.table = data.table::setDT(dat)
+        , ci
+    ))
 }
 
 #
