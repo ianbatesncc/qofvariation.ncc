@@ -569,6 +569,7 @@ f__91__load_measures <- function(
 #' Compare routines
 #'
 #' Benchmark against reference value e.g. England - CI overlap with reference
+#' SPC methods - comapre point value with control limits
 #'
 #'
 f__91__compare <- function(
@@ -671,10 +672,35 @@ f__91__compare <- function(
         mutate(compare.type = "benchmark", compare.param = benchmark.level) %>%
         #select(-ends_with("ator"), -starts_with("value"))
         status("INFO: done.")
+
+    spc.sd <- 3
+
+    qof.comp.spc.3 <- copy(qof.combined) %>%
+        status("INFO: - control limits ...") %>%
+        .[, statsig := testspc_hilo_s(
+            value.var, value.ref, denominator.var = denominator, multiplier = 100
+            , ci.type = "proportion", sd = spc.sd
+        )] %>%
+        status("INFO: - cleaning ...") %>%
+        mutate(compare.type = "spc", compare.param = spc.sd) %>%
+        status("INFO: done.")
+
+    spc.sd <- 2
+
+    qof.comp.spc.2 <- copy(qof.combined) %>%
+        status("INFO: - control limits ...") %>%
+        .[, statsig := testspc_hilo_s(
+            value.var, value.ref, denominator.var = denominator, multiplier = 100
+            , ci.type = "proportion", sd = spc.sd
+        )] %>%
+        status("INFO: - cleaning ...") %>%
+        mutate(compare.type = "spc", compare.param = spc.sd) %>%
         status("INFO: done.")
 
     qof.comp <- list(
         qof.comp.bench
+        , qof.comp.spc.3
+        , qof.comp.spc.2
     ) %>% rbindlist(use.names = TRUE) %>%
         # drop values and counts - can join with measures or raw if needed.
         select(
