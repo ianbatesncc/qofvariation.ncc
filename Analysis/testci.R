@@ -85,23 +85,14 @@ testci_gen <- function(ci.ref, ci.var, bAsString = FALSE, bSenseHigherisBetter =
     }
 
     # simple compare overlap
-    hilo <- function(l_ci_ref, l_ci_var) {
-        # prepare parameters
-        ensure_length2_sorted <- function(x) {
-            if (length(x) == 1)
-                x <- rep(x, 2)
-            return(sort(x[1:2], na.last = FALSE))
-        }
-        l_ci_ref <- ensure_length2_sorted(l_ci_ref)
-        l_ci_var <- ensure_length2_sorted(l_ci_var)
-
+    hilo <- function(cilo.ref, cihi.ref, cilo.var, cihi.var) {
         # compare
         retval <- NA
-        if (!any(is.na(c(l_ci_var, l_ci_ref)))) {
+        if (!any(is.na(c(cilo.ref, cihi.ref, cilo.var, cihi.var)))) {
             retval <- 0
-            if (l_ci_var[1] > l_ci_ref[2]) {
+            if (cilo.var > cihi.ref) {
                 retval <- 1
-            } else if (l_ci_var[2] < l_ci_ref[1]) {
+            } else if (cihi.var < cilo.ref) {
                 retval <- -1
             }
         }
@@ -135,32 +126,49 @@ testci_gen <- function(ci.ref, ci.var, bAsString = FALSE, bSenseHigherisBetter =
 
     # Compare
 
-    if (!(any(sapply(list(ci.ref, ci.var, bSenseHigherisBetter), typeof) == "list"))) {
-        # simple case - all NOT list
+    # play with inputs - to get cilo, cihi for .ref and .var
 
-        comp <- hilo(ci.ref, ci.var)
-        comp <- apply_sense(comp, bSenseHigherisBetter)
+    if (class(ci.ref) == "list") {
+        if (length(ci.ref) > 2)
+            ci.ref <- transpose(ci.ref)
+        names(ci.ref)[1:2] <- c("cilo.ref", "cihi.ref")
     } else {
-        # some lists involved
-
-        # ensure all as list
-        ensure_list <- function(x) {
-            if (typeof(x) != "list") list(x)
-            else x
-        }
-        ci.ref <- ensure_list(ci.ref)
-        ci.var <- ensure_list(ci.var)
-
-        comp <- mapply(hilo, ci.ref, ci.var)
-        comp <- mapply(apply_sense, comp, bSenseHigherisBetter)
+        ci.ref = list(cilo.ref = ci.ref, cihi.ref = ci.ref)
     }
 
+    if (class(ci.var) == "list") {
+        if (length(ci.var) > 2)
+            ci.var <- transpose(ci.var)
+        names(ci.var)[1:2] <- c("cilo.var", "cihi.var")
+    } else {
+        ci.var = list(cilo.var = ci.var, cihi.var = ci.var)
+    }
+
+    dat <- data.frame(
+        ci.ref, ci.var
+        , bAsString, bSenseHigherisBetter
+        , stringsAsFactors = FALSE
+    ) %>% mutate(
+        comp = mapply(hilo, cilo.ref, cihi.ref, cilo.var, cihi.var)
+        , comp_sense = mapply(apply_sense, comp, bSenseHigherisBetter)
+        , comp_string = mapply(as_string, comp_sense)
+    )
+
     if (!is.na(bAsString) & bAsString)
-        retval <- as_string(comp)
+        retval <- dat$comp_string
+    else if (!is.na(bSenseHigherisBetter))
+        retval <- dat$comp_sense
     else
-        retval <- comp
+        retval <- dat$comp
 
     return(retval)
+}
+
+
+transpose <- function(l) {
+    ftranspose <- data.table::transpose
+
+    ftranspose(l)
 }
 
 #
