@@ -13,8 +13,8 @@
 #' @name testci
 NULL
 
-DEBUG_TESTCI <- TRUE
-#DEBUG_TESTCI <- FALSE
+#DEBUG_TESTCI <- TRUE
+DEBUG_TESTCI <- FALSE
 
 #
 # Generic test routine ####
@@ -125,8 +125,6 @@ testci_gen <- function(
         # done
         return(strs[comp])
     }
-
-    comp <- NA
 
     # Compare
 
