@@ -196,20 +196,20 @@ testspc_gen <- function(
     , bAsString = FALSE
     , return.type = "minimal" # "data.frame" "data.table"
 ) {
-    level = 2 * pnorm(sd) - 1
 
     dat <- data.frame(
         value.var, value.ref, denominator.var
         , ci.type, sd
+        #, bAsString
         , stringsAsFactors = FALSE) %>%
         mutate(
             numerator = denominator.var * value.ref / multiplier
-            , level = 2 * pnorm(sd) - 1
+            , level.spc = 2 * pnorm(sd) - 1
         ) %>%
         mutate(ci.ref = aphoci_gen(
-            numerator, denominator.var, multiplier, level, ci.type
+            numerator, denominator.var, multiplier, level.spc, ci.type
         )) %>%
-        mutate(comp = testci_hilo(ci.ref, value.var, bAsString = bAsString))
+        mutate(comp = testci_gen(ci.ref, value.var, bAsString = bAsString))
 
     # return
 
