@@ -183,9 +183,9 @@ testci_gen <- function(
 #' special cause variation detection using SPC methods
 #' Variable value is compared to control limits around a reference value
 #'
-#' @param sd sds to cosider for limit.  2 corresponds to level 95.44997%, 3 to 99.73002%.
+#' @param sd sds to consider for limit.  2 corresponds to level 95.44997%, 3 to 99.73002%.
 #'
-#' @return c(-3, 0, 3)
+#' @return c(-1, 0, 1)
 #' @return c("Lower", "Similar", "Higher")
 #'
 #'
@@ -224,7 +224,12 @@ testspc_gen <- function(
     ))
 }
 
+#' Tranpose a list of vectors
+#'
+#' Wrapper around transpose routines.  data.table or purrr.  No 'native' yet.
+#'
 transpose <- function(l) {
+    #ftranspose <- purrr::transpose
     ftranspose <- data.table::transpose
 
     ftranspose(l)
@@ -236,6 +241,10 @@ transpose <- function(l) {
 is.installed <- function(p) {
     is.element(p, utils::installed.packages()[, 1])
 }
+
+#' Test routine for testspc_gen
+#'
+#'
 testing__spc <- function() {
     require("dplyr")
 
