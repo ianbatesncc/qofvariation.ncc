@@ -164,6 +164,40 @@ testci_gen <- function(ci.ref, ci.var, bAsString = FALSE, bSenseHigherisBetter =
     return(retval)
 }
 
+#' Test variation with SPC methods
+#'
+#' special cause variation detection using SPC methods
+#' Variable value is compared to control limits around a reference value
+#'
+#' @param sd sds to cosider for limit.  2 corresponds to level 95.44997%, 3 to 99.73002%.
+#'
+#' @return c(-3, 0, 3)
+#' @return c("Lower", "Similar", "Higher")
+#'
+#'
+testspc_gen <- function(
+    value.var, value.ref
+    , denominator.var, multiplier = 1
+    , ci.type = "poisson", sd = 3
+    , bAsString = FALSE
+) {
+    level = 2 * pnorm(sd) - 1
+
+    dat <- data.frame(
+        value.var, value.ref, denominator.var
+        , ci.type, sd
+        , stringsAsFactors = FALSE) %>%
+        mutate(
+            numerator = denominator.var * value.ref / multiplier
+            , level = 2 * pnorm(sd) - 1
+        ) %>%
+        mutate(ci.ref = aphoci_gen(
+            numerator, denominator.var, multiplier, level, ci.type
+        )) %>%
+        mutate(comp = testci_hilo(ci.ref, value.var, bAsString = bAsString))
+
+    return(dat$comp)
+}
 
 transpose <- function(l) {
     ftranspose <- data.table::transpose
