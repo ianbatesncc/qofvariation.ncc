@@ -1,5 +1,10 @@
 CHANGELOG
 
+2018-05-28
+
+* add funnel test routine (testspc_gen)
+* add spc compare
+
 2018-05-25
 
 * Initial commit.

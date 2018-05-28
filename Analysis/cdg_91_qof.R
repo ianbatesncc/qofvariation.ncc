@@ -566,7 +566,10 @@ f__91__load_measures <- function(
 # COMPARE - Add England comparator and significance test ####
 #
 
+#' Compare routines
 #'
+#' Benchmark against reference value e.g. England - CI overlap with reference
+#' SPC methods - comapre point value with control limits
 #'
 #'
 f__91__compare <- function(
@@ -646,18 +649,64 @@ f__91__compare <- function(
 
     cat("INFO: f__91__compare: calculating confidence intervals ... (combined)", "\n")
 
-    qof.comp <- qof.combined %>%
-        status("INFO: - aphoci_gen ...") %>%
-        .[, c('cilo', 'cihi') := aphoci_gen(numerator, denominator, multiplier = 100, ci.type = 'proportion', bTransposeResults = TRUE)] %>%
+    benchmark.level <- 0.95
+
+    qof.comp.bench <- copy(qof.combined) %>%
+        status("INFO: - confidence intervals (", benchmark.level, ") ...") %>%
+        .[, c('cilo', 'cihi') := aphoci_gen(
+            numerator, denominator, multiplier = 100
+            , ci.type = 'proportion', level = benchmark.level
+            , bTransposeResults = TRUE
+        )] %>%
         status("INFO: - prevalence ...") %>%
-        .[(m.type == "prevalence"), statsig := testci_hilo_s(value.ref, transpose(list(cilo, cihi)))] %>%
+        .[(m.type == "prevalence")
+          , statsig := testci_hilo_s(value.ref, transpose(list(cilo, cihi)))] %>%
         status("INFO: - exceptions ...") %>%
-        .[(m.type == "performance") & (m.name %in% "exceptions"), statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = FALSE)] %>%
+        .[(m.type == "performance") & (m.name %in% "exceptions")
+          , statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = FALSE)] %>%
         status("INFO: - remaining ...") %>%
-        .[(m.type == "performance") & !(m.name %in% "exceptions"), statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = TRUE)] %>%
+        .[(m.type == "performance") & !(m.name %in% "exceptions")
+          , statsig := testci_sense_s(value.ref, transpose(list(cilo, cihi)), bSenseHigherisBetter = TRUE)] %>%
         status("INFO: - cleaning ...") %>%
         .[, c('cilo', 'cihi') :=  NULL] %>%
+        mutate(compare.type = "benchmark", compare.param = benchmark.level) %>%
+        #select(-ends_with("ator"), -starts_with("value"))
         status("INFO: done.")
+
+    spc.sd <- 3
+
+    qof.comp.spc.3 <- copy(qof.combined) %>%
+        status("INFO: - control limits (", spc.sd, ") ...") %>%
+        .[, statsig := testspc_hilo_s(
+            value.var, value.ref, denominator.var = denominator, multiplier = 100
+            , ci.type = "proportion", sd = spc.sd
+        )] %>%
+        status("INFO: - cleaning ...") %>%
+        mutate(compare.type = "spc", compare.param = spc.sd) %>%
+        status("INFO: done.")
+
+    spc.sd <- 2
+
+    qof.comp.spc.2 <- copy(qof.combined) %>%
+        status("INFO: - control limits (", spc.sd, ") ...") %>%
+        .[, statsig := testspc_hilo_s(
+            value.var, value.ref, denominator.var = denominator, multiplier = 100
+            , ci.type = "proportion", sd = spc.sd
+        )] %>%
+        status("INFO: - cleaning ...") %>%
+        mutate(compare.type = "spc", compare.param = spc.sd) %>%
+        status("INFO: done.")
+
+    qof.comp <- list(
+        qof.comp.bench
+        , qof.comp.spc.3
+        , qof.comp.spc.2
+    ) %>% rbindlist(use.names = TRUE) %>%
+        # drop values and counts - can join with measures or raw if needed.
+        select(
+            -starts_with("value")
+            , -ends_with("ator")
+        )
 
     #~ save ####
 

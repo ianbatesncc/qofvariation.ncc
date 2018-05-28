@@ -13,6 +13,16 @@
 #' @name testci
 NULL
 
+#' Family of testspc routines
+#'
+#' Container for testspc routines
+#'
+#' @family testspc routines
+#' @family sections
+#'
+#' @name testspc
+NULL
+
 #DEBUG_TESTCI <- TRUE
 DEBUG_TESTCI <- FALSE
 
@@ -186,6 +196,15 @@ testci_gen <- function(
 #' @return c(-1, 0, 1)
 #' @return c("Lower", "Similar", "Higher")
 #'
+#' @family testspc routines
+#' @family generic routines
+#' @family returns hilo
+#' @family returns sense
+#' @family returns numeric
+#' @family returns string
+#'
+#' @md
+#' @export
 #'
 testspc_gen <- function(
     value.var, value.ref
@@ -349,6 +368,24 @@ testci_hilo <- function(ci.ref, ci.var) {
     return(testci_gen(ci.ref, ci.var))
 }
 
+#' Return simple hilo comparison
+#'
+#' @inheritParams testspc_gen
+#'
+#' @family testspc routines
+#' @family returns hilo
+#' @family returns numeric
+#'
+#' @export
+testspc_hilo <- function(
+    value.var, value.ref
+    , denominator.var, multiplier = 1
+    , ci.type = "poisson", sd = 3
+    , return.type = "minimal" # "data.frame" "data.table"
+) {
+    testspc_gen(value.var, value.ref, denominator.var, multiplier, ci.type, sd, bAsString = FALSE, return.type)
+}
+
 #' Apply sense (Better / Worse) to testci comparison
 #'
 #' @inheritParams testci_gen
@@ -385,6 +422,26 @@ testci_sense <- function(ci.ref, ci.var, bSenseHigherisBetter = NA) {
 #'
 testci_hilo_s <- function(ci.ref, ci.var) {
     return(testci_gen(ci.ref, ci.var, bAsString = TRUE))
+}
+
+#' Return a string to denote higher/lower/similar/not tested
+#'
+#' @inheritParams testspc_hilo
+#'
+#' @family testspc routines
+#' @family instances of generic routines
+#' @family returns hilo
+#' @family returns string
+#'
+#' @export
+#'
+testspc_hilo_s <- function(
+    value.var, value.ref
+    , denominator.var, multiplier = 1
+    , ci.type = "poisson", sd = 3
+    , return.type = "minimal" # "data.frame" "data.table"
+) {
+    testspc_gen(value.var, value.ref, denominator.var, multiplier, ci.type, sd, bAsString = TRUE, return.type)
 }
 
 #' Return a string to denote better/worse/similar/not tested
