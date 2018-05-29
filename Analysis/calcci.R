@@ -253,7 +253,6 @@ aphoci_gen <- function(
         lapply(seq_len(dim(m)[1]), function(i){m[i, ]})
     }
 
-#browser()
     dat <- data.frame(
         num, den, multiplier, level, ci.type
         , stringsAsFactors = FALSE

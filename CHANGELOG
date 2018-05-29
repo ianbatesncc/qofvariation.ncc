@@ -4,6 +4,7 @@ CHANGELOG
 
 * add funnel test routine (testspc_gen)
 * add spc compare
+* add ccg groups (UOP, STP)
 
 2018-05-25
 
