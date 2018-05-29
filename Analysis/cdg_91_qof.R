@@ -285,6 +285,80 @@ f__91__load_data <- function(
 # MEASURES ####
 #
 
+#' Calculate QOF measures
+#'
+#' Wrapper around measures_ind and measures_prev.
+#'
+#' Separate at this stage as ind and prev although a  lot of similarity have
+#' different underlying data structure.
+#'
+f__91__measures <- function(
+    qof
+    , bWriteCSV = FALSE
+    , qof_root
+    , file_suffix = "__eng_ccg_prac__measure_ndv"
+    , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
+    , lu.orgs.ccgs.groups = NA
+) {
+    cat("INFO: f__91__measures: processing ...", "\n")
+
+    cat("INFO: - local ccgs = (", paste(lu.orgs.ccgs.local, sep = ", "), ")", "\n")
+
+    m.ind <- f__91__measures_ind(
+        qof
+        , bWriteCSV = bWriteCSV
+        , qof_root, file_suffix
+        , lu.orgs.ccgs.local = lu.orgs.ccgs.local
+    )
+
+    m.prev <- f__91__measures_prev(
+        qof
+        , bWriteCSV = bWriteCSV
+        , qof_root, file_suffix
+        , lu.orgs.ccgs.local = lu.orgs.ccgs.local
+    )
+
+    # combine
+
+    m.comb <- list(m.ind, m.prev) %>% rbindlist(use.names = TRUE)
+
+    # calculate ccg groups
+
+    m.groups <- m.comb %>%
+        # choose ccg qunatities
+        filter(org.type == "ccg") %>%
+        filter(m.stat %in% c("numerator", "denominator")) %>%
+        # spin up on stat
+        dcast(... ~ m.stat, value.var = "value", fun = sum) %>%
+        # tag ccg groups
+        merge(
+            lu.orgs.ccgs.groups %>% select(ccg_code, ccg_group_code, ccg_group_type)
+            , all.y = TRUE
+            , by = "ccg_code"
+        ) %>%
+        select(-org.type, -ccg_code) %>%
+        rename(
+            org.type = "ccg_group_type"
+            , ccg_code = "ccg_group_code"
+        ) %>%
+        mutate(practice_code = "all") %>%
+        # summarise over the new ccg groups
+        group_by_at(vars(-numerator, -denominator)) %>%
+        summarise_at(vars(numerator, denominator), sum) %>%
+        ungroup() %>%
+        mutate(value = numerator * 100 / denominator) %>%
+        # spin back down
+        melt(
+            measure.vars = c("numerator", "denominator", "value")
+            , variable.name = "m.stat", variable.factor = FALSE
+        )
+
+    m.comb <- list(m.comb, m.groups) %>% rbindlist(use.names = TRUE)
+
+    # return
+
+    return(m.comb)
+}
 
 #
 # Indicators ####
@@ -516,40 +590,6 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 #'
 #'
 #'
-f__91__measures <- function(
-    qof
-    , bWriteCSV = FALSE
-    , qof_root
-    , file_suffix = "__eng_ccg_prac__measure_ndv"
-    , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
-) {
-    cat("INFO: f__91__measures: processing ...", "\n")
-
-    cat("INFO: - local ccgs = (", paste(lu.orgs.ccgs.local, sep = ", "), ")", "\n")
-
-    m.ind <- f__91__measures_ind(
-        qof
-        , bWriteCSV = bWriteCSV
-        , qof_root, file_suffix
-        , lu.orgs.ccgs.local = lu.orgs.ccgs.local
-    )
-
-    m.prev <- f__91__measures_prev(
-        qof
-        , bWriteCSV = bWriteCSV
-        , qof_root, file_suffix
-        , lu.orgs.ccgs.local = lu.orgs.ccgs.local
-    )
-
-browser()
-    # return
-
-    return(list(m.ind, m.prev) %>% rbindlist(use.names = TRUE))
-}
-
-#'
-#'
-#'
 f__91__load_measures <- function(
     qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
@@ -771,6 +811,7 @@ f__91__load_compare <- function(
 f__91__process__reference_measures_compare <- function(
     qof_period = "1516" # "1617"
     , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
+    , lu.orgs.ccgs.groups = NA
     , bWriteCSV = FALSE
 ) {
     cat("INFO: f__91__process__reference_measures_compare: processing ...", "\n")
@@ -792,14 +833,13 @@ f__91__process__reference_measures_compare <- function(
 
     # Localisation
 
-    #lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
-
     # Calculate performance measures ####
 
     qof_measures <- f__91__measures(
         qof
         , bWriteCSV = bWriteCSV, qof_root
         , lu.orgs.ccgs.local = lu.orgs.ccgs.local
+        , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
     )
 
     qof_compare <- f__91__compare(qof_measures, bWriteCSV = bWriteCSV, qof_root)
