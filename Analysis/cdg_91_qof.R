@@ -321,10 +321,18 @@ f__91__measures <- function(
     # combine
 
     m.comb <- list(m.ind, m.prev) %>% rbindlist(use.names = TRUE)
+}
 
-    # calculate ccg groups
+#' Calculate ccg groups
+#'
+#' Add ccg groups to the measures.
+#'
+f__91__measures_ccg_group <- function(
+    qof_measures
+    , lu.orgs.ccgs.groups = NA
+) {
 
-    m.groups <- m.comb %>%
+    m.groups <- qof_measures %>%
         # choose ccg qunatities
         filter(org.type == "ccg") %>%
         filter(m.stat %in% c("numerator", "denominator")) %>%
@@ -353,11 +361,36 @@ f__91__measures <- function(
             , variable.name = "m.stat", variable.factor = FALSE
         )
 
-    m.comb <- list(m.comb, m.groups) %>% rbindlist(use.names = TRUE)
+    m.comb <- list(qof_measures, m.groups) %>% rbindlist(use.names = TRUE)
 
     # return
 
     return(m.comb)
+}
+
+#' Merge ccg groups into orgref
+#'
+#'
+f__91__reference_ccg_groups <- function(
+    orgref
+    , lu.orgs.ccgs.groups = NA
+){
+    # ccg_group_type,ccg_group_name,ccg_code,ccg_group_code,ccg_group_name
+    # uop,Unit of Planning,02Q,nno,North Notts. UOP
+
+    retval <- list(
+        orgref
+        , lu.orgs.ccgs.groups %>%
+            select(-ccg_code) %>%
+            rename(
+                practice_code = "ccg_group_code", practice_name = "ccg_group_name"
+                , ccg_code = "ccg_group_type", ccg_name = "ccg_group_type_name"
+            ) %>%
+            mutate(ccg_geography_code = ccg_code) %>%
+            unique()
+    ) %>% rbindlist(use.names = TRUE)
+
+    return(retval)
 }
 
 #
@@ -829,9 +862,10 @@ f__91__process__reference_measures_compare <- function(
     qof <- f__91__load_raw(qof_root) %>%
         f__91__preprocess()
 
-    qof %>% f__91__save_reference(qof_root, bWriteCSV = bWriteCSV)
+    qof$reference$orgref <- qof$reference$orgref %>%
+        f__91__reference_ccg_groups(lu.orgs.ccgs.groups)
 
-    # Localisation
+    qof %>% f__91__save_reference(qof_root, bWriteCSV = bWriteCSV)
 
     # Calculate performance measures ####
 
@@ -840,7 +874,7 @@ f__91__process__reference_measures_compare <- function(
         , bWriteCSV = bWriteCSV, qof_root
         , lu.orgs.ccgs.local = lu.orgs.ccgs.local
         , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
-    )
+    ) %>% f__91__measures_ccg_group(lu.orgs.ccgs.groups)
 
     qof_compare <- f__91__compare(qof_measures, bWriteCSV = bWriteCSV, qof_root)
 
