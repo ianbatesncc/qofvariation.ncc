@@ -61,9 +61,17 @@ lep,Local Enterprise P-ship,04K,n2,Nottingham and Nottinghamshire LEP N2
     } else {
         retval <- f__91__load__reference_measures_compare(
             qof_period
+        ) %>% f__91__amend_data__add_subtotals(
+            bCalcEngTotal = TRUE
+            , bCalcCCGTotals = TRUE
+            , lu.orgs.ccgs.local = lu.orgs.ccgs.local
+            , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
         )
     }
 
+    # return
+
+    return(retval)
 }
 
 #' Test the main routine
