@@ -66,12 +66,21 @@ lep,Local Enterprise P-ship,04K,n2,Nottingham and Nottinghamshire LEP N2
 
 }
 
-test_main <- function() {
-    v1 <- main(qof_period = "1516", bProcessRaw = TRUE, bWriteCSV = TRUE)
-    v2 <- main(qof_period = "1516", bProcessRaw = FALSE)
+#' Test the main routine
+#'
+#' Iterate over known instances.
+#'
+test_main <- function(bProcessRaw = TRUE) {
 
-    v3 <- main(qof_period = "1617", bProcessRaw = TRUE, bWriteCSV = TRUE)
-    v4 <- main(qof_period = "1617", bProcessRaw = FALSE)
+    if (is.na(bProcessRaw) | bProcessRaw) {
+        v1 <- main(qof_period = "1516", bProcessRaw = TRUE, bWriteCSV = TRUE)
+        v3 <- main(qof_period = "1617", bProcessRaw = TRUE, bWriteCSV = TRUE)
+    }
+
+    if (is.na(bProcessRaw) | !bProcessRaw){
+        v2 <- main(qof_period = "1516", bProcessRaw = FALSE)
+        v4 <- main(qof_period = "1617", bProcessRaw = FALSE)
+    }
 
     return(TRUE)
 }
