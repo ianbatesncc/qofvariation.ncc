@@ -344,12 +344,11 @@ f__91__measures_ccg_group <- function(
             , all.y = TRUE
             , by = "ccg_code"
         ) %>%
-        select(-org.type, -ccg_code) %>%
-        rename(
-            org.type = "ccg_group_type"
-            , ccg_code = "ccg_group_code"
-        ) %>%
-        mutate(practice_code = "all") %>%
+        mutate(
+            org.type = paste(ccg_group_type, "instance", sep = ", ")
+            , ccg_code = ccg_group_type
+            , practice_code = ccg_group_code
+        ) %>% select(-starts_with("ccg_group")) %>%
         # summarise over the new ccg groups
         group_by_at(vars(-numerator, -denominator)) %>%
         summarise_at(vars(numerator, denominator), sum) %>%
