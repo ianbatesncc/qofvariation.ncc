@@ -77,7 +77,7 @@ test_main <- function(bProcessRaw = TRUE) {
         v3 <- main(qof_period = "1617", bProcessRaw = TRUE, bWriteCSV = TRUE)
     }
 
-    if (is.na(bProcessRaw) | !bProcessRaw){
+    if (is.na(bProcessRaw) | !bProcessRaw) {
         v2 <- main(qof_period = "1516", bProcessRaw = FALSE)
         v4 <- main(qof_period = "1617", bProcessRaw = FALSE)
     }
