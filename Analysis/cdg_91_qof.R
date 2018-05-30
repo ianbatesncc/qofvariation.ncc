@@ -577,15 +577,15 @@ f__91__measures_ccg_group <- function(
 #' Merge ccg groups into orgref
 #'
 #'
-f__91__reference_ccg_groups <- function(
-    orgref
+f__91__amend_orgref__ccg_groups <- function(
+    qof
     , lu.orgs.ccgs.groups = NA
 ){
     # ccg_group_type,ccg_group_name,ccg_code,ccg_group_code,ccg_group_name
     # uop,Unit of Planning,02Q,nno,North Notts. UOP
 
-    retval <- list(
-        orgref
+    qof$reference$orgref <- list(
+        qof$reference$orgref
         , lu.orgs.ccgs.groups %>%
             select(-ccg_code) %>%
             rename(
@@ -596,7 +596,7 @@ f__91__reference_ccg_groups <- function(
             unique()
     ) %>% rbindlist(use.names = TRUE)
 
-    return(retval)
+    invisible(qof)
 }
 
 #
