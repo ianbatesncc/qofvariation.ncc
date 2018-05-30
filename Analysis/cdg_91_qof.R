@@ -12,10 +12,8 @@
 
 cat("INFO: cdg_91_qof: starting...", "\n")
 
-# INTERNAL routines that do the work ####
-
 #
-# Helpers ####
+# HELPERS ####
 #
 
 require("data.table")
@@ -30,6 +28,106 @@ sum.rmna <- function(x) return(sum(x, na.rm = TRUE))
 # to clean table/frame names
 setnames.clean <- function(x) {setnames(x, make.names(tolower(colnames(x))))}
 
+
+# EXPORT routines that string these together ####
+
+#' process all
+#'
+#' Load raw data and produce measures and compare against england.
+#'
+#' @export
+#'
+f__91__process__reference_measures_compare <- function(
+    qof_period = "1516" # "1617"
+    , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
+    , lu.orgs.ccgs.groups = NA
+    , bWriteCSV = FALSE
+) {
+    cat("INFO: f__91__process__reference_measures_compare: processing ...", "\n")
+
+    cat("INFO: bWriteCSV =", bWriteCSV, "\n")
+
+    if (qof_period %in% c("1516", "1617")) {
+        qof_root <- paste("qof", qof_period, sep = "-")
+    } else {
+        cat("WARNING: qof period", qof_period, "unknown ...", "\n")
+        return(FALSE)
+    }
+
+    # raw data and reference
+
+    qof <- f__91__load_data(qof_root) %>%
+        f__91__amend_data__add_subtotals(
+            bCalcEngTotal = TRUE
+            , bCalcCCGTotals = TRUE
+            , lu.orgs.ccgs.local = lu.orgs.ccgs.local
+            , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
+        ) %>%
+        f__91__amend_orgref__ccg_groups(lu.orgs.ccgs.groups)
+
+    qof %>% f__91__save_reference(qof_root, bWriteCSV = bWriteCSV)
+
+    # measures and grouping
+
+    qof_measures <- f__91__measures(
+        qof
+        , bWriteCSV = bWriteCSV, qof_root
+    )
+
+    # compare
+
+    qof_compare <- f__91__compare(qof_measures, bWriteCSV = bWriteCSV, qof_root)
+
+    # return
+
+    return(list(
+        data = qof$data
+        , reference = qof$reference
+        , measures = qof_measures
+        , compare = qof_compare
+    ))
+}
+
+#' load processed
+#'
+#' @export
+#'
+f__91__load__reference_measures_compare <- function(
+    qof_period = "1516" # "1617"
+) {
+    cat("INFO: f__91__load__reference_measures_compare: loading ...", "\n")
+
+    require("data.table")
+    require("dplyr")
+
+    if (qof_period %in% c("1516", "1617")) {
+        qof_root <- paste("qof", qof_period, sep = "-")
+    } else {
+        cat("WARNING: qof period", qof_period, "unknown ...", "\n")
+        return(FALSE)
+    }
+
+    # Localisation
+
+    qof_reference <- f__91__load_reference(qof_root)
+    qof_measures <- f__91__load_measures(qof_root)
+    qof_compare <- f__91__load_compare(qof_root)
+
+    lu.orgs.ccgs.local <- qof_measures$ccg_code %>% unique()
+
+    qof_data <- f__91__load_data(qof_root)
+
+    # return
+
+    return(list(
+        data = qof_data
+        , reference = qof_reference
+        , measures = qof_measures
+        , compare = qof_compare
+    ))
+}
+
+# INTERNAL routines that do the work ####
 
 #
 # COUNTS - Load QOF data ####
@@ -878,107 +976,6 @@ f__91__load_compare <- function(
     return(list(prev = q.prev, ind = q.ind) %>% rbindlist(use.names = TRUE))
 }
 
-# EXPORT routines that string these together ####
-
-#' process all
-#'
-#' Load raw data and produce measures and compare against england.
-#'
-#' @export
-#'
-f__91__process__reference_measures_compare <- function(
-    qof_period = "1516" # "1617"
-    , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
-    , lu.orgs.ccgs.groups = NA
-    , bWriteCSV = FALSE
-) {
-    cat("INFO: f__91__process__reference_measures_compare: processing ...", "\n")
-
-    # Config ####
-
-    cat("INFO: bWriteCSV =", bWriteCSV, "\n")
-
-    if (qof_period %in% c("1516", "1617")) {
-        qof_root <- paste("qof", qof_period, sep = "-")
-    } else {
-        cat("WARNING: qof period", qof_period, "unknown ...", "\n")
-        return(FALSE)
-    }
-
-    # raw data and reference
-
-    qof <- f__91__load_data(qof_root) %>%
-        f__91__amend_data__add_subtotals(
-            bCalcEngTotal = TRUE
-            , bCalcCCGTotals = TRUE
-            , lu.orgs.ccgs.local = lu.orgs.ccgs.local
-            , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
-        )
-
-    qof$reference$orgref <- qof$reference$orgref %>%
-        f__91__reference_ccg_groups(lu.orgs.ccgs.groups)
-
-    qof %>% f__91__save_reference(qof_root, bWriteCSV = bWriteCSV)
-
-    # measures and grouping
-
-    qof_measures <- f__91__measures(
-        qof
-        , bWriteCSV = bWriteCSV, qof_root
-    )
-
-    # compare
-
-    qof_compare <- f__91__compare(qof_measures, bWriteCSV = bWriteCSV, qof_root)
-
-    # return
-
-    return(list(
-        data = qof$data
-        , reference = qof$reference
-        , measures = qof_measures
-        , compare = qof_compare
-    ))
-}
-
-#' load processed
-#'
-#' @export
-#'
-f__91__load__reference_measures_compare <- function(
-    qof_period = "1516" # "1617"
-) {
-    cat("INFO: f__91__load__reference_measures_compare: loading ...", "\n")
-
-    require("data.table")
-    require("dplyr")
-
-    if (qof_period %in% c("1516", "1617")) {
-        qof_root <- paste("qof", qof_period, sep = "-")
-    } else {
-        cat("WARNING: qof period", qof_period, "unknown ...", "\n")
-        return(FALSE)
-    }
-
-    # Localisation
-
-    qof_reference <- f__91__load_reference(qof_root)
-    qof_measures <- f__91__load_measures(qof_root)
-    qof_compare <- f__91__load_compare(qof_root)
-
-    lu.orgs.ccgs.local <- qof_measures$ccg_code %>% unique()
-
-    qof_data <- f__91__load_data(qof_root)
-
-    # return
-
-    return(list(
-        data = qof_data
-        , reference = qof_reference
-        , measures = qof_measures
-        , compare = qof_compare
-    ))
-}
 
 # Done. ####
 
