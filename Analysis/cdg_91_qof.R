@@ -446,7 +446,8 @@ f__91__amend_data__add_subtotals <- function(
                         x
                         , x %>%
                             group_by_at(vars(-value, -ccg_code, -practice_code)) %>%
-                            summarise_at(vars(value), sum) %>%
+                            summarise_at(vars(value), sum, na.rm = TRUE) %>%
+                            ungroup() %>%
                             mutate(ccg_code = "eng", practice_code = "eng", org.type = "england")
                     ) %>% rbindlist(use.names = TRUE)
                 })
@@ -474,7 +475,8 @@ f__91__amend_data__add_subtotals <- function(
                         x,
                         x %>%
                             group_by_at(vars(-value, -practice_code)) %>%
-                            summarise_at(vars(value), sum) %>%
+                            summarise_at(vars(value), sum, na.rm = TRUE) %>%
+                            ungroup() %>%
                             mutate(practice_code = "ccg", org.type = "ccg")
                     ) %>% rbindlist(use.names = TRUE)
                 })
@@ -507,7 +509,7 @@ f__91__amend_data__add_subtotals <- function(
                         ) %>% select(-starts_with("ccg_group")) %>%
                         # summarise over the new ccg groups
                         group_by_at(vars(-value)) %>%
-                        summarise_at(vars(value), sum) %>%
+                        summarise_at(vars(value), sum, na.rm = TRUE) %>%
                         ungroup()
                 ) %>% rbindlist(use.names = TRUE)
             }
