@@ -850,9 +850,6 @@ f__91__compare <- function(
 
     q.var.cast <- qof_measures %>%
         filter(org.type != "england", m.stat %in% c('value', 'numerator', 'denominator')) %>%
-        select(indicator_group_code, indicator_code
-               , org.type, ccg_code, practice_code
-               , m.type, m.name, m.stat, value) %>%
         dcast(... ~ m.stat, value.var = 'value')
 
     # National reference ####
@@ -861,9 +858,7 @@ f__91__compare <- function(
         q.var.cast
         , qof_measures %>%
             filter(org.type == 'england', m.stat %in% c('value')) %>%
-            select(indicator_group_code, indicator_code
-                   , org.type
-                   , m.type, m.name, m.stat, value) %>%
+            select(-data_source, -ccg_code, -practice_code) %>%
             dcast(... ~ m.stat, value.var = 'value')
         , by = c('indicator_group_code', 'indicator_code', "m.type", 'm.name')
         , all.x = TRUE, suffixes = c('.var', '.ref')
@@ -875,9 +870,7 @@ f__91__compare <- function(
         q.var.cast
         , qof_measures %>%
             filter(org.type == 'ccg', m.stat %in% c('value')) %>%
-            select(indicator_group_code, indicator_code
-                   , org.type, ccg_code
-                   , m.type, m.name, m.stat, value) %>%
+            select(-data_source, -practice_code) %>%
             dcast(... ~ m.stat, value.var = 'value')
         , by = c('indicator_group_code', 'indicator_code', 'ccg_code', "m.type", 'm.name')
         , all.x = FALSE, all.y = FALSE, suffixes = c('.var', '.ref')
