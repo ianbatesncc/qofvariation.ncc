@@ -3,6 +3,8 @@
 # Routines to calculate confidence intervals.
 #
 
+options(warn = 1)
+
 #' Family of calculate routines
 #'
 #' Container for calculate routines
