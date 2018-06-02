@@ -568,36 +568,43 @@ f__91__measures_ccg_group <- function(
     qof_measures
     , lu.orgs.ccgs.groups = NA
 ) {
+    cat("INFO: f__91__measures_ccg_group: adding ccg groups to measures ...", "\n")
 
-    m.groups <- qof_measures %>%
-        # choose ccg quantities
-        filter(org.type == "ccg") %>%
-        filter(m.stat %in% c("numerator", "denominator")) %>%
-        # spin up on stat
-        dcast(... ~ m.stat, value.var = "value", fun = sum) %>%
-        # tag ccg groups
-        merge(
-            lu.orgs.ccgs.groups %>% select(ccg_code, ccg_group_code, ccg_group_type)
-            , all.y = TRUE
-            , by = "ccg_code"
-        ) %>%
-        mutate(
-            org.type = paste(ccg_group_type, "instance", sep = ", ")
-            , ccg_code = ccg_group_type
-            , practice_code = ccg_group_code
-        ) %>% select(-starts_with("ccg_group")) %>%
-        # summarise over the new ccg groups
-        group_by_at(vars(-numerator, -denominator)) %>%
-        summarise_at(vars(numerator, denominator), sum) %>%
-        ungroup() %>%
-        mutate(value = numerator * 100 / denominator) %>%
-        # spin back down
-        melt(
-            measure.vars = c("numerator", "denominator", "value")
-            , variable.name = "m.stat", variable.factor = FALSE
-        )
+    if (!any(is.na(lu.orgs.ccgs.groups))) {
 
-    m.comb <- list(qof_measures, m.groups) %>% rbindlist(use.names = TRUE)
+        m.groups <- qof_measures %>%
+            # choose ccg quantities
+            filter(org.type == "ccg") %>%
+            filter(m.stat %in% c("numerator", "denominator")) %>%
+            # spin up on stat
+            dcast(... ~ m.stat, value.var = "value", fun = sum) %>%
+            # tag ccg groups
+            merge(
+                lu.orgs.ccgs.groups %>% select(ccg_code, ccg_group_code, ccg_group_type)
+                , all.y = TRUE
+                , by = "ccg_code"
+            ) %>%
+            mutate(
+                org.type = paste(ccg_group_type, "instance", sep = ", ")
+                , ccg_code = ccg_group_type
+                , practice_code = ccg_group_code
+            ) %>% select(-starts_with("ccg_group")) %>%
+            # summarise over the new ccg groups
+            group_by_at(vars(-numerator, -denominator)) %>%
+            summarise_at(vars(numerator, denominator), sum) %>%
+            ungroup() %>%
+            mutate(value = numerator * 100 / denominator) %>%
+            # spin back down
+            melt(
+                measure.vars = c("numerator", "denominator", "value")
+                , variable.name = "m.stat", variable.factor = FALSE
+            )
+
+        m.comb <- list(qof_measures, m.groups) %>% rbindlist(use.names = TRUE)
+
+    } else {
+        m.comb <- qof_measures
+    }
 
     # return
 
