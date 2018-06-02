@@ -253,6 +253,19 @@ aphoci_gen <- function(
         lapply(seq_len(dim(m)[1]), function(i){m[i, ]})
     }
 
+if (is.installed("data.table")) {
+
+    dat <- data.table(
+        num, den, multiplier, level, ci.type
+    ) %>%
+        .[, c("cilo", "cihi") := mat2list(
+            mapply(calcci, num, den, multiplier, level, ci.type), bTranspose = TRUE
+        )]
+
+    ci <- list(dat$cilo, dat$cihi) %>% transpose()
+
+} else {
+
     dat <- data.frame(
         num, den, multiplier, level, ci.type
         , stringsAsFactors = FALSE
@@ -262,6 +275,8 @@ aphoci_gen <- function(
         ))
 
     ci <- dat$ci
+}
+
     if (bTransposeResults)
         ci <- transpose(ci)
 
