@@ -401,6 +401,7 @@ f__91__load_data <- function(
     l_add_qof_root <- function(x, qof_root) {
         cat("INFO: l_add_qof_root: amending ...", "\n")
         x$data <- x$data %>% lapply(mutate, data_source = qof_root)
+        x$reference <- x$reference %>% lapply(mutate, data_source = qof_root)
         invisible(x)
     }
 
@@ -408,7 +409,7 @@ f__91__load_data <- function(
         # process lookups
         f__91__preprocess() %>%
         l_add_orgtype() %>%
-        l_add_qof_root()
+        l_add_qof_root(qof_root)
 
     # return
 
@@ -637,7 +638,10 @@ f__91__amend_orgref__ccg_groups <- function(
                 practice_code = "ccg_group_code", practice_name = "ccg_group_name"
                 , ccg_code = "ccg_group_type", ccg_name = "ccg_group_type_name"
             ) %>%
-            mutate(ccg_geography_code = ccg_code) %>%
+            mutate(
+                ccg_geography_code = ccg_code
+                , data_source = qof$reference$orgref$data_source %>% unique()
+                ) %>%
             unique()
     ) %>% rbindlist(use.names = TRUE)
 
