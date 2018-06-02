@@ -907,7 +907,7 @@ f__91__compare <- function(
                    , m.type, m.name, m.stat, value) %>%
             dcast(... ~ m.stat, value.var = 'value')
         , by = c('indicator_group_code', 'indicator_code', 'ccg_code', "m.type", 'm.name')
-        , all.x = TRUE, suffixes = c('.var', '.ref')
+        , all.x = FALSE, all.y = FALSE, suffixes = c('.var', '.ref')
     )
 
     # combine ####
