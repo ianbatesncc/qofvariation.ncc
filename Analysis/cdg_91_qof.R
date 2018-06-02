@@ -569,6 +569,12 @@ f__91__measures <- function(
         , qof_root, file_suffix
     )
 
+    # some practices with a zero register will have zeros for indicators
+    # ... (num, den, value) = (0, 0, NA)
+    # also some achievement denominators may be zero (after exceptions)
+    # ... (num, den, value) = (0, 0, NA)
+    # ... NA and NaN behave as is.na() == TRUE ... leaving as is
+
     # combine
 
     m.comb <- list(m.ind, m.prev) %>% rbindlist(use.names = TRUE)
