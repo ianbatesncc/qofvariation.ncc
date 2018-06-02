@@ -214,7 +214,8 @@ f__91__preprocess <- function(
 
     # drop uneeded columns
     q.orgref <- qof$reference$orgref %>%
-        select(starts_with("practice"), starts_with("ccg"))
+        select(starts_with("practice"), starts_with("ccg")) %>%
+        setDT()
 
     # indmap - qof indicator lookups ####
 
@@ -252,7 +253,8 @@ f__91__preprocess <- function(
                 filter(measure == "REGISTER") %>%
                 .$indicator_code %>%
                 unique()
-        )))
+        ))) %>%
+        setDT()
 
     # filter out non-register indicators via join with indmap
     q.ind <- qof$data$ind %>%
@@ -262,6 +264,7 @@ f__91__preprocess <- function(
         # tag ccg, indicator group
         mutate(measure = tolower(measure)) %>%
         filter(!(measure == tolower("ACHIEVED_POINTS"))) %>%
+        setDT() %>%
         # tag ccg
         merge(q.orgref %>% select(practice_code, ccg_code)
               , by = "practice_code") %>%
@@ -556,7 +559,7 @@ f__91__measures <- function(
         qof
         , bWriteCSV = bWriteCSV
         , qof_root, file_suffix
-    )
+    ) %>% setDT()
 
     m.prev <- f__91__measures_prev(
         qof
