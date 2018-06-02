@@ -649,7 +649,7 @@ f__91__measures_ind <- function(
 
     q.ind.combined <- qof$data$ind
 
-    # Calculate measures ####
+    # Calculate measures
 
     lu_measures <- fread(strip.white = TRUE, input = "
 m.type,      m.name,        m.stat,      i.num, i.den, i.exc
@@ -679,16 +679,16 @@ performance, suboptimal,    denominator, 0,     1,     1
              , variable.name = "m.stat", variable.factor = FALSE
              , value.name = "value")
 
-    # Save ####
+    # Save
 
     if (bWriteCSV) {
-        cat("INFO: f__91__measures_ind: saving qof.ind.combined ...", "\n")
+        cat("INFO: f__91__measures_ind: saving q.ind.measures ...", "\n")
 
         this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
         fwrite(q.ind.measures, file = this.file)
 
     } else {
-        cat("INFO: f__91__measures_ind: NOT saving qof.ind.combined ...", "\n")
+        cat("INFO: f__91__measures_ind: NOT saving q.ind.measures ...", "\n")
     }
 
     #q.ind.measures %>% filter(FALSE) %>% str()
@@ -738,7 +738,7 @@ f__91__measures_prev <- function(
 
     qof.prev.combined <- qof$data$prev.melt
 
-    # Calculate measures ####
+    # Calculate measures
 
     lu_measures <- fread(strip.white = TRUE, input = "
 m.type,      m.name,        m.stat,      i.num, i.den, i.exc
@@ -763,16 +763,16 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
              , variable.name = "m.stat", variable.factor = FALSE
              , value.name = "value")
 
-    # Save ####
+    # Save
 
     if (bWriteCSV) {
-        cat("INFO: f__91__measures_prev: saving qof.prev.combined ...", "\n")
+        cat("INFO: f__91__measures_prev: saving q.prev.measures ...", "\n")
 
         this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
         fwrite(q.prev.measures, file = this.file)
 
     } else {
-        cat("INFO: f__91__measures_prev: NOT saving qof.prev.combined ...", "\n")
+        cat("INFO: f__91__measures_prev: NOT saving q.prev.measures ...", "\n")
     }
 
     # return
