@@ -37,6 +37,16 @@ setnames.clean <- function(x) {setnames(x, make.names(tolower(colnames(x))))}
 #'
 #' @export
 #'
+#' @notes
+#' Call tree:
+#'
+#' f__91__load_data
+#' f__91__amend_data__add_subtotals
+#' f__91__amend_orgref__ccg_groups
+#' f__91__save_reference
+#' f__91__measures
+#' f__91__compare
+#'
 f__91__process__reference_measures_compare <- function(
     qof_period = "1516" # "1617"
     , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
@@ -91,6 +101,14 @@ f__91__process__reference_measures_compare <- function(
 #' load processed
 #'
 #' @export
+#'
+#' @notes
+#' Call tree:
+#'
+#' f__91__load_reference
+#' f__91__load_measures
+#' f__91__load_compare
+#' f__91__load_data
 #'
 f__91__load__reference_measures_compare <- function(
     qof_period = "1516" # "1617"
@@ -361,6 +379,12 @@ f__91__load_reference <- function(
 #'
 #' Default is not to do anything further.
 #'
+#' @notes
+#' Call tree:
+#'
+#' f__91__load_raw
+#' f__91__preprocess
+#'
 f__91__load_data <- function(
     qof_root
 ) {
@@ -504,6 +528,12 @@ f__91__amend_data__add_subtotals <- function(
 #'
 #' Separate at this stage as ind and prev although a  lot of similarity have
 #' different underlying data structure.
+#'
+#' @notes
+#' Call tree:
+#'
+#' f__91__measures_ind
+#' f__91__measures_prev
 #'
 f__91__measures <- function(
     qof
