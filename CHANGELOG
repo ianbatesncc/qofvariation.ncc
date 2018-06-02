@@ -1,5 +1,9 @@
 CHANGELOG
 
+2018-06-02
+
+* BUGFIX: ccg grouping and ccg comparison mis-match
+
 2018-05-29
 
 * tag qof period into datasets
