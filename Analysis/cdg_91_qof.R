@@ -133,7 +133,7 @@ f__91__load__reference_measures_compare <- function(
 
     lu.orgs.ccgs.local <- qof_measures$ccg_code %>% unique()
 
-    qof_data <- f__91__load_data(qof_root)
+    qof_data <- f__91__load_data(qof_root)$data
 
     # return
 
