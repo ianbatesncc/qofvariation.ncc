@@ -392,15 +392,23 @@ f__91__load_data <- function(
 
     #' Add org.type to data elements
     l_add_orgtype <- function(x) {
-        cat("INFO: l_amend_data: amending ...", "\n")
+        cat("INFO: l_add_orgtype: amending ...", "\n")
         x$data <- x$data %>% lapply(mutate, org.type = "(ccg, practice)")
+        invisible(x)
+    }
+
+    #' Tag on data source
+    l_add_qof_root <- function(x, qof_root) {
+        cat("INFO: l_add_qof_root: amending ...", "\n")
+        x$data <- x$data %>% lapply(mutate, data_source = qof_root)
         invisible(x)
     }
 
     qof <- f__91__load_raw(qof_root) %>%
         # process lookups
         f__91__preprocess() %>%
-        l_add_orgtype()
+        l_add_orgtype() %>%
+        l_add_qof_root()
 
     # return
 
