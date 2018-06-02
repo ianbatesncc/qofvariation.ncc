@@ -814,9 +814,8 @@ f__91__compare <- function(
     qof_measures
     , bWriteCSV = TRUE
     , qof_root
-    , file_suffix = "__eng_ccg_prac__measure_ndv__comp_eng_ccg"
-    ) {
-
+    , file_suffix = "__eng_ccg_prac__compare__bench_spc23__eng_ccg"
+) {
     cat("INFO: f__91__compare: processing statistical significance comparison ...", "\n")
 
     #source("./Analysis/aphoci.R")
@@ -978,7 +977,7 @@ f__91__compare <- function(
 #'
 f__91__load_compare <- function(
     qof_root
-    , file_suffix = "__eng_ccg_prac__measure_ndv__comp_eng_ccg"
+    , file_suffix = "__eng_ccg_prac__compare__bench_spc23__eng_ccg"
 ) {
     cat("INFO: f__91__load_compare: loading ...", "\n")
 
