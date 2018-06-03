@@ -12,6 +12,7 @@ output:
 ```{r setup, include = FALSE}
 require("flexdashboard")
 require("shiny")
+require("d3heatmap")
 
 ```
 
@@ -113,12 +114,56 @@ this_comparison_method <- reactive(input$this_comparison_method)
 #this_comparison_param <- reactive(input$this_comparison_param)
 
 
-# renderPlot({
-#     p = par(mai=c(0,0,0,0))
-#     heatmapBC(BicatYeast, res, number=num(), xlab="", ylab="",
-#       order=TRUE, useRaster=TRUE, col=col)
-#     par(p)
-# })
+lu_statsig_num <- fread(input = "
+statsig,istatsig
+Better,1
+Higher,1
+Similar,0
+Lower,-1
+Worse,-1
+Not tested,NA
+"
+)
+
+renderD3heatmap({
+  # prepare matrix from reactive() components
+  
+  this_mat <- compare %>%
+    filter(
+      org.type.var == this_orgtype()
+      , ccg_code == this_ccg()
+      , m.name == this_measure()
+      , org.type.ref == this_comparator()
+      , compare.type == this_comparison_method()
+      #, compare.parm == this.comparison_param
+    ) %>%
+    select(practice_code, indicator_code, compare.param, statsig) %>%
+    merge(lu_statsig_num, by = "statsig")
+  
+  #if (this_comparison_method() == "benchmark") {
+    this_m <- this_mat %>%
+      dcast(practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
+    
+  #} else if (this_comparison_method() == "spc") {
+  #  this_m <- this_mat %>% mutate(istatsig = compare.param * istatsig) %>%
+  #    dcast(practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
+  #}
+  
+  rownames(this_m) <- this_m$practice_code
+  this_m <- this_m %>% select(-practice_code)
+
+  # ... and plot
+  
+  #col = colorRampPalette(c("blue", "yellow", "red"), space = "Lab")(5)
+  col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
+  
+  d3heatmap(
+    (this_m)
+    #, colors = "RdYlBu"
+    , colors = col
+    , dendrogram = c("none", "both", "row", "column")[3]
+  )
+})
 
 ```
 
