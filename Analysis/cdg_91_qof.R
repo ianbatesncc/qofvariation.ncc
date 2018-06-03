@@ -112,6 +112,7 @@ f__91__process__reference_measures_compare <- function(
 #'
 f__91__load__reference_measures_compare <- function(
     qof_period = "1516" # "1617"
+    , bLoadData = FALSE
 ) {
     cat("INFO: f__91__load__reference_measures_compare: loading ...", "\n")
 
@@ -133,7 +134,11 @@ f__91__load__reference_measures_compare <- function(
 
     lu.orgs.ccgs.local <- qof_measures$ccg_code %>% unique()
 
-    qof_data <- f__91__load_data(qof_root)$data
+    if (bLoadData == TRUE) {
+        qof_data <- f__91__load_data(qof_root)$data
+    } else {
+        qof_data <- list(ind = data.frame(), prev.melt = data.frame())
+    }
 
     # return
 

@@ -38,6 +38,7 @@ main <- function(
     qof_period = "1516"
     , bProcessRaw = FALSE
     , bWriteCSV = FALSE
+    , bLoadData = FALSE
 ) {
 
     lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
@@ -87,12 +88,16 @@ lep,Local Enterprise P-ship,04K,n2,Nottingham and Nottinghamshire LEP N2
     } else {
         retval <- f__91__load__reference_measures_compare(
             qof_period
-        ) %>% f__91__amend_data__add_subtotals(
-            bCalcEngTotal = TRUE
-            , bCalcCCGTotals = TRUE
-            , lu.orgs.ccgs.local = lu.orgs.ccgs.local
-            , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
+            , bLoadData
         )
+        if (bLoadData == TRUE) {
+            retval <- retval %>% f__91__amend_data__add_subtotals(
+                bCalcEngTotal = TRUE
+                , bCalcCCGTotals = TRUE
+                , lu.orgs.ccgs.local = lu.orgs.ccgs.local
+                , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
+            )
+        }
     }
 
     # return
@@ -112,8 +117,8 @@ test_main <- function(bProcessRaw = TRUE) {
     }
 
     if (is.na(bProcessRaw) | !bProcessRaw) {
-        v2 <- main(qof_period = "1516", bProcessRaw = FALSE)
-        v4 <- main(qof_period = "1617", bProcessRaw = FALSE)
+        v2 <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
+        v4 <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
     }
 
     return(TRUE)
