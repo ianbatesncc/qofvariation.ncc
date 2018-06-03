@@ -5,8 +5,8 @@ output:
   flexdashboard::flex_dashboard:
     orientation: rows
     source_code: embed
-    vertical_layout: fill # scroll # fill
-#runtime: shiny
+    vertical_layout: fill # scroll
+    #runtime: shiny
 ---
 
 ```{r setup, include = FALSE}
@@ -41,15 +41,57 @@ Inputs {.sidebar}
 Show variation in QOF.
 
 ```{r}
-# selectInput(
-#     "clusterNum", label = h3("Cluster number")
-#     , choices = list("1" = 1, "2" = 2, "3" = 3, "4" = 4, "5" = 5)
-#     , selected = 1
-# )
+
+these_orgtypes <- measures$org.type %>% unique() %>% sort()
+these_ccgs <- measures$ccg_code %>% unique() %>% sort()
+these_measures <- measures$m.name %>% unique() %>% sort()
+these_comparisons <- compare$compare.type %>% unique() %>% sort()
+these_comparisons_param <- compare$compare.param  %>% unique() %>% sort()
+these_comparators <- compare$org.type.ref %>% unique() %>% sort()
 
 cat("INFO: possible input selections here", "\n")
-cat("INFO: Choose CCG", "\n")
-cat("INFO: Choose measure", "\n")
+
+selectInput(
+  "this_orgtype"
+  , label = "Select org type:"
+  , choices = these_orgtypes
+  , selected = these_orgtypes[1]
+)
+
+selectInput(
+  "this_ccg"
+  , label = "Select CCG:"
+  , choices = these_ccgs
+  , selected = these_ccgs[1]
+)
+
+selectInput(
+    "this_measure"
+    , label = "Select measure:"
+    , choices = these_measures
+    , selected = these_measures[1]
+)
+
+selectInput(
+    "this_comparison_method"
+    , label = "Select comparison method:"
+    , choices = these_comparisons
+    , selected = these_comparisons[1]
+)
+
+# selectInput(
+#     "this_comparison_param"
+#     , label = "Select comparison parameter:"
+#     , choices = these_comparisons_param
+#     , selected = these_comparisons_param[1]
+# )
+
+selectInput(
+    "this_comparator"
+    , label = "Select measure:"
+    , choices = these_comparators
+    , selected = these_comparators[1]
+)
 
 ```
 
@@ -61,11 +103,15 @@ Row 1
     
 ```{r}
 
-cat("INFO: heatmap", "\n")
+cat("INFO: Heatmap", "\n")
 
-num <- reactive(as.integer(input$clusterNum))
+this_orgtype <- reactive(input$this_orgtype)
+this_ccg <- reactive(input$this_ccg)
+this_measure <- reactive(input$this_measure)
+this_comparator <- reactive(input$this_comparator)
+this_comparison_method <- reactive(input$this_comparison_method)
+#this_comparison_param <- reactive(input$this_comparison_param)
 
-col = colorRampPalette(c("red", "white", "darkblue"), space = "Lab")(10)
 
 # renderPlot({
 #     p = par(mai=c(0,0,0,0))
