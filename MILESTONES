@@ -1,0 +1,38 @@
+MILESTONES
+
+1.0
+
+Basic calculations
+
+ - load raw qof data
+ - group by ccgs
+ - calculate meausures - prevalence and indicators
+ - compare - benchmark and spc
+
+1.1
+
+Include modelled disease prevalence
+
+  - CCG level
+  - observed Vs expected
+
+1.2
+
+Track practices over time
+
+ - Introduce a 'practice_reporting_code' field
+
+2.0
+
+Basic Dashboard - Minimal
+
+ - Rushcliffe CCG
+ - heatmap of variation (SPC, benchmark)
+ - stacked 100% barcharts of variation (indicator_code, CCG, GP)
+    - treated (Gre), suboptimal (Ora), excepted (Red), excluded (Blu)
+
+Future
+
+ - dynamic choice of CCG
+ - View QOF indicator metadata
+ - Summary of variation (CCG)
