@@ -160,13 +160,20 @@ f__91__load_raw <- function(
 ) {
     cat("INFO: f__91__load_raw: loading data ...", "\n")
 
-    qof.orgref <- fread(file = paste0("./Data/", qof_root, "-csv/ORGANISATION_REFERENCE.csv")) %>% setnames.clean()
-    qof.indmap <- fread(file = paste0("./Data/", qof_root, "-csv/INDICATOR_MAPPINGS.csv")) %>% setnames.clean()
+    taskdir <- proj_root()
 
-    qof.prev <- fread(file = paste0("./Data/", qof_root, "-csv/PREVALENCE.csv")) %>% setnames.clean()
-    this.file <- paste0("./Data/", qof_root, "-csv/ACHIEVEMENT_EXCEPTIONS.csv")
+    this.file <- paste_paths(taskdir, "./Data/", paste0(qof_root, "-csv/ORGANISATION_REFERENCE.csv"))
+    qof.orgref <- fread(file = this.file) %>% setnames.clean()
+
+    this.file <- paste_paths(taskdir, "./Data/", paste0(qof_root, "-csv/INDICATOR_MAPPINGS.csv"))
+    qof.indmap <- fread(file = this.file) %>% setnames.clean()
+
+    this.file <- paste_paths(taskdir, "./Data/", paste0(qof_root, "-csv/PREVALENCE.csv"))
+    qof.prev <- fread(file = this.file) %>% setnames.clean()
+
+    this.file <- paste_paths(taskdir, "./Data/", paste0(qof_root, "-csv/ACHIEVEMENT_EXCEPTIONS.csv"))
     if (!(file.exists(this.file)))
-        this.file <- paste0("./Data/", qof_root, "-csv/ACHIEVEMENT.csv")
+        this.file <- paste_paths(taskdir, "./Data/", paste0(qof_root, "-csv/ACHIEVEMENT.csv"))
     qof.ind <- fread(file = this.file) %>% setnames.clean()
 
     # return
@@ -367,10 +374,12 @@ f__91__load_reference <- function(
 ) {
     cat("INFO: f__91__load_reference: loading ...", "\n")
 
-    this.file <- paste0("./Results/", qof_root, "_orgref", file_suffix, ".csv")
+    taskdir <- proj_root()
+
+    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_orgref", file_suffix, ".csv"))
     q.orgref <- fread(file = this.file)
 
-    this.file <- paste0("./Results/", qof_root, "_indmap", file_suffix, ".csv")
+    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_indmap", file_suffix, ".csv"))
     q.indmap <- fread(file = this.file)
 
     # return
@@ -795,10 +804,12 @@ f__91__load_measures <- function(
 ) {
     cat("INFO: f__91__load_measures: loading ...", "\n")
 
-    this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
+    taskdir <- proj_root()
+
+    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_ind", file_suffix, ".csv"))
     q.ind <- fread(file = this.file)
 
-    this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
+    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_prev", file_suffix, ".csv"))
     q.prev <- fread(file = this.file)
 
     # return
@@ -824,9 +835,10 @@ f__91__compare <- function(
 ) {
     cat("INFO: f__91__compare: processing statistical significance comparison ...", "\n")
 
-    #source("./Analysis/aphoci.R")
-    source("./Analysis/calcci.R")
-    source("./Analysis/testci.R")
+    taskdir <- proj_root()
+
+    source(file = paste_paths(taskdir, "/Analysis/calcci.R"))
+    source(file = paste_paths(taskdir, "./Analysis/testci.R"))
 
     ##
     ## QOF
@@ -980,10 +992,12 @@ f__91__load_compare <- function(
 ) {
     cat("INFO: f__91__load_compare: loading ...", "\n")
 
-    this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
+    taskdir <- proj_root()
+
+    this.file <- paste_paths(taskdir, "./Results", paste0(qof_root, "_ind", file_suffix, ".csv"))
     q.ind <- fread(file = this.file)
 
-    this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
+    this.file <- paste_paths(taskdir, "./Results", paste0(qof_root, "_prev", file_suffix, ".csv"))
     q.prev <- fread(file = this.file)
 
     # return

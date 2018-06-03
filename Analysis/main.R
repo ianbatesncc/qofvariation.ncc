@@ -4,9 +4,35 @@
 
 options(warn = 1)
 
-source("./Analysis/cdg_91_qof.R")
-source("./Analysis/calcci.R")
-source("./Analysis/testci.R")
+# HELPERS ####
+
+#
+# Concept of 'root directory' depends on context.
+# - from project root is ./Analysis
+# - from ./Reports/dashboard it is, not surprisingly, ./Reports ...
+#
+proj_root <- function() {
+    if (interactive()) {
+        getwd()
+    } else {
+        normalizePath("..")
+    }
+}
+
+# shortcut for constructing paths
+paste_paths <- function(...) {
+    normalizePath(gsub("//", "/", paste(..., sep = "/")))
+}
+
+# Setup ####
+
+taskdir <- proj_root()
+
+source(file = paste_paths(taskdir, "Analysis/cdg_91_qof.R"))
+source(file = paste_paths(taskdir, "Analysis/calcci.R"))
+source(file = paste_paths(taskdir, "Analysis/testci.R"))
+
+# Main ####
 
 main <- function(
     qof_period = "1516"
