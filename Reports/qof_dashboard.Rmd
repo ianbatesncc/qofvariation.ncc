@@ -1,0 +1,103 @@
+---
+title: "QOF variation dashboard"
+author: "Ian Bates"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    source_code: embed
+    vertical_layout: fill # scroll # fill
+#runtime: shiny
+---
+
+```{r setup, include = FALSE}
+require("flexdashboard")
+require("shiny")
+
+```
+
+```{r global, include = FALSE}
+# load data in 'global' chunk so it can be shared by all users of the dashboard
+
+```
+
+About
+====
+
+Row 1
+-----------------------------------------------------------------------
+
+### About
+
+Here is some content.
+
+Heatmap
+====
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+Show variation in QOF.
+
+```{r}
+# selectInput(
+#     "clusterNum", label = h3("Cluster number")
+#     , choices = list("1" = 1, "2" = 2, "3" = 3, "4" = 4, "5" = 5)
+#     , selected = 1
+# )
+
+cat("INFO: possible input selections here", "\n")
+cat("INFO: Choose CCG", "\n")
+cat("INFO: Choose measure", "\n")
+
+```
+
+
+Row 1
+-----------------------------------------------------------------------
+
+### Heatmap
+    
+```{r}
+
+cat("INFO: heatmap", "\n")
+
+num <- reactive(as.integer(input$clusterNum))
+
+col = colorRampPalette(c("red", "white", "darkblue"), space = "Lab")(10)
+
+# renderPlot({
+#     p = par(mai=c(0,0,0,0))
+#     heatmapBC(BicatYeast, res, number=num(), xlab="", ylab="",
+#       order=TRUE, useRaster=TRUE, col=col)
+#     par(p)
+# })
+
+```
+
+
+Row 2 {.tabset}
+-----------------------------------------------------------------------
+
+### Tab 1
+    
+```{r}
+# renderPlot(
+#   parallelCoordinates(BicatYeast, res, number = num())
+# )
+
+cat("INFO: tab 1", "\n")
+
+```
+   
+### Tab 2
+
+```{r}
+
+cat("INFO: tab 2", "\n")
+
+# only display table for values in cluster 4
+# renderTable(
+#   BicatYeast[which(res@RowxNumber[, num()]), which(res@NumberxCol[num(), ])]
+# )
+
+```
