@@ -1,5 +1,14 @@
 CHANGELOG
 
+2018-06-02
+
+* BUGFIX: ccg grouping and ccg comparison mis-match
+
+2018-05-29
+
+* tag qof period into datasets
+* Add grouping to raw data
+
 2018-05-28
 
 * add funnel test routine (testspc_gen)
