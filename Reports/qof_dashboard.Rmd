@@ -21,17 +21,16 @@ require("shiny")
 taskdir <- normalizePath("..")
 source(file = paste(taskdir, "Analysis/main.R", sep = "/"))
 #source(file = paste(taskdir, "Analysis/cdg_91_qof.R", sep = "/"))
+
+dat <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
+
+orgref <- dat$reference$orgref
+indmap <- dat$reference$indmap
+measures <- dat$measures
+compare <- dat$compare
+
 ```
 
-About
-====
-
-Row 1
------------------------------------------------------------------------
-
-### About
-
-Here is some content.
 
 Heatmap
 ====
@@ -104,3 +103,13 @@ cat("INFO: tab 2", "\n")
 # )
 
 ```
+
+About
+====
+
+Row 1
+-----------------------------------------------------------------------
+
+### About
+
+Here is some content.
