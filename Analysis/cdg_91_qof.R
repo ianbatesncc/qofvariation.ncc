@@ -156,7 +156,7 @@ f__91__load__reference_measures_compare <- function(
 #' put in an R list for later analysis
 #'
 f__91__load_raw <- function(
-    qof_root
+    qof_root = "qof-1617"
 ) {
     cat("INFO: f__91__load_raw: loading data ...", "\n")
 
@@ -186,6 +186,177 @@ f__91__load_raw <- function(
 
 }
 
+#' Load data - csv format v2
+#'
+#' 13/14 and 14/15 datasets
+
+f__91__load_raw_historic__v1 <- function(
+    qof_root = "qof-1415"
+) {
+    # orgref
+
+ # $ practice_code           : chr  "B82007" "B82020" "B82028" "B82053" ...
+ # $ practice_name           : chr  "TOWNHEAD SURGERY" "CROSS HILLS GROUP PRACTICE" "FISHER MEDICAL CENTRE" "DYNELEY HOUSE SURGERY" ...
+ # $ ccg_code                : chr  "02N" "02N" "02N" "02N" ...
+ # $ ccg_geography_code      : chr  "E38000001" "E38000001" "E38000001" "E38000001" ...
+ # $ ccg_name                : chr  "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" ...
+ # $ stp_code                : chr  "E54000005" "E54000005" "E54000005" "E54000005" ...
+ # $ stp_name                : chr  "WEST YORKSHIRE STP" "WEST YORKSHIRE STP" "WEST YORKSHIRE STP" "WEST YORKSHIRE STP" ...
+ # $ subregion_code          : chr  "Q72" "Q72" "Q72" "Q72" ...
+ # $ subregion_geography_code: chr  "E39000029" "E39000029" "E39000029" "E39000029" ...
+ # $ subregion_name          : chr  "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" ...
+ # $ region_code             : chr  "Y54" "Y54" "Y54" "Y54" ...
+ # $ region_geography_code   : chr  "E40000001" "E40000001" "E40000001" "E40000001" ...
+ # $ region_name             : chr  "NORTH OF ENGLAND" "NORTH OF ENGLAND" "NORTH OF ENGLAND" "NORTH OF ENGLAND" ...
+ # $ country                 : chr  "ENGLAND" "ENGLAND" "ENGLAND" "ENGLAND" ...
+ # $ revised_maximum_points  : int  559 559 559 559 559 559 559 559 559 559 ...
+
+    #o1 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "CCG_CONTROL.csv")) %>% setnames.clean()
+    o2 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "PRAC_CONTROL.csv")) %>% setnames.clean()
+
+    on <- o2 %>%
+        rename(stp_code = "area_team_code", stp_name = "area_team_name") %>%
+        select(-starts_with("address_"), -postcode, -crp) %>%
+        mutate(country = "ENGLAND", revised_maximum_points = as.numeric(NA)) %>%
+        setnames(names(.), gsub("sub_region_", "subregion_", names(.)))
+
+    qof.orgref <- on
+
+    # indmap
+
+# $ indicator_code             : chr  "AF001" "AF006" "AF007" "AST001" ...
+#  $ indicator_description      : chr  "The contractor establishes and maintains a register of patients with atrial fibrillation" "The percentage of patients with atrial fibrillation in whom stroke risk has been assessed using the CHA2DS2-VASc score risk str "In those patients with atrial fibrillation with a record of a CHA2DS2-VASc score of 2 or more, the percentage of patients who a "The contractor establishes and maintains a register of patients with asthma, excluding patients with asthma who have been presc ...
+#  $ indicator_point_value      : int  5 12 12 4 15 20 6 15 5 6 ...
+#  $ indicator_group_code       : chr  "AF" "AF" "AF" "AST" ...
+#  $ indicator_group_description: chr  "Atrial fibrillation" "Atrial fibrillation" "Atrial fibrillation" "Asthma" ...
+#  $ domain_code                : chr  "CL" "CL" "CL" "CL" ...
+#  $ domain_description         : chr  "Clinical" "Clinical" "Clinical" "Clinical" ...
+#  $ patient_list_type          : chr  "TOTAL" "TOTAL" "TOTAL" "TOTAL" ...
+
+    im1 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "INDICATOR_DOM_REFERENCE_FINAL.csv")) %>% setnames.clean()
+    im2 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "INDICATOR_GRP_REFERENCE_FINAL.csv")) %>% setnames.clean()
+    im3 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "INDICATOR_REFERENCE_FINAL.csv")) %>% setnames.clean()
+
+    imn <- im3 %>%
+        select(-ends_with("_threshold"), -indicator_version, -indicator_type) %>%
+        rename(indicator_group_code = "indicator_group") %>%
+        merge(im2 %>% select(starts_with("indicator_group_"), domain_code), by = "indicator_group_code") %>%
+        merge(im1 %>% select(domain_code, domain_description), by = "domain_code") %>%
+        mutate(patient_list_type = "TOTAL (most likely)")
+
+    qof.indmap <- imn
+
+    # prevalence
+
+ # $ practice_code       : chr  "A81001" "A81001" "A81001" "A81001" ...
+ # $ indicator_group_code: chr  "AF" "AST" "CAN" "CHD" ...
+ # $ register            : int  106 306 118 171 188 113 20 47 286 262 ...
+ # $ patient_list_type   : chr  "TOTAL" "TOTAL" "TOTAL" "TOTAL" ...
+ # $ patient_list_size   : int  4150 4150 4150 4150 3314 4150 2237 4150 3314 3368 ...
+
+    p1 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "PREVALENCE_BY_PRAC_v2.csv")) %>% setnames.clean()
+    p2 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "REGISTER_SIZES.csv")) %>% setnames.clean()
+
+    pn <- p1 %>%
+        select(-practice_name, -indicator_group_description, -prevalence) %>%
+        # age-related list size
+        rename(register = "register_size", patient_list_size = "practice_list_size") %>%
+        mutate_at(vars(register), as.numeric)
+
+    # NOTE: 2014/15: patient_list_type NOT in 13/14 csv files.
+
+    # 15/16
+    # 1:    AF   AST   BP   CAN   CHD  CKD    CON  COPD      CS CVDPP   DEM  DEP   DM   EP    HF   HYP    LD    MH   OB  OST   PAD    PC   RA SMOK  STIA
+    # 2: TOTAL TOTAL 45OV TOTAL TOTAL 18OV 54UN_F TOTAL 25_64_F 30_74 TOTAL 18OV 17OV 18OV TOTAL TOTAL TOTAL TOTAL 18OV 50OV TOTAL TOTAL 16OV 15OV TOTAL
+    #
+    # 14/15
+    # p1 %>% filter(practice_code == "M83678") %>% group_by(practice_code) %>% mutate(plist = practice_list_size * 100 / max(practice_list_size)) %>% ungroup() %>% setDT() %>% head(32) %>% select(indicator_group_code, plist) %>% arrange(indicator_group_code) %>% mutate(plist = format(plist, nsmall = 1, digits = 3)) %>% transpose()
+    # 1    AF   AST   CAN   CHD   CKD  COPD CVDPP   DEM   DEP    DM    EP    HF   HYP    LD    MH    OB   OST   PAD    PC    RA  STIA
+    # 2 100.0 100.0 100.0 100.0  82.6 100.0  57.7 100.0  82.6  83.4  82.6 100.0 100.0 100.0 100.0  84.1  44.8 100.0 100.0  84.1 100.0
+
+    qof.indmap <- qof.indmap %>%
+        mutate(
+            patient_list_type = case_when(
+                indicator_group_code   == "CKD"   ~ "18OV"
+                , indicator_group_code == "CVDPP" ~ "30_74"
+                , indicator_group_code == "DEP"   ~ "18OV"
+                , indicator_group_code == "DM"    ~ "17OV"
+                , indicator_group_code == "EP"    ~ "18OV"
+                , indicator_group_code == "OB"    ~ "16OV"
+                , indicator_group_code == "OST"   ~ "50OV"
+                , indicator_group_code == "RA"    ~ "16OV"
+                , TRUE                            ~ "TOTAL"
+            )
+        )
+
+    pn <- pn %>%
+        merge(
+            qof.indmap %>% select(indicator_group_code, patient_list_type) %>% unique()
+            , by = "indicator_group_code"
+        )
+
+    qof.prev <- pn
+
+    # indicators
+
+ # $ practice_code : chr  "A81001" "A81001" "A81001" "A81001" ...
+ # $ indicator_code: chr  "AF001" "AF001" "AF006" "AF006" ...
+ # $ measure       : chr  "ACHIEVED_POINTS" "REGISTER" "ACHIEVED_POINTS" "DENOMINATOR" ...
+ # $ value         : num  5 106 12 43 1 42 12 91 6 86 ...
+ #
+ # [1] "ACHIEVED_POINTS" "REGISTER"        "DENOMINATOR"     "EXCEPTIONS"      "NUMERATOR"
+
+    i1 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "INDICATORS_BY_PRAC.csv")) %>% setnames.clean()
+    i2 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "EXCEPTION_OUTPUT.csv")) %>% setnames.clean()
+
+    inn <- qof.orgref %>%
+        select(practice_code) %>% setDT() %>%
+        # ensure all orgref practices present
+        # tag numerator, denominator
+        merge(i1, by = "practice_code", all.x = TRUE) %>%
+        select(
+            indicator_code, practice_code
+            , ACHIEVED_POINTS = achieved_points, NUMERATOR = numerator, DENOMINATOR = denominator
+            , indicator_group_code = indicator_group # for REGISTER
+        ) %>%
+        # tag exceptions
+        merge(
+            i2 %>% select(indicator_code, practice_code, EXCEPTIONS = exception_count)
+            , by = c("indicator_code", "practice_code")
+        ) %>%
+        # tag receptions
+        merge(
+            qof.prev %>% select(indicator_group_code, practice_code, REGISTER = register)
+            , by = c("indicator_group_code", "practice_code")
+        ) %>%
+        select(-indicator_group_code) %>%
+        # spin down on measure
+        # dodge some warnings about implicit conversion integer -> numeric
+        mutate_if(is.integer, as.numeric) %>%
+        setDT() %>%
+        melt(
+            id.vars = c("indicator_code", "practice_code")
+            , variable.name = "measure", variable.factor = FALSE
+        )
+
+    qof.ind <- inn
+
+    # return
+
+    return(
+        list(
+            reference = list(
+                orgref = qof.orgref
+                , indmap = qof.indmap
+            )
+            , data = list(
+                prev = qof.prev
+                , ind = qof.ind
+            )
+        )
+    )
+
+}
 #' preprocess
 #'
 #' optionally save tweaked reference data
