@@ -471,11 +471,12 @@ f__91__load_raw_historic__v2 <- function(
 
     imn <- data.frame()
 
+    this.wb <- read_xl_wb(
+        wb = paste0("./Data/", qof_root, "-csv/", qof_root3, "-indmap.xlsx")
+        , bReadSheets = c(FALSE, FALSE, FALSE, TRUE)
+    )
 
-    this.file <- paste0("./Data/", qof_root, "-csv/", "spreadsheets/", "Practice/", qof_root2, "-data-tab-prac-clin-summ.xlsx")
-    this.wb <- list(wb = this.file, ws = excel_sheets(this.file))
-    this.ws <- read_excel(path = this.file, sheet = this.wb$ws[1], skip = 13, n_max = 1e4) %>%
-        setnames.clean() %>% setnames(gsub("\\.", "_", names(.)))
+    imn <- this.wb$wss$results
 
     qof.indmap <- imn
 
