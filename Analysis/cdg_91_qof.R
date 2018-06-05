@@ -497,17 +497,20 @@ f__91__preprocess <- function(
 
     # return
 
-    return(list(
-        reference = list(
-            orgref = q.orgref
-            , indmap = q.indmap
+    return(
+        list(
+            reference = list(
+                orgref = q.orgref
+                , indmap = q.indmap
+            )
+            , data = list(
+                ind = q.ind
+                , prev = q.prev
+                , prev.melt = q.prev.melt
+            )
         )
-        , data = list(
-            ind = q.ind
-            , prev = q.prev
-            , prev.melt = q.prev.melt
-        )
-    ))
+    )
+
 }
 
 #'
