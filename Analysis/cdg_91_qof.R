@@ -16,6 +16,8 @@ cat("INFO: cdg_91_qof: starting...", "\n")
 # HELPERS ####
 #
 
+options(warn = 1)
+
 require("data.table")
 require("dplyr")
 
@@ -357,6 +359,156 @@ f__91__load_raw_historic__v1 <- function(
     )
 
 }
+
+
+#' Load data - xls format
+#'
+#' 12/13 datasets and earlier
+
+f__91__load_raw_historic__v2 <- function(
+    qof_root = "qof-1213"
+) {
+
+    qof_root2 <- paste("qof", substr(qof_root, 5, 6), substr(qof_root, 7, 8), sep = "-")
+
+    # orgref
+
+ # $ practice_code           : chr  "B82007" "B82020" "B82028" "B82053" ...
+ # $ practice_name           : chr  "TOWNHEAD SURGERY" "CROSS HILLS GROUP PRACTICE" "FISHER MEDICAL CENTRE" "DYNELEY HOUSE SURGERY" ...
+ # $ ccg_code                : chr  "02N" "02N" "02N" "02N" ...
+ # $ ccg_geography_code      : chr  "E38000001" "E38000001" "E38000001" "E38000001" ...
+ # $ ccg_name                : chr  "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" ...
+ # $ stp_code                : chr  "E54000005" "E54000005" "E54000005" "E54000005" ...
+ # $ stp_name                : chr  "WEST YORKSHIRE STP" "WEST YORKSHIRE STP" "WEST YORKSHIRE STP" "WEST YORKSHIRE STP" ...
+ # $ subregion_code          : chr  "Q72" "Q72" "Q72" "Q72" ...
+ # $ subregion_geography_code: chr  "E39000029" "E39000029" "E39000029" "E39000029" ...
+ # $ subregion_name          : chr  "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" ...
+ # $ region_code             : chr  "Y54" "Y54" "Y54" "Y54" ...
+ # $ region_geography_code   : chr  "E40000001" "E40000001" "E40000001" "E40000001" ...
+ # $ region_name             : chr  "NORTH OF ENGLAND" "NORTH OF ENGLAND" "NORTH OF ENGLAND" "NORTH OF ENGLAND" ...
+ # $ country                 : chr  "ENGLAND" "ENGLAND" "ENGLAND" "ENGLAND" ...
+ # $ revised_maximum_points  : int  559 559 559 559 559 559 559 559 559 559 ...
+
+    on <- data.frame()
+
+    this.file <- paste0("./Data/", qof_root, "-csv/", "spreadsheets/", "Practice/", qof_root2, "-data-tab-prac-clin-summ.xlsx")
+    this.wb <- list(wb = this.file, ws = excel_sheets(this.file))
+    this.ws <- read_excel(path = this.file, sheet = this.wb$ws[1], skip = 13, n_max = 1e4) %>%
+        setnames.clean() %>% setnames(gsub("\\.", "_", names(.)))
+
+    on <- this.ws %>%
+        rename(
+            stp_code = "at_code", stp_name = "at_name"
+        ) %>%
+        mutate(
+            ccg_geography_code = NA_character_
+            , subregion_code = NA_character_
+            , subregion_geography_code = NA_character_
+            , subregion_name = NA_character_
+            , region_geography_code = NA_character_
+        ) %>%
+        select(
+            practice_code, practice_name
+            , ccg_code, ccg_geography_code, ccg_name
+            , stp_code, stp_name
+            , subregion_code, subregion_geography_code, subregion_name
+            , region_code, region_geography_code, region_name
+        )
+
+    qof.orgref <- on
+
+    # indmap
+
+# $ indicator_code             : chr  "AF001" "AF006" "AF007" "AST001" ...
+#  $ indicator_description      : chr  "The contractor establishes and maintains a register of patients with atrial fibrillation" "The percentage of patients with atrial fibrillation in whom stroke risk has been assessed using the CHA2DS2-VASc score risk str "In those patients with atrial fibrillation with a record of a CHA2DS2-VASc score of 2 or more, the percentage of patients who a "The contractor establishes and maintains a register of patients with asthma, excluding patients with asthma who have been presc ...
+#  $ indicator_point_value      : int  5 12 12 4 15 20 6 15 5 6 ...
+#  $ indicator_group_code       : chr  "AF" "AF" "AF" "AST" ...
+#  $ indicator_group_description: chr  "Atrial fibrillation" "Atrial fibrillation" "Atrial fibrillation" "Asthma" ...
+#  $ domain_code                : chr  "CL" "CL" "CL" "CL" ...
+#  $ domain_description         : chr  "Clinical" "Clinical" "Clinical" "Clinical" ...
+#  $ patient_list_type          : chr  "TOTAL" "TOTAL" "TOTAL" "TOTAL" ...
+
+    imn <- data.frame()
+
+    ind.clin <- fread(input = "
+asth,ASTHMA
+atr-fib,AF
+cancer,CANCER
+cardio,PP
+chro-kid-dis,CKD
+copd,COPD
+cor-heart-dis,CHD
+dem,DEM
+depr,DEP
+diab,DM
+epilepsy,EP
+heart-fail,HF
+hyper,BP
+learn-dis,LD
+ment-heal,MH
+obesity,OBESIT
+osteo,OST
+pall-care,PC
+peri-art-dis,PAD
+smoke,SMOKE
+stroke,STROKE
+thyroid,THYROID
+")
+
+    this.file <- paste0("./Data/", qof_root, "-csv/", "spreadsheets/", "Practice/", qof_root2, "-data-tab-prac-clin-summ.xlsx")
+    this.wb <- list(wb = this.file, ws = excel_sheets(this.file))
+    this.ws <- read_excel(path = this.file, sheet = this.wb$ws[1], skip = 13, n_max = 1e4) %>%
+        setnames.clean() %>% setnames(gsub("\\.", "_", names(.)))
+
+    qof.indmap <- imn
+
+    # prevalence
+
+ # $ practice_code       : chr  "A81001" "A81001" "A81001" "A81001" ...
+ # $ indicator_group_code: chr  "AF" "AST" "CAN" "CHD" ...
+ # $ register            : int  106 306 118 171 188 113 20 47 286 262 ...
+ # $ patient_list_type   : chr  "TOTAL" "TOTAL" "TOTAL" "TOTAL" ...
+ # $ patient_list_size   : int  4150 4150 4150 4150 3314 4150 2237 4150 3314 3368 ...
+
+    pn <- data.frame()
+
+    #p1 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "PREVALENCE_BY_PRAC_v2.csv")) %>% setnames.clean()
+
+    qof.prev <- pn
+
+    # indicators
+
+ # $ practice_code : chr  "A81001" "A81001" "A81001" "A81001" ...
+ # $ indicator_code: chr  "AF001" "AF001" "AF006" "AF006" ...
+ # $ measure       : chr  "ACHIEVED_POINTS" "REGISTER" "ACHIEVED_POINTS" "DENOMINATOR" ...
+ # $ value         : num  5 106 12 43 1 42 12 91 6 86 ...
+ #
+ # [1] "ACHIEVED_POINTS" "REGISTER"        "DENOMINATOR"     "EXCEPTIONS"      "NUMERATOR"
+
+    inn <- data.frame()
+
+    #i1 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "INDICATORS_BY_PRAC.csv")) %>% setnames.clean()
+
+    qof.ind <- inn
+
+    # return
+
+    return(
+        list(
+            reference = list(
+                orgref = qof.orgref
+                , indmap = qof.indmap
+            )
+            , data = list(
+                prev = qof.prev
+                , ind = qof.ind
+            )
+        )
+    )
+
+}
+
+
 #' preprocess
 #'
 #' optionally save tweaked reference data
