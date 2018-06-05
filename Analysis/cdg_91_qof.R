@@ -429,12 +429,11 @@ f__91__load_raw_historic__v2 <- function(
  # $ country                 : chr  "ENGLAND" "ENGLAND" "ENGLAND" "ENGLAND" ...
  # $ revised_maximum_points  : int  559 559 559 559 559 559 559 559 559 559 ...
 
-    on <- data.frame()
-
-    this.file <- paste0("./Data/", qof_root, "-csv/", "spreadsheets/", "Practice/", qof_root2, "-data-tab-prac-clin-summ.xlsx")
-    this.wb <- list(wb = this.file, ws = excel_sheets(this.file))
-    this.ws <- read_excel(path = this.file, sheet = this.wb$ws[1], skip = 13, n_max = 1e4) %>%
-        setnames.clean() %>% setnames(gsub("\\.", "_", names(.)))
+    this.wb <- read_xl_wb(
+        paste0("./Data/", qof_root, "-csv/", "spreadsheets/", "Practice/", qof_root2, "-data-tab-prac-clin-summ.xlsx")
+        , bReadSheets = TRUE, skip = 13
+    )
+    this.ws <- this.wb$wss[["qof.export"]]
 
     on <- this.ws %>%
         rename(
