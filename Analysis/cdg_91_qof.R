@@ -490,7 +490,52 @@ f__91__load_raw_historic__v2 <- function(
 
     pn <- data.frame()
 
-    #p1 <- fread(paste0("./Data/", "qof-", qof_period, "-csv/", "PREVALENCE_BY_PRAC_v2.csv")) %>% setnames.clean()
+    this.wb <- read_xl_wb(
+        wb = paste0("./Data/", qof_root, "-csv/", "spreadsheets/Practice/Prevalence/", qof_root2, "-data-tab-prac-prev.xlsx")
+        , bReadSheets = TRUE, skip = 13
+    )
+
+    p1 <- this.wb$wss$prac_prevalence %>%
+        select(-ends_with("_name"), -starts_with("region_"), -starts_with("at_")) %>%
+        # suppress warninhs about conversion from character to numeric
+        mutate_at(vars(-ends_with("_code")), function(x){suppressWarnings(as.numeric(x))}) %>%
+        setDT() %>%
+        melt(
+            id.vars = c("practice_code", "ccg_code", "list_size")
+            , variable.name = "field_header", variable.factor = FALSE
+        )
+
+    these.fields <- p1 %>% setDF() %>% select(field_header) %>% unique() %>%
+        mutate(
+            #is_reg = grepl("_register", field_header)
+            #, is_percent = grepl("_per_cent", field_header)
+            #, is_ind = grepl("_indicator", field_header)
+            indicator_group = copy(field_header)
+            , m.stat = NA_character_
+            , patient_list_type = "TOTAL"
+        ) %>% setDT()
+
+    these.fields[grepl("_register", indicator_group), `:=`(m.stat = "register", indicator_group = gsub("_{1,3}register", "", indicator_group))]
+    these.fields[grepl("_per_cent", indicator_group), `:=`(m.stat = "value", indicator_group = gsub("_{1,2}prevalence_{1,3}per_cent_", "", indicator_group))]
+
+    these.fields[is.na(m.stat), indicator_group := gsub("_indicator[s]{0,1}", "", indicator_group)]
+
+    these.fields[grepl("register_for_", indicator_group), `:=`(m.stat = "register", indicator_group = gsub("register_for_", "", indicator_group))]
+    these.fields[grepl("_prevalence", indicator_group), `:=`(m.stat = "value", indicator_group = gsub("_prevalence", "", indicator_group))]
+
+    these.fields[grepl("__ages_", indicator_group), `:=`(
+        patient_list_type = paste0(gsub(".*__ages_(..)__", "\\1", indicator_group), "OV")
+        , indicator_group = gsub("__ages_..__", "", indicator_group)
+    )]
+
+    these.fields[these.fields[m.stat == "register"], on = "indicator_group", patient_list_type := i.patient_list_type]
+
+    p12 <- p1 %>% setDT() %>%
+        .[these.fields, on = "field_header"] %>%
+        select(-field_header) %>%
+        dcast(... ~ m.stat, fun = sum)
+
+
 
     qof.prev <- pn
 
