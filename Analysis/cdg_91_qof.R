@@ -436,6 +436,7 @@ f__91__load_raw_historic__v2 <- function(
     this.ws <- this.wb$wss[["qof.export"]]
 
     on <- this.ws %>%
+        select(-contains("total_points")) %>%
         rename(
             stp_code = "at_code", stp_name = "at_name"
         ) %>%
