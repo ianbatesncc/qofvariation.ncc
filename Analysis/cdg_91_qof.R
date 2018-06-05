@@ -30,6 +30,46 @@ sum.rmna <- function(x) return(sum(x, na.rm = TRUE))
 # to clean table/frame names
 setnames.clean <- function(x) {setnames(x, make.names(tolower(colnames(x))))}
 
+#' function to return list of worksheets in an xl workbook
+#'
+#' read xl, return list of sheet names, and optionally the worksheet
+#' contents too as a list of data.frame objects.
+#'
+#' @param bReadSheets FALSE no read, TRUE, read all, vector of bool, read if TRUE, recycled.
+#'
+read_xl_wb <- function(wb, bReadSheets = FALSE, skip = 0) {
+    require("readxl")
+
+    this.wb = list(wb = wb, ws_names = NULL, ws_names_orig = NULL, wss = list())
+
+    if (file.exists(wb)) {
+
+        this.wb$ws_names_orig <- excel_sheets(wb)
+
+        if (any(bReadSheets)) {
+            this.wb$wss <- lapply(
+                this.wb$ws_names_orig[bReadSheets]
+                , function(x) {
+                    cat("INFO: reading \\", x, "/ ...", "\n", sep = "")
+                    read_excel(path = this.wb$wb, sheet = x, skip = skip) %>%
+                        setnames.clean() %>%
+                        setnames(gsub("\\.", "_", names(.)))
+                }
+            )
+            names(this.wb$wss) <- make.names(tolower(this.wb$ws_names_orig[bReadSheets]))
+
+        } else {
+            this.wb$wss <- rep(list(data.frame()), length(this.wb$ws_names_orig))
+            names(this.wb$wss) <- make.names(tolower(this.wb$ws_names_orig))
+        }
+
+        this.wb$ws_names <- names(this.wb$wss)
+    }
+
+    return(this.wb)
+}
+
+
 
 # EXPORT routines that string these together ####
 
