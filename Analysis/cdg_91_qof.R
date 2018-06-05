@@ -471,30 +471,6 @@ f__91__load_raw_historic__v2 <- function(
 
     imn <- data.frame()
 
-    ind.clin <- fread(input = "
-asth,ASTHMA
-atr-fib,AF
-cancer,CANCER
-cardio,PP
-chro-kid-dis,CKD
-copd,COPD
-cor-heart-dis,CHD
-dem,DEM
-depr,DEP
-diab,DM
-epilepsy,EP
-heart-fail,HF
-hyper,BP
-learn-dis,LD
-ment-heal,MH
-obesity,OBESIT
-osteo,OST
-pall-care,PC
-peri-art-dis,PAD
-smoke,SMOKE
-stroke,STROKE
-thyroid,THYROID
-")
 
     this.file <- paste0("./Data/", qof_root, "-csv/", "spreadsheets/", "Practice/", qof_root2, "-data-tab-prac-clin-summ.xlsx")
     this.wb <- list(wb = this.file, ws = excel_sheets(this.file))
@@ -525,6 +501,31 @@ thyroid,THYROID
  # $ value         : num  5 106 12 43 1 42 12 91 6 86 ...
  #
  # [1] "ACHIEVED_POINTS" "REGISTER"        "DENOMINATOR"     "EXCEPTIONS"      "NUMERATOR"
+
+    lu_stem_groupcode <- fread(input = "
+asth,ASTHMA
+atr-fib,AF
+cancer,CANCER
+cardio,PP
+chro-kid-dis,CKD
+copd,COPD
+cor-heart-dis,CHD
+dem,DEM
+depr,DEP
+diab,DM
+epilepsy,EPILEP
+heart-fail,HF
+hyper,BP
+learn-dis,LD
+ment-heal,MH
+obesity,OBESIT
+osteo,OST
+pall-care,PC
+peri-art-dis,PAD
+smoke,SMOKE
+stroke,STROKE
+thyroid,THYROI
+")
 
     inn <- data.frame()
 
