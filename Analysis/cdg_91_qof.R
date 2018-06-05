@@ -171,16 +171,19 @@ f__91__load_raw <- function(
 
     # return
 
-    return(list(
-        reference = list(
-            orgref = qof.orgref
-            , indmap = qof.indmap
+    return(
+        list(
+            reference = list(
+                orgref = qof.orgref
+                , indmap = qof.indmap
+            )
+            , data = list(
+                prev = qof.prev
+                , ind = qof.ind
+            )
         )
-        , data = list(
-            prev = qof.prev
-            , ind = qof.ind
-        )
-    ))
+    )
+
 }
 
 #' preprocess
