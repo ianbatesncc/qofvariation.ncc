@@ -410,6 +410,7 @@ f__91__load_raw_historic__v2 <- function(
 ) {
 
     qof_root2 <- paste("qof", substr(qof_root, 5, 6), substr(qof_root, 7, 8), sep = "-")
+    qof_root3 <- paste0("qof-20", substr(qof_root, 5, 8))
 
     # orgref
 
