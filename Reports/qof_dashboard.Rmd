@@ -133,6 +133,10 @@ selectInput(
     , selected = "england" # these_comparators[1]
 )
 
+checkboxInput("group_rows", "Group rows", FALSE)
+checkboxInput("group_cols", "Group cols", FALSE)
+
+
 ```
 
 
@@ -145,12 +149,16 @@ Row 1
 
 cat("INFO: Heatmap", "\n")
 
-this_orgtype <- reactive(input$this_orgtype)
-this_ccg <- reactive(input$this_ccg)
+#this_orgtype <- reactive(input$this_orgtype)
+#this_ccg <- reactive(input$this_ccg)
+this_ccg_group <- reactive(input$this_ccg_group)
 this_measure <- reactive(input$this_measure)
 this_comparator <- reactive(input$this_comparator)
 this_comparison_method <- reactive(input$this_comparison_method)
 #this_comparison_param <- reactive(input$this_comparison_param)
+
+this_group_rows <- reactive(input$group_rows)
+this_group_cols <- reactive(input$group_cols)
 
 
 lu_statsig_num <- fread(input = "
@@ -165,43 +173,59 @@ Not tested,NA
 )
 
 renderD3heatmap({
-  # prepare matrix from reactive() components
-  
-  this_mat <- compare %>%
-    filter(
-      org.type.var == this_orgtype()
-      , ccg_code == this_ccg()
-      , m.name == this_measure()
-      , org.type.ref == this_comparator()
-      , compare.type == this_comparison_method()
-      #, compare.parm == this.comparison_param
-    ) %>%
-    select(practice_code, indicator_code, compare.param, statsig) %>%
-    merge(lu_statsig_num, by = "statsig")
-  
-  #if (this_comparison_method() == "benchmark") {
-    this_m <- this_mat %>%
-      dcast(practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
+    # prepare matrix from reactive() components
     
-  #} else if (this_comparison_method() == "spc") {
-  #  this_m <- this_mat %>% mutate(istatsig = compare.param * istatsig) %>%
-  #    dcast(practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
-  #}
-  
-  rownames(this_m) <- this_m$practice_code
-  this_m <- this_m %>% select(-practice_code)
-
-  # ... and plot
-  
-  #col = colorRampPalette(c("blue", "yellow", "red"), space = "Lab")(5)
-  col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
-  
-  d3heatmap(
-    (this_m)
-    #, colors = "RdYlBu"
-    , colors = col
-    , dendrogram = c("none", "both", "row", "column")[3]
-  )
+    this_mat <- compare %>%
+        # filter on measure and comparison
+        filter(
+            m.name == this_measure()
+            , org.type.ref == this_comparator()
+            , compare.type == this_comparison_method()
+        ) %>%
+        # filter on practices of interest
+        filter(
+            practice_code %in% c(
+                practice_grouping %>%
+                    filter(ccg_group_name == this_ccg_group()) %>%
+                    .$practice_code
+            )
+        ) %>%
+        select(ccg_code, practice_code, indicator_code, compare.param, statsig) %>%
+        merge(lu_statsig_num, by = "statsig")
+    
+    #if (this_comparison_method() == "benchmark") {
+    this_m <- this_mat %>%
+        dcast(ccg_code + practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
+    
+    #} else if (this_comparison_method() == "spc") {
+    #  this_m <- this_mat %>% mutate(istatsig = compare.param * istatsig) %>%
+    #    dcast(practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
+    #}
+    
+    rownames(this_m) <- this_m %>%
+        select(ccg_code, practice_code) %>% 
+        unique() %>% transpose() %>%
+        sapply(paste, collapse = " - ")
+    
+    this_m <- this_m %>% select(-ends_with("_code"))
+    
+    # ... and plot
+    
+    #this_col = colorRampPalette(c("blue", "yellow", "red"), space = "Lab")(5)
+    #this_col = "RdYlBu"
+    this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
+    this_idendrogram <- c(this_group_rows(), this_group_cols()) %*% c(1, 2) + 1
+    #this_idendrogram <- c(input$group_rows, input$group_cols) %*% c(1, 2) + 1
+    
+    dendrogram_opts <- c("none", "row", "column", "both")
+    
+    #print(dendrogram_opts[this_idendrogram])
+    
+    d3heatmap(
+        (this_m)
+        , colors = this_col
+        , dendrogram = dendrogram_opts[this_idendrogram]
+    )
 })
 
 ```
