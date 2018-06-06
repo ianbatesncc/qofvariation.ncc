@@ -109,14 +109,14 @@ selectInput(
     "this_measure"
     , label = "Select measure:"
     , choices = these_measures
-    , selected = these_measures[1]
+    , selected = "exceptions" # these_measures[1]
 )
 
 selectInput(
     "this_comparison_method"
     , label = "Select comparison method:"
     , choices = these_comparisons
-    , selected = these_comparisons[1]
+    , selected = "spc" # these_comparisons[1]
 )
 
 # selectInput(
@@ -128,9 +128,9 @@ selectInput(
 
 selectInput(
     "this_comparator"
-    , label = "Select measure:"
+    , label = "Select comparator:"
     , choices = these_comparators
-    , selected = these_comparators[1]
+    , selected = "england" # these_comparators[1]
 )
 
 ```
