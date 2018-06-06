@@ -2,21 +2,24 @@
 title: "QOF variation dashboard"
 author: "Ian Bates"
 output: 
-  flexdashboard::flex_dashboard:
+    flexdashboard::flex_dashboard:
     orientation: rows
     source_code: embed
     vertical_layout: fill # scroll
-    #runtime: shiny
+    runtime: shiny
 ---
 
-```{r setup, include = FALSE}
+```{r setup, include = FALSE, cache = FALSE}
 require("flexdashboard")
 require("shiny")
 require("d3heatmap")
 
+knitr::opts_chunk$set(cache = FALSE)
+knitr::opts_chunk$set(echo = FALSE)
+
 ```
 
-```{r global, include = FALSE}
+```{r global, include = FALSE, cache = TRUE}
 # load data in 'global' chunk so it can be shared by all users of the dashboard
 
 taskdir <- normalizePath("..")
