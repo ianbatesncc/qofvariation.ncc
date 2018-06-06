@@ -141,11 +141,11 @@ checkboxInput("group_cols", "Group cols", FALSE)
 ```
 
 
-Row 1
+Row
 -----------------------------------------------------------------------
 
 ### Heatmap
-    
+
 ```{r}
 
 cat("INFO: Heatmap", "\n")
@@ -239,7 +239,7 @@ Row {.tabset}
 -----------------------------------------------------------------------
 
 ### Tab 1
-    
+
 ```{r}
 # renderPlot(
 #   parallelCoordinates(BicatYeast, res, number = num())
@@ -248,7 +248,7 @@ Row {.tabset}
 cat("INFO: tab 1", "\n")
 
 ```
-   
+
 ### Tab 2
 
 ```{r}
