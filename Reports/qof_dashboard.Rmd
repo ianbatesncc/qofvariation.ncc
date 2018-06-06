@@ -71,8 +71,9 @@ Show variation in QOF.
 
 ```{r}
 
-these_orgtypes <- measures$org.type %>% unique() %>% sort()
-these_ccgs <- measures$ccg_code %>% unique() %>% sort()
+#these_orgtypes <- measures$org.type %>% unique() %>% sort()
+#these_ccgs <- measures$ccg_code %>% unique() %>% sort()
+these_ccg_groups <- practice_grouping$ccg_group_name %>% unique() %>% sort()
 these_measures <- measures$m.name %>% unique() %>% sort()
 these_comparisons <- compare$compare.type %>% unique() %>% sort()
 these_comparisons_param <- compare$compare.param  %>% unique() %>% sort()
@@ -80,18 +81,25 @@ these_comparators <- compare$org.type.ref %>% unique() %>% sort()
 
 cat("INFO: possible input selections here", "\n")
 
-selectInput(
-  "this_orgtype"
-  , label = "Select org type:"
-  , choices = these_orgtypes
-  , selected = these_orgtypes[1]
-)
+# selectInput(
+#     "this_orgtype"
+#     , label = "Select org type:"
+#     , choices = these_orgtypes
+#     , selected = these_orgtypes[1]
+# )
+
+# selectInput(
+#     "this_ccg"
+#     , label = "Select CCG:"
+#     , choices = these_ccgs
+#     , selected = these_ccgs[1]
+# )
 
 selectInput(
-  "this_ccg"
-  , label = "Select CCG:"
-  , choices = these_ccgs
-  , selected = these_ccgs[1]
+    "this_ccg_group"
+    , label = "Select Practice grouping:"
+    , choices = these_ccg_groups
+    , selected = these_ccg_groups[1]
 )
 
 selectInput(
