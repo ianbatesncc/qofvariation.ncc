@@ -262,6 +262,112 @@ cat("INFO: tab 2", "\n")
 ```
 
 
+Practice detail
+====
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+Show QOF dat for practice.
+
+
+```{r}
+
+#these_orgtypes <- measures$org.type %>% unique() %>% sort()
+#these_ccgs <- measures$ccg_code %>% unique() %>% sort()
+these_practices <- practice_grouping$practice_code %>% unique() %>% sort()
+these_ind_groups <- measures$indicator_group_code %>% unique() %>% sort()
+these_measures <- measures$m.name %>% unique() %>% sort()
+#these_comparisons <- compare$compare.type %>% unique() %>% sort()
+#these_comparisons_param <- compare$compare.param  %>% unique() %>% sort()
+#these_comparators <- compare$org.type.ref %>% unique() %>% sort()
+
+selectInput(
+    "this_practice"
+    , label = "Select Practice:"
+    , choices = these_practices
+    , selected = these_practices[1]
+)
+
+selectInput(
+    "this_ind_group"
+    , label = "Select indicator group:"
+    , choices = these_ind_groups
+    , selected = these_ind_groups[1]
+)
+
+selectInput(
+    "this_measure"
+    , label = "Select measure:"
+    , choices = these_measures
+    , selected = these_measures[1]
+)
+
+```
+
+
+Practice detail {.tabset}
+----
+
+### compare
+
+```{r}
+cat("DEBUG: compare:", taskdir, "\n")
+compare %>% mutate_if(is.character, as.factor) %>% str()
+compare %>% mutate_if(is.character, as.factor) %>% summary()
+
+```
+
+### measures
+
+```{r}
+cat("DEBUG: measures:", taskdir, "\n")
+
+this_ind_group <- reactive(input$this_ind_group)
+this_practice <- reactive(input$this_practice)
+this_measure <- reactive(input$this_measure)
+
+require("DT")
+
+DT::renderDataTable({
+    this_m <- measures %>% 
+        filter(
+            practice_code == this_practice()
+            , indicator_group_code == this_ind_group()
+            , m.name == this_measure()
+        ) %>%
+        dcast(... ~ m.stat, fun = sum)
+    
+    DT::datatable(
+        this_m
+        , options = list(
+            bPaginate = FALSE
+        )
+    )
+})
+
+```
+
+### orgref
+
+```{r}
+cat("DEBUG: orgref:", taskdir, "\n")
+orgref %>% mutate_if(is.character, as.factor) %>% str()
+orgref %>% mutate_if(is.character, as.factor) %>% summary()
+
+```
+
+### indmap
+
+```{r}
+cat("DEBUG: indmap:", taskdir, "\n")
+indmap %>% mutate_if(is.character, as.factor) %>% str()
+indmap %>% select(-ends_with("description")) %>% mutate_if(is.character, as.factor) %>% summary()
+
+```
+
+
+
 Debug
 ====
 
