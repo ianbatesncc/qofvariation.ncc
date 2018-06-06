@@ -21,7 +21,7 @@ proj_root <- function() {
 
 # shortcut for constructing paths
 paste_paths <- function(...) {
-    normalizePath(gsub("//", "/", paste(..., sep = "/")))
+    normalizePath(gsub("//", "/", paste(..., sep = "/")), mustWork = FALSE)
 }
 
 # Setup ####
