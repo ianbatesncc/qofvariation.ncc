@@ -30,6 +30,34 @@ indmap <- dat$reference$indmap
 measures <- dat$measures
 compare <- dat$compare
 
+# Add ccg group lookup
+lu.orgs.ccgs.groups <- fread(
+    file = paste_paths(taskdir, "./Results/lu__ccg_groups.csv")
+)
+
+practice_grouping <- list(
+    orgref %>% 
+        # filter out existing ccg groups
+        filter(nchar(practice_code) > 3) %>%
+        select(practice_code, ccg_code) %>%
+        merge(lu.orgs.ccgs.groups, by = "ccg_code", all.y = TRUE)
+    
+    , orgref %>% 
+        # filter out existing ccg groups
+        filter(nchar(practice_code) > 3) %>%
+        # only local ccgs
+        filter(ccg_code %in% c(lu.orgs.ccgs.groups$ccg_code %>% unique())) %>%
+        select(practice_code, ccg_code) %>%
+        mutate(
+            ccg_group_type = "ccg"
+            , ccg_group_type_name = "ccg"
+            , ccg_group_code = ccg_code
+            , ccg_group_name = ccg_code
+        )
+) %>%
+    # lapply(function(x){sort(names(x))}) 
+    rbindlist(use.names = TRUE)
+
 ```
 
 

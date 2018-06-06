@@ -74,6 +74,12 @@ lep,Local Enterprise P-ship,04N,n2,Nottingham and Nottinghamshire LEP N2
 lep,Local Enterprise P-ship,04K,n2,Nottingham and Nottinghamshire LEP N2
 "
 )
+    if (bWriteCSV) {
+        this_file <- paste_paths(taskdir, "./Results", "lu__ccg_groups.csv")
+
+        fwrite(lu.orgs.ccgs.groups, file = this_file)
+    }
+
     # short inspection of lookup
     lu.orgs.ccgs.groups %>%
         dcast(... ~ ccg_code, fun = length, value.var = "ccg_group_code") %>%
