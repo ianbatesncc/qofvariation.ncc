@@ -26,6 +26,7 @@ taskdir <- normalizePath("..")
 source(file = paste(taskdir, "Analysis/main.R", sep = "/"))
 #source(file = paste(taskdir, "Analysis/cdg_91_qof.R", sep = "/"))
 
+#dat <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
 dat <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
 
 orgref <- dat$reference$orgref
