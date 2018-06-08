@@ -13,6 +13,7 @@ output:
 require("flexdashboard")
 require("shiny")
 require("d3heatmap")
+require("DT")
 
 knitr::opts_chunk$set(cache = FALSE)
 knitr::opts_chunk$set(echo = FALSE)
@@ -29,15 +30,23 @@ source(file = paste(taskdir, "Analysis/main.R", sep = "/"))
 #dat <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
 dat <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
 
-orgref <- dat$reference$orgref
+l_add_orgtag <- function(x, c1 = "ccg_code", c2 = "practice_code") {
+  x %>%
+    mutate(orgtag = paste(
+      UQ(rlang::sym(c1))
+      , UQ(rlang::sym(c2)))
+    ) %>% invisible()
+}
+
+orgref <- dat$reference$orgref #%>% l_add_orgtag()
 indmap <- dat$reference$indmap
-measures <- dat$measures
-compare <- dat$compare
+measures <- dat$measures #%>% l_add_orgtag()
+compare <- dat$compare #%>% l_add_orgtag()
 
 # Add ccg group lookup
 lu.orgs.ccgs.groups <- fread(
     file = paste_paths(taskdir, "./Results/lu__ccg_groups.csv")
-)
+) #%>% l_add_orgtag("ccg_group_type", "ccg_group_code")
 
 practice_grouping <- list(
     orgref %>% 
@@ -62,6 +71,37 @@ practice_grouping <- list(
     # lapply(function(x){sort(names(x))}) 
     rbindlist(use.names = TRUE)
 
+# For inputs
+
+these_orgtypes <- measures$org.type %>% unique() %>% sort()
+these_ccg_groups <- practice_grouping$ccg_group_name %>% unique() %>% sort()
+these_ccgs <- measures$ccg_code %>% unique() %>% sort()
+these_practices <- practice_grouping$practice_code %>% unique() %>% sort()
+
+these_ind_groups <- measures$indicator_group_code %>% unique() %>% sort()
+these_inds <- measures$indicator_code %>% unique() %>% sort()
+
+these_measures <- measures$m.name %>% unique() %>% sort()
+
+these_comparisons <- compare$compare.type %>% unique() %>% sort()
+these_comparisons_param <- compare$compare.param  %>% unique() %>% sort()
+
+these_comparators <- compare$org.type.ref %>% unique() %>% sort()
+
+
+# for e.g. Heatmap
+
+lu_statsig_num <- fread(input = "
+statsig,istatsig
+Better,1
+Higher,1
+Similar,0
+Lower,-1
+Worse,-1
+Not tested,NA
+"
+)
+
 ```
 
 
@@ -73,18 +113,9 @@ Inputs {.sidebar}
 
 Show variation in QOF.
 
-```{r}
-
-#these_orgtypes <- measures$org.type %>% unique() %>% sort()
-#these_ccgs <- measures$ccg_code %>% unique() %>% sort()
-these_ccg_groups <- practice_grouping$ccg_group_name %>% unique() %>% sort()
-these_measures <- measures$m.name %>% unique() %>% sort()
-these_comparisons <- compare$compare.type %>% unique() %>% sort()
-these_comparisons_param <- compare$compare.param  %>% unique() %>% sort()
-these_comparators <- compare$org.type.ref %>% unique() %>% sort()
+```{r heatmap_inputs}
 
 cat("INFO: possible input selections here", "\n")
-
 # selectInput(
 #     "this_orgtype"
 #     , label = "Select org type:"
@@ -100,21 +131,21 @@ cat("INFO: possible input selections here", "\n")
 # )
 
 selectInput(
-    "this_ccg_group"
+    "hm__this_ccg_group"
     , label = "Select Practice grouping:"
     , choices = these_ccg_groups
     , selected = these_ccg_groups[1]
 )
 
 selectInput(
-    "this_measure"
+    "hm__this_measure"
     , label = "Select measure:"
     , choices = these_measures
     , selected = "exceptions" # these_measures[1]
 )
 
 selectInput(
-    "this_comparison_method"
+    "hm__this_comparison_method"
     , label = "Select comparison method:"
     , choices = these_comparisons
     , selected = "spc" # these_comparisons[1]
@@ -128,15 +159,14 @@ selectInput(
 # )
 
 selectInput(
-    "this_comparator"
+    "hm__this_comparator"
     , label = "Select comparator:"
     , choices = these_comparators
     , selected = "england" # these_comparators[1]
 )
 
-checkboxInput("group_rows", "Group rows", FALSE)
-checkboxInput("group_cols", "Group cols", FALSE)
-
+checkboxInput("hm__group_rows", "Group rows", FALSE)
+checkboxInput("hm__group_cols", "Group cols", FALSE)
 
 ```
 
@@ -146,76 +176,132 @@ Row
 
 ### Heatmap
 
-```{r}
+```{r heatmap_render}
 
-cat("INFO: Heatmap", "\n")
+#cat("INFO: Heatmap", "\n")
 
 #this_orgtype <- reactive(input$this_orgtype)
 #this_ccg <- reactive(input$this_ccg)
-this_ccg_group <- reactive(input$this_ccg_group)
-this_measure <- reactive(input$this_measure)
-this_comparator <- reactive(input$this_comparator)
-this_comparison_method <- reactive(input$this_comparison_method)
+hm__this_ccg_group <- reactive(input$hm__this_ccg_group)
+hm__this_measure <- reactive(input$hm__this_measure)
+hm__this_comparator <- reactive(input$hm__this_comparator)
+hm__this_comparison_method <- reactive(input$hm__this_comparison_method)
 #this_comparison_param <- reactive(input$this_comparison_param)
 
-this_group_rows <- reactive(input$group_rows)
-this_group_cols <- reactive(input$group_cols)
+hm__this_group_rows <- reactive(input$hm__group_rows)
+hm__this_group_cols <- reactive(input$hm__group_cols)
 
+if (TRUE) {
+renderPlot({
+  # prepare matrix from reactive() components
+  
+  tmp_practices <- c(
+    # practices
+    practice_grouping %>%
+      filter(ccg_group_name == hm__this_ccg_group()) %>%
+      .$practice_code
+  )
+  
+  this_dat <- compare %>%
+    # filter on measure and comparison
+    filter(
+      m.name == hm__this_measure()
+      , org.type.ref == hm__this_comparator()
+      , compare.type == hm__this_comparison_method()
+    ) %>%
+    # filter on practices of interest
+    filter(practice_code %in% tmp_practices) %>%
+    mutate(
+      xticklabel = paste(indicator_group_code, indicator_code)
+      , yticklabel = paste(ccg_code, practice_code)
+    ) %>%
+    #select(ccg_code, practice_code, indicator_code, compare.param, statsig) %>%
+    select(xticklabel, yticklabel, compare.param, statsig) %>%
+    merge(lu_statsig_num, by = "statsig") %>%
+    # this handles benchmark and spc    
+    #dcast(ccg_code + practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
+    group_by_at(vars(-compare.param, -istatsig, -statsig)) %>%
+    summarise_at(vars(istatsig), sum) %>%
+    ungroup()
+  
+  require("ggplot2")
+  
+  p__base_size <- 11
+  
+  p <- ggplot(
+    this_dat
+    #, aes(x = indicator_code, y = practice_code)
+    , aes(x = xticklabel, y = yticklabel)
+  ) + 
+    geom_tile(aes(fill = istatsig), colour = "white") + 
+    #scale_fill_gradient(low = "white", high = "steelblue") +
+    #    this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
+    scale_fill_gradient2(
+      low = "#6666cc"
+      , mid = "#ffffee"
+      , high = "#cc8888"
+      , na.value = "#eeeeee"
+      , space = "Lab") +
+    # styling
+    theme_grey(base_size = p__base_size) + 
+    labs(x = "", y = "") + 
+    scale_x_discrete(
+      expand = c(0, 0), position = "top"
+    ) +
+    scale_y_discrete(expand = c(0, 0)) +
+    theme(
+      legend.position = "none"
+      , axis.ticks = element_blank()
+      , axis.text.x = element_text(
+        size = max(7, p__base_size * 0.67)
+        , angle = 60 # 45 30
+        , hjust = 0
+        , colour = "grey50"
+      )
+    )
+  
+  p %>% print()
 
-lu_statsig_num <- fread(input = "
-statsig,istatsig
-Better,1
-Higher,1
-Similar,0
-Lower,-1
-Worse,-1
-Not tested,NA
-"
-)
+})
+}
 
+if (FALSE) {
 renderD3heatmap({
     # prepare matrix from reactive() components
     
-    this_mat <- compare %>%
+    this_dat <- compare %>%
         # filter on measure and comparison
         filter(
-            m.name == this_measure()
-            , org.type.ref == this_comparator()
-            , compare.type == this_comparison_method()
+            m.name == hm__this_measure()
+            , org.type.ref == hm__this_comparator()
+            , compare.type == hm__this_comparison_method()
         ) %>%
         # filter on practices of interest
         filter(
             practice_code %in% c(
                 practice_grouping %>%
-                    filter(ccg_group_name == this_ccg_group()) %>%
+                    filter(ccg_group_name == hm__this_ccg_group()) %>%
                     .$practice_code
             )
         ) %>%
         select(ccg_code, practice_code, indicator_code, compare.param, statsig) %>%
-        merge(lu_statsig_num, by = "statsig")
-    
-    #if (this_comparison_method() == "benchmark") {
-    this_m <- this_mat %>%
-        dcast(ccg_code + practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
-    
-    #} else if (this_comparison_method() == "spc") {
-    #  this_m <- this_mat %>% mutate(istatsig = compare.param * istatsig) %>%
-    #    dcast(practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
-    #}
-    
-    rownames(this_m) <- this_m %>%
+      merge(lu_statsig_num, by = "statsig") %>%
+      # this handles benchmark and spc    
+      dcast(ccg_code + practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
+
+    rownames(this_dat) <- this_dat %>%
         select(ccg_code, practice_code) %>% 
         unique() %>% transpose() %>%
         sapply(paste, collapse = " - ")
     
-    this_m <- this_m %>% select(-ends_with("_code"))
+    this_dat <- this_dat %>% select(-ends_with("_code"))
     
     # ... and plot
     
     #this_col = colorRampPalette(c("blue", "yellow", "red"), space = "Lab")(5)
     #this_col = "RdYlBu"
     this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
-    this_idendrogram <- c(this_group_rows(), this_group_cols()) %*% c(1, 2) + 1
+    this_idendrogram <- c(hm__this_group_rows(), hm__this_group_cols()) %*% c(1, 2) + 1
     #this_idendrogram <- c(input$group_rows, input$group_cols) %*% c(1, 2) + 1
     
     dendrogram_opts <- c("none", "row", "column", "both")
@@ -223,11 +309,12 @@ renderD3heatmap({
     #print(dendrogram_opts[this_idendrogram])
     
     d3heatmap(
-        (this_m)
+        this_dat
         , colors = this_col
         , dendrogram = dendrogram_opts[this_idendrogram]
     )
 })
+}
 
 ```
 
@@ -240,7 +327,7 @@ Row {.tabset}
 
 ### Tab 1
 
-```{r}
+```{r stacked_tab1}
 # renderPlot(
 #   parallelCoordinates(BicatYeast, res, number = num())
 # )
@@ -251,7 +338,7 @@ cat("INFO: tab 1", "\n")
 
 ### Tab 2
 
-```{r}
+```{r stacked_tab2}
 
 cat("INFO: tab 2", "\n")
 
@@ -272,37 +359,43 @@ Inputs {.sidebar}
 Show QOF dat for practice.
 
 
-```{r}
-
-#these_orgtypes <- measures$org.type %>% unique() %>% sort()
-#these_ccgs <- measures$ccg_code %>% unique() %>% sort()
-these_practices <- practice_grouping$practice_code %>% unique() %>% sort()
-these_ind_groups <- measures$indicator_group_code %>% unique() %>% sort()
-these_measures <- measures$m.name %>% unique() %>% sort()
-#these_comparisons <- compare$compare.type %>% unique() %>% sort()
-#these_comparisons_param <- compare$compare.param  %>% unique() %>% sort()
-#these_comparators <- compare$org.type.ref %>% unique() %>% sort()
+```{r practicedetail_input}
 
 selectInput(
-    "this_practice"
+    "pd__this_ccg"
+    , label = "Select CCG:"
+    , choices = c("[All]", these_ccgs)
+    #, selected = these_ccgs[1]
+    , selected = "[All]"
+)
+
+selectInput(
+    "pd__this_practice"
     , label = "Select Practice:"
-    , choices = these_practices
+    , choices = c("[All]", these_practices)
     , selected = these_practices[1]
+    #, selected = "[All]"
 )
 
 selectInput(
-    "this_ind_group"
+    "pd__this_ind_group"
     , label = "Select indicator group:"
-    , choices = these_ind_groups
-    , selected = these_ind_groups[1]
+    , choices = c("[All]", these_ind_groups)
+    #, selected = these_ind_groups[1]
+    , selected = "[All]"
 )
 
 selectInput(
-    "this_measure"
+    "pd__this_measure"
     , label = "Select measure:"
-    , choices = these_measures
-    , selected = these_measures[1]
+    , choices = c("[All]", these_measures)
+    , selected = "exceptions"
 )
+
+pd__this_ccg <- reactive(input$pd__this_ccg)
+pd__this_practice <- reactive(input$pd__this_ccg)
+pd__this_measure <- reactive(input$pd__this_measure)
+pd__this_ind_group <- reactive(input$pd__this_ind_group)
 
 ```
 
@@ -310,63 +403,116 @@ selectInput(
 Practice detail {.tabset}
 ----
 
-### compare
-
-```{r}
-cat("DEBUG: compare:", taskdir, "\n")
-compare %>% mutate_if(is.character, as.factor) %>% str()
-compare %>% mutate_if(is.character, as.factor) %>% summary()
-
-```
-
 ### measures
 
-```{r}
-cat("DEBUG: measures:", taskdir, "\n")
-
-this_ind_group <- reactive(input$this_ind_group)
-this_practice <- reactive(input$this_practice)
-this_measure <- reactive(input$this_measure)
+```{r practicedetail_measures}
+#cat("DEBUG: measures:", taskdir, "\n")
 
 require("DT")
 
 DT::renderDataTable({
-    this_m <- measures %>% 
-        filter(
-            practice_code == this_practice()
-            , indicator_group_code == this_ind_group()
-            , m.name == this_measure()
-        ) %>%
-        dcast(... ~ m.stat, fun = sum)
-    
-    DT::datatable(
-        this_m
-        , options = list(
-            bPaginate = FALSE
-        )
+  this_m <- measures %>% 
+    filter(
+      (pd__this_ccg() == "[All]") | (ccg_code == pd__this_ccg())
+      , (pd__this_practice() == "[All]") | (practice_code == pd__this_practice())
+      , (pd__this_ind_group() == "[All]") | (indicator_group_code == pd__this_ind_group())
+      , (pd__this_measure() == "[All]") | (m.name == pd__this_measure())
+    ) %>%
+    select(-org.type, -data_source, -m.type) %>%
+    select(ccg_code, practice_code, indicator_group_code, indicator_code, everything()) %>%
+    dcast(... ~ m.stat, fun = sum)
+  
+  DT::datatable(
+    this_m
+    , options = list(
+      bPaginate = FALSE # paging = FALSE ?
     )
+  ) %>%
+    DT::formatRound(c("numerator", "denominator"), digits = 0) %>%
+    DT::formatRound("value", digits = 1)
 })
 
 ```
 
 ### orgref
 
-```{r}
+```{r practicedetail_orgref}
 cat("DEBUG: orgref:", taskdir, "\n")
-orgref %>% mutate_if(is.character, as.factor) %>% str()
-orgref %>% mutate_if(is.character, as.factor) %>% summary()
+#orgref %>% mutate_if(is.character, as.factor) %>% str()
+#orgref %>% mutate_if(is.character, as.factor) %>% summary()
 
+pd__this_ccg <- reactive(input$pd__this_ccg)
+pd__this_practice <- reactive(input$pd__this_practice)
+pd__all_practices <- reactive(input$pd__all_practices)
+
+require("DT")
+
+DT::renderDataTable({
+  this_m <- orgref %>% 
+    filter(
+      (pd__this_ccg() == "[All]") | (ccg_code == pd__this_ccg())
+      , (pd__this_practice() == "[All]") | (practice_code == pd__this_practice())
+    )
+  
+  DT::datatable(
+    this_m
+    , options = list(
+      bPaginate = FALSE # paging = FALSE ?
+    )
+  )
+})
 ```
 
 ### indmap
 
-```{r}
+```{r practicedetail_indmap}
 cat("DEBUG: indmap:", taskdir, "\n")
 indmap %>% mutate_if(is.character, as.factor) %>% str()
 indmap %>% select(-ends_with("description")) %>% mutate_if(is.character, as.factor) %>% summary()
 
 ```
 
+### compare
+
+```{r practicedetail_compare}
+cat("DEBUG: compare:", taskdir, "\n")
+compare %>% mutate_if(is.character, as.factor) %>% str()
+compare %>% mutate_if(is.character, as.factor) %>% summary()
+
+pd__this_ccg <- reactive(input$pd__this_ccg)
+pd__this_practice <- reactive(input$pd__this_practice)
+
+pd__this_ind_group <- reactive(input$pd__this_ind_group)
+
+pd__this_measure <- reactive(input$pd__this_measure)
+
+require("DT")
+
+DT::renderDataTable({
+  this_m <- compare %>% 
+    filter(
+      (pd__this_ccg() == "[All]") | (ccg_code == pd__this_ccg())
+      , (pd__this_practice() == "[All]") | (practice_code == pd__this_practice())
+      , (pd__this_ind_group() == "[All]") | (indicator_group_code == pd__this_ind_group())
+      , (pd__this_measure() == "[All]") | (m.name == pd__this_measure())
+    ) %>%
+    select(-org.type.var, -data_source, -m.name, -m.type) %>%
+    select(ccg_code, practice_code, indicator_group_code, indicator_code, org.type.ref, everything()) %>%
+    dcast(... ~ compare.type + compare.param, fun = function(x){paste(x, collapse = "")})
+  
+  DT::datatable(
+    this_m
+    , options = list(
+      bPaginate = FALSE # paging = FALSE ?
+    )
+  )
+  # %>%
+  #   DT::formatRound(c("numerator", "denominator"), digits = 0) %>%
+  #   DT::formatRound("value", digits = 1)
+})
+
+
+```
 
 
 Debug
@@ -377,14 +523,14 @@ Debug {.tabset}
 
 ### Debug
 
-``` {r}
+``` {r debug_overview}
 cat("DEBUG: getwd =", getwd(), "\n")
 cat("DEBUG: taskdir =", taskdir, "\n")
 ```
 
 ### compare
 
-```{r}
+```{r debug_compare}
 cat("DEBUG: compare:", taskdir, "\n")
 compare %>% mutate_if(is.character, as.factor) %>% str()
 compare %>% mutate_if(is.character, as.factor) %>% summary()
@@ -393,7 +539,7 @@ compare %>% mutate_if(is.character, as.factor) %>% summary()
 
 ### measures
 
-```{r}
+```{r debug_measures}
 cat("DEBUG: measures:", taskdir, "\n")
 measures %>% mutate_if(is.character, as.factor) %>% str()
 measures %>% mutate_if(is.character, as.factor) %>% summary()
@@ -402,7 +548,7 @@ measures %>% mutate_if(is.character, as.factor) %>% summary()
 
 ### orgref
 
-```{r}
+```{r debug_orgref}
 cat("DEBUG: orgref:", taskdir, "\n")
 orgref %>% mutate_if(is.character, as.factor) %>% str()
 orgref %>% mutate_if(is.character, as.factor) %>% summary()
@@ -411,7 +557,7 @@ orgref %>% mutate_if(is.character, as.factor) %>% summary()
 
 ### indmap
 
-```{r}
+```{r debug_indmap}
 cat("DEBUG: indmap:", taskdir, "\n")
 indmap %>% mutate_if(is.character, as.factor) %>% str()
 indmap %>% select(-ends_with("description")) %>% mutate_if(is.character, as.factor) %>% summary()
