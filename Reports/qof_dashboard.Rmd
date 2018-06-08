@@ -436,10 +436,51 @@ selectInput(
     , selected = "exceptions"
 )
 
-pd__this_ccg <- reactive(input$pd__this_ccg)
-pd__this_practice <- reactive(input$pd__this_ccg)
+pd__this_ccg_group <- reactive(input$pd__this_ccg_group)
+pd__this_practice <- reactive(input$pd__this_practice)
 pd__this_measure <- reactive(input$pd__this_measure)
 pd__this_ind_group <- reactive(input$pd__this_ind_group)
+
+pd__tmp_practices_list <- reactive({
+    # # practices
+    # if (pd__this_practice() == "[All]") {
+    #     practice_grouping %>%
+    #         filter(ccg_group_name == pd__this_ccg_group()) %>%
+    #         select(practice_code) %>% unlist() %>% as.vector()
+    # } else {
+    #     pd__this_practice()
+    # }
+
+    # every time
+    global_orgs <- c("eng", "n2")
+    
+    # relevant orgs
+    relevant_orgs <- 
+        lu.orgs.ccgs.groups %>%
+        filter(
+            ccg_code %in% 
+                (lu.orgs.ccgs.groups %>% filter(
+                    ccg_group_name == pd__this_ccg_group() |
+                        ccg_code == pd__this_ccg_group()
+                ) %>% .$ccg_code)
+        ) %>%
+        .$ccg_group_code %>% unique()
+    
+    # practices
+    if (pd__this_practice() == "[All]") {
+        relevant_practices <-
+            practice_grouping %>%
+            filter(ccg_group_name == pd__this_ccg_group()) %>%
+            #.$practice_code %>%
+            select(practice_code) %>% unlist() %>% as.vector()
+    } else {
+        relevant_practices <- pd__this_practice()
+    }
+    
+    c(global_orgs, relevant_orgs, relevant_practices) %>% unique() %>% invisible()
+
+    
+})
 
 ```
 
@@ -489,28 +530,33 @@ DT::renderDataTable({
 ```{r practicedetail_measures}
 #cat("DEBUG: measures:", taskdir, "\n")
 
+pd__measures_dat <- reactive({
+    measures %>% 
+        filter(
+            practice_code %in% pd__tmp_practices_list()
+            , (pd__this_ind_group() == "[All]") | (indicator_group_code == pd__this_ind_group())
+            , (pd__this_measure() == "[All]") | (m.name == pd__this_measure())
+        ) %>%
+        select(-org.type, -data_source, -m.type) %>%
+        select(ccg_code, practice_code, indicator_group_code, indicator_code, everything()) %>%
+        dcast(... ~ m.stat, fun = sum) %>%
+        mutate_if(is.character, as.factor) %>%
+        invisible()
+})
+
 require("DT")
 
 DT::renderDataTable({
-  this_m <- measures %>% 
-    filter(
-      (pd__this_ccg() == "[All]") | (ccg_code == pd__this_ccg())
-      , (pd__this_practice() == "[All]") | (practice_code == pd__this_practice())
-      , (pd__this_ind_group() == "[All]") | (indicator_group_code == pd__this_ind_group())
-      , (pd__this_measure() == "[All]") | (m.name == pd__this_measure())
+    DT::datatable(
+        pd__measures_dat()
+        , class = "compact nowrap"
+        , filter = list(position = 'top', clear = TRUE, plain = FALSE)
+        , options = list(
+            paging = TRUE, pageLength = 16
+        )
     ) %>%
-    select(-org.type, -data_source, -m.type) %>%
-    select(ccg_code, practice_code, indicator_group_code, indicator_code, everything()) %>%
-    dcast(... ~ m.stat, fun = sum)
-  
-  DT::datatable(
-    this_m
-    , options = list(
-      bPaginate = FALSE # paging = FALSE ?
-    )
-  ) %>%
-    DT::formatRound(c("numerator", "denominator"), digits = 0) %>%
-    DT::formatRound("value", digits = 1)
+        DT::formatRound(c("numerator", "denominator"), digits = 0) %>%
+        DT::formatRound("value", digits = 1)
 })
 
 ```
@@ -522,25 +568,25 @@ cat("DEBUG: orgref:", taskdir, "\n")
 #orgref %>% mutate_if(is.character, as.factor) %>% str()
 #orgref %>% mutate_if(is.character, as.factor) %>% summary()
 
-pd__this_ccg <- reactive(input$pd__this_ccg)
-pd__this_practice <- reactive(input$pd__this_practice)
-pd__all_practices <- reactive(input$pd__all_practices)
+pd__orgref_dat <- reactive({
+    orgref %>% 
+        filter(
+            practice_code %in% pd__tmp_practices_list()
+        ) %>%
+        invisible()
+})
 
 require("DT")
 
 DT::renderDataTable({
-  this_m <- orgref %>% 
-    filter(
-      (pd__this_ccg() == "[All]") | (ccg_code == pd__this_ccg())
-      , (pd__this_practice() == "[All]") | (practice_code == pd__this_practice())
+    DT::datatable(
+        pd__orgref_dat()
+        , class = "compact nowrap"
+        , filter = list(position = 'top', clear = TRUE, plain = FALSE)
+        , options = list(
+            bPaginate = FALSE # paging = FALSE ?
+        )
     )
-  
-  DT::datatable(
-    this_m
-    , options = list(
-      bPaginate = FALSE # paging = FALSE ?
-    )
-  )
 })
 ```
 
