@@ -73,7 +73,19 @@ lep,Local Enterprise P-ship,04M,n2,Nottingham and Nottinghamshire LEP N2
 lep,Local Enterprise P-ship,04N,n2,Nottingham and Nottinghamshire LEP N2
 lep,Local Enterprise P-ship,04K,n2,Nottingham and Nottinghamshire LEP N2
 "
-)
+) %>%
+        merge(
+            fread(input = "
+ccg_group_type,type_display_order
+lep,1
+utla,2
+stp,3
+uop,4
+")
+            , by = "ccg_group_type"
+            , all.x = TRUE
+        )
+
     if (bWriteCSV) {
         this_file <- paste_paths(taskdir, "./Results", "lu__ccg_groups.csv")
 
