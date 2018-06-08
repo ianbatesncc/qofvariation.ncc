@@ -63,6 +63,8 @@ l_add_display_order <- function(x, c1 = "org.type") {
         mutate(display_order = ifelse(is.na(display_order), 20, display_order))
 }
 
+setnames.display <- function(x) {setnames(x, gsub("_|\\.", " ", names(x)))}
+
 # actually load data
 orgref <- dat$reference$orgref #%>% l_add_orgtag()
 indmap <- dat$reference$indmap
@@ -513,7 +515,7 @@ require("DT")
 
 DT::renderDataTable({
     DT::datatable(
-        pd__compare_dat()
+        pd__compare_dat() %>% setnames.display()
         , class = "compact nowrap"
         , filter = list(position = 'top', clear = TRUE, plain = FALSE)
         , options = list(
@@ -548,7 +550,7 @@ require("DT")
 
 DT::renderDataTable({
     DT::datatable(
-        pd__measures_dat()
+        pd__measures_dat() %>% setnames.display()
         , class = "compact nowrap"
         , filter = list(position = 'top', clear = TRUE, plain = FALSE)
         , options = list(
@@ -564,7 +566,7 @@ DT::renderDataTable({
 ### orgref
 
 ```{r practicedetail_orgref}
-cat("DEBUG: orgref:", taskdir, "\n")
+#cat("DEBUG: orgref:", taskdir, "\n")
 #orgref %>% mutate_if(is.character, as.factor) %>% str()
 #orgref %>% mutate_if(is.character, as.factor) %>% summary()
 
@@ -573,6 +575,7 @@ pd__orgref_dat <- reactive({
         filter(
             practice_code %in% pd__tmp_practices_list()
         ) %>%
+        mutate_if(is.character, as.factor) %>%
         invisible()
 })
 
@@ -580,11 +583,11 @@ require("DT")
 
 DT::renderDataTable({
     DT::datatable(
-        pd__orgref_dat()
+        pd__orgref_dat() %>% setnames.display()
         , class = "compact nowrap"
         , filter = list(position = 'top', clear = TRUE, plain = FALSE)
         , options = list(
-            bPaginate = FALSE # paging = FALSE ?
+            paging = TRUE, pagelength = 16
         )
     )
 })
@@ -593,9 +596,33 @@ DT::renderDataTable({
 ### indmap
 
 ```{r practicedetail_indmap}
-cat("DEBUG: indmap:", taskdir, "\n")
-indmap %>% mutate_if(is.character, as.factor) %>% str()
-indmap %>% select(-ends_with("description")) %>% mutate_if(is.character, as.factor) %>% summary()
+#cat("DEBUG: indmap:", taskdir, "\n")
+#indmap %>% mutate_if(is.character, as.factor) %>% str()
+#indmap %>% select(-ends_with("description")) %>% mutate_if(is.character, as.factor) %>% summary()
+
+pd__indmap_dat <- reactive({
+    indmap %>% 
+        filter(
+            pd__this_ind_group() == "[All]" | 
+            indicator_group_code == pd__this_ind_group()
+        ) %>%
+        select(-indicator_group_code, -data_source, -starts_with("domain_")) %>%
+        mutate_if(is.character, as.factor) %>%
+        invisible()
+})
+
+require("DT")
+
+DT::renderDataTable({
+    DT::datatable(
+        pd__indmap_dat() %>% setnames.display()
+        , class = "compact"
+        , filter = list(position = 'top', clear = TRUE, plain = FALSE)
+        , options = list(
+            paging = TRUE, pagelength = 16
+        )
+    )
+})
 
 ```
 
