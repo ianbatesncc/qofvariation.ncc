@@ -191,13 +191,10 @@ Row
 
 #cat("INFO: Heatmap", "\n")
 
-#this_orgtype <- reactive(input$this_orgtype)
-#this_ccg <- reactive(input$this_ccg)
 hm__this_ccg_group <- reactive(input$hm__this_ccg_group)
 hm__this_measure <- reactive(input$hm__this_measure)
 hm__this_comparator <- reactive(input$hm__this_comparator)
 hm__this_comparison_method <- reactive(input$hm__this_comparison_method)
-#this_comparison_param <- reactive(input$this_comparison_param)
 
 hm__tmp_practices_list <- reactive({
     
