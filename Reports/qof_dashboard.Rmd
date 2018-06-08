@@ -140,19 +140,7 @@ Show variation in QOF.
 bRenderD3 = FALSE
 bRenderggplot = TRUE
 cat("INFO: possible input selections here", "\n")
-# selectInput(
-#     "this_orgtype"
-#     , label = "Select org type:"
-#     , choices = these_orgtypes
-#     , selected = these_orgtypes[1]
-# )
 
-# selectInput(
-#     "this_ccg"
-#     , label = "Select CCG:"
-#     , choices = these_ccgs
-#     , selected = these_ccgs[1]
-# )
 
 selectInput(
     "hm__this_ccg_group"
@@ -174,13 +162,6 @@ selectInput(
     , choices = these_comparisons
     , selected = "spc" # these_comparisons[1]
 )
-
-# selectInput(
-#     "this_comparison_param"
-#     , label = "Select comparison parameter:"
-#     , choices = these_comparisons_param
-#     , selected = these_comparisons_param[1]
-# )
 
 selectInput(
     "hm__this_comparator"
@@ -426,19 +407,18 @@ Show QOF dat for practice.
 ```{r practicedetail_input}
 
 selectInput(
-    "pd__this_ccg"
-    , label = "Select CCG:"
-    , choices = c("[All]", these_ccgs)
-    #, selected = these_ccgs[1]
-    , selected = "[All]"
+    "pd__this_ccg_group"
+    , label = "Select Practice grouping:"
+    , choices = these_ccg_groups
+    , selected = these_ccg_groups[1]
 )
 
 selectInput(
     "pd__this_practice"
     , label = "Select Practice:"
     , choices = c("[All]", these_practices)
-    , selected = these_practices[1]
-    #, selected = "[All]"
+    #, selected = these_practices[1]
+    , selected = "[All]"
 )
 
 selectInput(
