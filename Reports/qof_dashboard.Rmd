@@ -31,11 +31,13 @@ source(file = paste(taskdir, "Analysis/main.R", sep = "/"))
 dat <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
 
 l_add_orgtag <- function(x, c1 = "ccg_code", c2 = "practice_code") {
-  x %>%
-    mutate(orgtag = paste(
-      UQ(rlang::sym(c1))
-      , UQ(rlang::sym(c2)))
-    ) %>% invisible()
+    x %>%
+        mutate(
+            orgtag = paste(
+                UQ(rlang::sym(c1))
+                , UQ(rlang::sym(c2))
+            )
+        ) %>% invisible()
 }
 
 orgref <- dat$reference$orgref #%>% l_add_orgtag()
