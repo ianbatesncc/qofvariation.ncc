@@ -40,22 +40,42 @@ l_add_orgtag <- function(x, c1 = "ccg_code", c2 = "practice_code") {
         ) %>% invisible()
 }
 
-orgref <- dat$reference$orgref #%>% l_add_orgtag()
-indmap <- dat$reference$indmap
-measures <- dat$measures #%>% l_add_orgtag()
-compare <- dat$compare #%>% l_add_orgtag()
-
 # Add ccg group lookup
 lu.orgs.ccgs.groups <- fread(
     file = paste_paths(taskdir, "./Results/lu__ccg_groups.csv")
 ) #%>% l_add_orgtag("ccg_group_type", "ccg_group_code")
+
+# Add display order
+#
+# Based on ccg_group_type.  CCGs go to 10, practices go to 20.
+l_add_display_order <- function(x, c1 = "org.type") {
+    #names(x) %>% print()
+    x %>% 
+        merge(
+            lu.orgs.ccgs.groups %>% 
+                select(ccg_group_code, display_order = type_display_order) %>%
+                unique()
+            , by.x = "practice_code", by.y = "ccg_group_code"
+            , all.x = TRUE
+        ) %>%
+        mutate(display_order = ifelse(UQ(rlang::sym(c1)) == "england", 0, display_order)) %>%
+        mutate(display_order = ifelse(UQ(rlang::sym(c1)) == "ccg", 10, display_order)) %>%
+        mutate(display_order = ifelse(is.na(display_order), 20, display_order))
+}
+
+# actually load data
+orgref <- dat$reference$orgref #%>% l_add_orgtag()
+indmap <- dat$reference$indmap
+measures <- dat$measures %>% l_add_display_order() #%>% l_add_orgtag()
+compare <- dat$compare %>% l_add_display_order("org.type.var") #%>% l_add_orgtag()
 
 practice_grouping <- list(
     orgref %>% 
         # filter out existing ccg groups
         filter(nchar(practice_code) > 3) %>%
         select(practice_code, ccg_code) %>%
-        merge(lu.orgs.ccgs.groups, by = "ccg_code", all.y = TRUE)
+        merge(lu.orgs.ccgs.groups, by = "ccg_code", all.y = TRUE) %>%
+        select(-type_display_order)
     
     , orgref %>% 
         # filter out existing ccg groups
