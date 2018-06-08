@@ -447,6 +447,43 @@ pd__this_ind_group <- reactive(input$pd__this_ind_group)
 Practice detail {.tabset}
 ----
 
+### compare
+
+```{r practicedetail_compare}
+#cat("DEBUG: compare:", taskdir, "\n")
+#compare %>% mutate_if(is.character, as.factor) %>% str()
+#compare %>% mutate_if(is.character, as.factor) %>% summary()
+
+pd__compare_dat <- reactive({
+    compare %>% 
+        filter(
+            practice_code %in% pd__tmp_practices_list()
+            , (pd__this_ind_group() == "[All]") | (indicator_group_code == pd__this_ind_group())
+            , (pd__this_measure() == "[All]") | (m.name == pd__this_measure())
+        ) %>%
+        select(-org.type.var, -data_source, -m.type) %>%
+        select(ccg_code, practice_code, indicator_group_code, indicator_code, org.type.ref, everything()) %>%
+        dcast(... ~ compare.type + compare.param, value.var = "statsig", fun = function(x){paste(x, collapse = "")}) %>%
+        mutate_if(is.character, as.factor) %>%
+        invisible()
+})
+
+require("DT")
+
+DT::renderDataTable({
+    DT::datatable(
+        pd__compare_dat()
+        , class = "compact nowrap"
+        , filter = list(position = 'top', clear = TRUE, plain = FALSE)
+        , options = list(
+            paging = TRUE, pageLength = 16
+        )
+    )
+})
+
+
+```
+
 ### measures
 
 ```{r practicedetail_measures}
@@ -516,47 +553,6 @@ indmap %>% select(-ends_with("description")) %>% mutate_if(is.character, as.fact
 
 ```
 
-### compare
-
-```{r practicedetail_compare}
-cat("DEBUG: compare:", taskdir, "\n")
-compare %>% mutate_if(is.character, as.factor) %>% str()
-compare %>% mutate_if(is.character, as.factor) %>% summary()
-
-pd__this_ccg <- reactive(input$pd__this_ccg)
-pd__this_practice <- reactive(input$pd__this_practice)
-
-pd__this_ind_group <- reactive(input$pd__this_ind_group)
-
-pd__this_measure <- reactive(input$pd__this_measure)
-
-require("DT")
-
-DT::renderDataTable({
-  this_m <- compare %>% 
-    filter(
-      (pd__this_ccg() == "[All]") | (ccg_code == pd__this_ccg())
-      , (pd__this_practice() == "[All]") | (practice_code == pd__this_practice())
-      , (pd__this_ind_group() == "[All]") | (indicator_group_code == pd__this_ind_group())
-      , (pd__this_measure() == "[All]") | (m.name == pd__this_measure())
-    ) %>%
-    select(-org.type.var, -data_source, -m.name, -m.type) %>%
-    select(ccg_code, practice_code, indicator_group_code, indicator_code, org.type.ref, everything()) %>%
-    dcast(... ~ compare.type + compare.param, fun = function(x){paste(x, collapse = "")})
-  
-  DT::datatable(
-    this_m
-    , options = list(
-      bPaginate = FALSE # paging = FALSE ?
-    )
-  )
-  # %>%
-  #   DT::formatRound(c("numerator", "denominator"), digits = 0) %>%
-  #   DT::formatRound("value", digits = 1)
-})
-
-
-```
 
 
 Debug
