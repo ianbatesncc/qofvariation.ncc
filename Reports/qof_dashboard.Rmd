@@ -375,6 +375,111 @@ Row {.tabset}
 # renderPlot(
 #   parallelCoordinates(BicatYeast, res, number = num())
 # )
+sb__ind_dat <- reactive({
+    l_ind_num <- measures %>%
+        filter(
+            m.type == "performance"
+            , ccg_code == "02Q"
+            , indicator_code == "DM002"
+            , m.stat == "numerator"
+            , !m.name %in% "achievement"
+        ) %>%
+        select(-m.type, -m.stat) %>%
+        dcast(... ~ m.name)
+    
+    l_ind_den <- measures %>%
+        filter(
+            m.type == "performance"
+            , m.name == "exceptions" # anything NOT acheivement
+            , ccg_code == "02Q"
+            , indicator_code == "DM002"
+            , m.stat == "denominator"
+        ) %>%
+        dcast(practice_code ~ m.stat)
+    
+    l_reg_num <- measures %>%
+        filter(
+            m.type == "prevalence"
+            , ccg_code == "02Q"
+            , indicator_group_code == "DM"
+            , m.stat == "numerator"
+        ) %>%
+        dcast(practice_code ~ m.name)
+    
+    l_ind <- l_ind_num %>%
+        merge(l_ind_den, by = "practice_code", all.x = TRUE) %>%
+        merge(l_reg_num, by = "practice_code", all.x = TRUE) %>%
+        arrange(display_order, ccg_code, practice_code)
+    
+    l_ind_delta <- l_ind %>%
+        mutate(
+            d_opt = treatment
+            , d_sub = suboptimal
+            , d_exc = exceptions
+            , d_excl = denominator - qofprevalence
+            , d_model = 0
+        )
+    
+    fields_drop <- c(
+        "exceptions"
+        , "suboptimal"
+        , "treatment"
+        , "denominator"
+        , "qofprevalence"
+    )
+    
+    fields_keep <- c(
+        "d_opt"
+        , "d_sub"
+        , "d_exc"
+        , "d_excl"
+        , "d_model"
+    )
+    
+    l_ind_melt <- l_ind_delta %>%
+        select(-one_of(fields_drop)) %>%
+        melt(
+            measure.vars = fields_keep
+            , variable.name = "status", variable.factor = FALSE
+            , value.name = "value", value.factor = FALSE
+        ) %>%
+        # dark arts to get desired order ...
+        mutate(
+            practice_code_ordered = factor(practice_code)
+            , practice_code_ordered = reorder(practice_code_ordered, desc(practice_code))
+            , practice_code_ordered = reorder(practice_code_ordered, desc(display_order))
+            # yticklabel_ordered = factor(yticklabel)
+            # , yticklabel_ordered = reorder(yticklabel_ordered, desc(yticklabel))
+            # , yticklabel_ordered = reorder(yticklabel_ordered, desc(display_order))
+        )
+    
+})
+
+renderPlot({
+    
+    cols <- c(
+        d_opt = "green4"
+        , d_sub = "darkorange"
+        , d_exc = "red"
+        , d_excl = "lightblue"
+        , d_model = "gray50"
+    )
+    
+    p <- ggplot(l_ind_melt) +
+        geom_col(
+            aes(x = practice_code_ordered, y = value, fill = status)
+            #, position = "dodge"
+            #, position = position_stack(reverse = TRUE)
+            , position = position_fill(reverse = TRUE)
+        ) +
+        coord_flip() +
+        scale_colour_manual(values = cols, aesthetics = "fill") +
+        theme(legend.position = "top")
+    
+    p %>% print()
+    
+})
+
 
 cat("INFO: tab 1", "\n")
 
