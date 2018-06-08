@@ -12,7 +12,7 @@ output:
 ```{r setup, include = FALSE, cache = FALSE}
 require("flexdashboard")
 require("shiny")
-require("d3heatmap")
+#require("d3heatmap")
 require("DT")
 
 knitr::opts_chunk$set(cache = FALSE)
@@ -117,6 +117,8 @@ Show variation in QOF.
 
 ```{r heatmap_inputs}
 
+bRenderD3 = FALSE
+bRenderggplot = TRUE
 cat("INFO: possible input selections here", "\n")
 # selectInput(
 #     "this_orgtype"
@@ -167,8 +169,12 @@ selectInput(
     , selected = "england" # these_comparators[1]
 )
 
-checkboxInput("hm__group_rows", "Group rows", FALSE)
-checkboxInput("hm__group_cols", "Group cols", FALSE)
+if (bRenderD3) {
+    
+    checkboxInput("hm__group_rows", "Group rows", FALSE)
+    checkboxInput("hm__group_cols", "Group cols", FALSE)
+    
+}
 
 ```
 
@@ -190,132 +196,168 @@ hm__this_comparator <- reactive(input$hm__this_comparator)
 hm__this_comparison_method <- reactive(input$hm__this_comparison_method)
 #this_comparison_param <- reactive(input$this_comparison_param)
 
-hm__this_group_rows <- reactive(input$hm__group_rows)
-hm__this_group_cols <- reactive(input$hm__group_cols)
-
-if (TRUE) {
-renderPlot({
-  # prepare matrix from reactive() components
-  
-  tmp_practices <- c(
+hm__tmp_practices_list <- reactive({
+    
+    # every time
+    global_orgs <- c("eng", "n2")
+    
+    # relevant orgs
+    relevant_orgs <- 
+        lu.orgs.ccgs.groups %>%
+        filter(
+            ccg_code %in% 
+                (lu.orgs.ccgs.groups %>% filter(
+                    ccg_group_name == hm__this_ccg_group() |
+                        ccg_code == hm__this_ccg_group()
+                ) %>% .$ccg_code)
+        ) %>%
+        .$ccg_group_code %>% unique()
+    
     # practices
-    practice_grouping %>%
-      filter(ccg_group_name == hm__this_ccg_group()) %>%
-      .$practice_code
-  )
-  
-  this_dat <- compare %>%
-    # filter on measure and comparison
-    filter(
-      m.name == hm__this_measure()
-      , org.type.ref == hm__this_comparator()
-      , compare.type == hm__this_comparison_method()
-    ) %>%
-    # filter on practices of interest
-    filter(practice_code %in% tmp_practices) %>%
-    mutate(
-      xticklabel = paste(indicator_group_code, indicator_code)
-      , yticklabel = paste(ccg_code, practice_code)
-    ) %>%
-    #select(ccg_code, practice_code, indicator_code, compare.param, statsig) %>%
-    select(xticklabel, yticklabel, compare.param, statsig) %>%
-    merge(lu_statsig_num, by = "statsig") %>%
-    # this handles benchmark and spc    
-    #dcast(ccg_code + practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
-    group_by_at(vars(-compare.param, -istatsig, -statsig)) %>%
-    summarise_at(vars(istatsig), sum) %>%
-    ungroup()
-  
-  require("ggplot2")
-  
-  p__base_size <- 11
-  
-  p <- ggplot(
-    this_dat
-    #, aes(x = indicator_code, y = practice_code)
-    , aes(x = xticklabel, y = yticklabel)
-  ) + 
-    geom_tile(aes(fill = istatsig), colour = "white") + 
-    #scale_fill_gradient(low = "white", high = "steelblue") +
-    #    this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
-    scale_fill_gradient2(
-      low = "#6666cc"
-      , mid = "#ffffee"
-      , high = "#cc8888"
-      , na.value = "#eeeeee"
-      , space = "Lab") +
-    # styling
-    theme_grey(base_size = p__base_size) + 
-    labs(x = "", y = "") + 
-    scale_x_discrete(
-      expand = c(0, 0), position = "top"
-    ) +
-    scale_y_discrete(expand = c(0, 0)) +
-    theme(
-      legend.position = "none"
-      , axis.ticks = element_blank()
-      , axis.text.x = element_text(
-        size = max(7, p__base_size * 0.67)
-        , angle = 60 # 45 30
-        , hjust = 0
-        , colour = "grey50"
-      )
-    )
-  
-  p %>% print()
-
+    relevant_practices <-
+        practice_grouping %>%
+        filter(ccg_group_name == hm__this_ccg_group()) %>%
+        #.$practice_code %>%
+        select(practice_code) %>% unlist() %>% as.vector()
+    
+    c(global_orgs, relevant_orgs, relevant_practices) %>% unique() %>% invisible()
 })
+
+
+if (bRenderggplot) {
+    
+    hm__heatmap_dat__ggplot <- reactive({
+        this_dat <- compare %>%
+            # filter on measure and comparison
+            filter(
+                m.name == hm__this_measure()
+                , org.type.ref == hm__this_comparator()
+                , compare.type == hm__this_comparison_method()
+            ) %>%
+            # filter on practices of interest
+            filter(practice_code %in% hm__tmp_practices_list()) %>%
+            mutate(
+                xticklabel = paste(indicator_group_code, indicator_code)
+                , yticklabel = paste(ccg_code, practice_code)
+            ) %>%
+            select(display_order, xticklabel, yticklabel, compare.param, statsig) %>%
+            merge(lu_statsig_num, by = "statsig") %>%
+            # this handles benchmark and spc    
+            #dcast(ccg_code + practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
+            group_by_at(vars(-compare.param, -istatsig, -statsig)) %>%
+            summarise_at(vars(istatsig), sum) %>%
+            ungroup() %>%
+            # try to sort for plot
+            mutate(
+                yticklabel_ordered = factor(yticklabel)
+                , yticklabel_ordered = reorder(yticklabel_ordered, desc(yticklabel))
+                , yticklabel_ordered = reorder(yticklabel_ordered, desc(display_order))
+            )
+
+        this_dat %>% invisible()
+        
+    })
+    
+    renderPlot({
+        # prepare matrix from reactive() components
+        
+        require("ggplot2")
+        
+        p__base_size <- 12
+        
+        p <- ggplot(
+            hm__heatmap_dat__ggplot()
+            #, aes(x = indicator_code, y = practice_code)
+            , aes(x = xticklabel, y = yticklabel_ordered)
+        ) + 
+            geom_tile(aes(fill = istatsig), colour = "white") + 
+            #scale_fill_gradient(low = "white", high = "steelblue") +
+            #    this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
+            scale_fill_gradient2(
+                low = "#6666cc"
+                , mid = "#ffffee"
+                , high = "#cc8888"
+                , na.value = "#eeeeee"
+                , space = "Lab") +
+            # styling
+            theme_grey(base_size = p__base_size) + 
+            labs(x = "", y = "") + 
+            scale_x_discrete(
+                expand = c(0, 0), position = "top"
+            ) +
+            scale_y_discrete(expand = c(0, 0)) +
+            theme(
+                legend.position = "none"
+                , axis.ticks = element_blank()
+                , axis.text.x = element_text(
+                    size = max(7, p__base_size * 0.67)
+                    , angle = 60 # 45 30
+                    , hjust = 0
+                    , colour = "grey50"
+                )
+            )
+        
+        p %>% print()
+        
+    })
+    
 }
 
-if (FALSE) {
-renderD3heatmap({
-    # prepare matrix from reactive() components
+if (bRenderD3) {
     
-    this_dat <- compare %>%
-        # filter on measure and comparison
-        filter(
-            m.name == hm__this_measure()
-            , org.type.ref == hm__this_comparator()
-            , compare.type == hm__this_comparison_method()
-        ) %>%
-        # filter on practices of interest
-        filter(
-            practice_code %in% c(
-                practice_grouping %>%
-                    filter(ccg_group_name == hm__this_ccg_group()) %>%
-                    .$practice_code
-            )
-        ) %>%
-        select(ccg_code, practice_code, indicator_code, compare.param, statsig) %>%
-      merge(lu_statsig_num, by = "statsig") %>%
-      # this handles benchmark and spc    
-      dcast(ccg_code + practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
-
-    rownames(this_dat) <- this_dat %>%
-        select(ccg_code, practice_code) %>% 
-        unique() %>% transpose() %>%
-        sapply(paste, collapse = " - ")
+    hm__this_group_rows <- reactive(input$hm__group_rows)
+    hm__this_group_cols <- reactive(input$hm__group_cols)
     
-    this_dat <- this_dat %>% select(-ends_with("_code"))
+    hm__heatmap_dat__d3 <- reactive({
+        this_dat <- compare %>%
+            # filter on measure and comparison
+            filter(
+                m.name == hm__this_measure()
+                , org.type.ref == hm__this_comparator()
+                , compare.type == hm__this_comparison_method()
+            ) %>%
+            # filter on practices of interest
+            filter(practice_code %in% hm__tmp_practices_list()) %>%
+            mutate(
+                xticklabel = paste(indicator_group_code, indicator_code)
+                , yticklabel = paste(ccg_code, practice_code)
+            ) %>%
+            #select(ccg_code, practice_code, indicator_code, compare.param, statsig) %>%
+            select(xticklabel, yticklabel, compare.param, statsig) %>%
+            merge(lu_statsig_num, by = "statsig") %>%
+            # this handles benchmark and spc    
+            dcast(xticklabel ~ yticklabel, value.var = "istatsig", fun = sum)
+        
+        rownames(this_dat) <- this_dat %>%
+            select(xticklabel)
+        
+        this_dat <- this_dat %>% select(-ends_with("_code"))
+        
+        this_dat %>% invisible()
+        
+    })
     
-    # ... and plot
-    
-    #this_col = colorRampPalette(c("blue", "yellow", "red"), space = "Lab")(5)
-    #this_col = "RdYlBu"
-    this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
-    this_idendrogram <- c(hm__this_group_rows(), hm__this_group_cols()) %*% c(1, 2) + 1
-    #this_idendrogram <- c(input$group_rows, input$group_cols) %*% c(1, 2) + 1
-    
-    dendrogram_opts <- c("none", "row", "column", "both")
-    
-    #print(dendrogram_opts[this_idendrogram])
-    
-    d3heatmap(
-        this_dat
-        , colors = this_col
-        , dendrogram = dendrogram_opts[this_idendrogram]
-    )
-})
+    renderD3heatmap({
+        # prepare matrix from reactive() components
+        
+        # ... and plot
+        
+        #this_col = colorRampPalette(c("blue", "yellow", "red"), space = "Lab")(5)
+        #this_col = "RdYlBu"
+        this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
+        this_idendrogram <- c(hm__this_group_rows(), hm__this_group_cols()) %*% c(1, 2) + 1
+        #this_idendrogram <- c(input$group_rows, input$group_cols) %*% c(1, 2) + 1
+        
+        dendrogram_opts <- c("none", "row", "column", "both")
+        
+        #print(dendrogram_opts[this_idendrogram])
+        
+        d3heatmap(
+            hm__heatmap_dat__d3()
+            , colors = this_col
+            , dendrogram = dendrogram_opts[this_idendrogram]
+        )
+    })
 }
 
 ```
