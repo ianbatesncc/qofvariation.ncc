@@ -594,9 +594,6 @@ sb__ind_dat <- reactive({
             value = (2 * l__sort_desc - 1) * value
         )
     
-    # measures %>% filter(practice_code %in% l__tmp_practices_list) %>% filter(m.stat != "denominator") %>% dcast(... ~ m.name + m.stat)
-    all_measure_stats <- measures %>% select(m.type, m.name, m.stat) %>% unique()
-    
     fields_ordered <- c(
         "optimal"
         , "suboptimal"
