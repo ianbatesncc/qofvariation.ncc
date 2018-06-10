@@ -41,6 +41,9 @@ main <- function(
     , bLoadData = FALSE
 ) {
 
+    require("dplyr")
+    require("data.table")
+
     lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
 
     lu.orgs.ccgs.groups <- fread(input = "
@@ -120,7 +123,7 @@ uop,4
 
     # return
 
-    return(retval)
+    invisible(retval)
 }
 
 #' Test the main routine
