@@ -518,39 +518,62 @@ Row
 
 ### Stacked Bar
 
+```{r stackedbar}
+
+sb__ind_dat <- reactive({
+    
+    l__this_indicator <- sb__this_indicator()
+    l__this_practice <- sb__this_practice()
+    l__tmp_practices_list <- sb__tmp_practices_list()
+
+    # For debugging dynamic elements
+    #
+    # l__this_indicator <- "AF006"
+    # l__this_practice <- "C84001"
+    # l__tmp_practices_list <- c("eng", "n2", "02Q", "C84001", "C84008", "C84013")
+    
+    l__this_ccg <- orgref %>%
+        filter(practice_code == l__this_practice) %>%
+        .$ccg_code
+    
+    l__this_ind_group <- indmap %>%
+        filter(indicator_code == l__this_indicator) %>%
+        .$indicator_group_code
+    
+    l_ind <- counts %>%
+        filter(
+            practice_code %in% l__tmp_practices_list | 
+                ((practice_code == "ccg") & (ccg_code %in% l__tmp_practices_list))
+            , indicator_code == l__this_indicator
         )
     
-    fields_drop <- c(
-        "exceptions"
+    # measures %>% filter(practice_code %in% l__tmp_practices_list) %>% filter(m.stat != "denominator") %>% dcast(... ~ m.name + m.stat)
+    all_measure_stats <- measures %>% select(m.type, m.name, m.stat) %>% unique()
+    
+    fields_ordered <- c(
+        "optimal"
         , "suboptimal"
-        , "treatment"
-        , "denominator"
-        , "qofprevalence"
+        , "exceptions"
+        , "exclusions"
+        , "model"
     )
     
-    fields_keep <- c(
-        "d_opt"
-        , "d_sub"
-        , "d_exc"
-        , "d_excl"
-        , "d_model"
-    )
-    
-    l_ind_melt <- l_ind_delta %>%
-        select(-one_of(fields_drop)) %>%
+    l_ind_melt <- l_ind %>% setDT() %>%
         melt(
-            measure.vars = fields_keep
+            measure.vars = fields_ordered
             , variable.name = "status", variable.factor = FALSE
             , value.name = "value", value.factor = FALSE
         ) %>%
         # dark arts to get desired order ...
+        mutate_at(vars(status), factor, levels = fields_ordered) %>%
+        mutate(pvalue = value / register) %>%
+        mutate(sort_key = display_order + ifelse(display_order < 20, 0, pvalue)) %>%
         mutate(
-            practice_code_ordered = factor(practice_code)
-            , practice_code_ordered = reorder(practice_code_ordered, desc(practice_code))
-            , practice_code_ordered = reorder(practice_code_ordered, desc(display_order))
-            # yticklabel_ordered = factor(yticklabel)
-            # , yticklabel_ordered = reorder(yticklabel_ordered, desc(yticklabel))
-            # , yticklabel_ordered = reorder(yticklabel_ordered, desc(display_order))
+            #practice_code_ordered = factor(practice_code)
+            #, practice_code_ordered = reorder(practice_code_ordered, desc(practice_code))
+             practice_code_ordered = reorder(factor(practice_code), desc(practice_code))
+            #, practice_code_ordered = reorder(practice_code_ordered, desc(practice_code))
+            , practice_code_ordered = reorder(practice_code_ordered, desc(sort_key))
         )
     
 })
