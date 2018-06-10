@@ -881,7 +881,7 @@ f__91__compare <- function(
     cat("INFO: f__91__compare: creating reference lookups ...", "\n")
 
     #qof_measures$prev$org.type %>% unique() %>% print()
-    # [1] "ccg, practice" "ccg"           ""england"
+    # [1] "ccg::practice" "ccg::instance" "england"
 
     # All that is not England ####
 
