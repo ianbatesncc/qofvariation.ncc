@@ -410,7 +410,7 @@ f__91__load_data <- function(
     #' Add org.type to data elements
     l_add_orgtype <- function(x) {
         cat("INFO: l_add_orgtype: amending ...", "\n")
-        x$data <- x$data %>% lapply(mutate, org.type = "(ccg, practice)")
+        x$data <- x$data %>% lapply(mutate, org.type = "ccg, practice")
         invisible(x)
     }
 
@@ -459,7 +459,7 @@ f__91__amend_data__add_subtotals <- function(
                     list(
                         x
                         , x %>%
-                            filter(org.type == "(ccg, practice)") %>%
+                            filter(org.type == "ccg, practice") %>%
                             group_by_at(vars(-value, -ccg_code, -practice_code)) %>%
                             summarise_at(vars(value), sum, na.rm = TRUE) %>%
                             ungroup() %>%
@@ -482,6 +482,10 @@ f__91__amend_data__add_subtotals <- function(
     }
 
     # ccg totals
+    #'
+    #' Consistently use practice_code as instance, ccg_code as type ... even for
+    #' CCGs ...
+    #'
     l_add_ccgs <- function(x, bProcess = FALSE) {
         if (bProcess) {
             x$data <- x$data[c("ind", "prev.melt")] %>%
@@ -489,11 +493,15 @@ f__91__amend_data__add_subtotals <- function(
                     list(
                         x,
                         x %>%
-                            filter(org.type == "(ccg, practice)") %>%
+                            filter(org.type == "ccg, practice") %>%
                             group_by_at(vars(-value, -practice_code)) %>%
                             summarise_at(vars(value), sum, na.rm = TRUE) %>%
                             ungroup() %>%
-                            mutate(practice_code = "ccg", org.type = "ccg")
+                            mutate(
+                                practice_code = ccg_code
+                                , ccg_code = "ccg"
+                                , org.type = "ccg, instance"
+                            )
                     ) %>% rbindlist(use.names = TRUE)
                 })
         }
@@ -888,9 +896,10 @@ f__91__compare <- function(
     tmp.ccg <- merge(
         q.var.cast
         , qof_measures %>%
-            filter(org.type == 'ccg', m.stat %in% c('value')) %>%
-            select(-data_source, -practice_code) %>%
-            dcast(... ~ m.stat, value.var = 'value')
+            filter(org.type == "ccg, instance", m.stat == "value") %>%
+            select(-data_source, -ccg_code) %>%
+            rename(ccg_code = "practice_code") %>%
+            dcast(... ~ m.stat, value.var = "value")
         , by = c('indicator_group_code', 'indicator_code', 'ccg_code', "m.type", 'm.name')
         , all.x = FALSE, all.y = FALSE, suffixes = c('.var', '.ref')
     )
