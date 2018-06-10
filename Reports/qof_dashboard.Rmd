@@ -5,7 +5,8 @@ output:
     flexdashboard::flex_dashboard:
     orientation: rows
     source_code: embed
-    vertical_layout: fill # scroll
+#    vertical_layout: fill # scroll
+    vertical_layout: scroll
     runtime: shiny
 ---
 
@@ -103,7 +104,7 @@ these_ccgs <- measures$ccg_code %>% unique() %>% sort()
 these_practices <- practice_grouping$practice_code %>% unique() %>% sort()
 
 these_ind_groups <- measures$indicator_group_code %>% unique() %>% sort()
-these_inds <- measures$indicator_code %>% unique() %>% sort()
+these_indicators <- measures$indicator_code %>% unique() %>% sort()
 
 these_measures <- measures$m.name %>% unique() %>% sort()
 
@@ -432,6 +433,8 @@ Stacked bars
 Inputs {.sidebar}
 -----------------------------------------------------------------------
 
+Show QOF dat for practice.
+
 ```{r stackedbar_input}
 
 selectInput(
@@ -638,7 +641,6 @@ Inputs {.sidebar}
 -----------------------------------------------------------------------
 
 Show QOF dat for practice.
-
 
 ```{r practicedetail_input}
 
