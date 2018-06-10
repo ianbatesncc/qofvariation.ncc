@@ -410,7 +410,7 @@ f__91__load_data <- function(
     #' Add org.type to data elements
     l_add_orgtype <- function(x) {
         cat("INFO: l_add_orgtype: amending ...", "\n")
-        x$data <- x$data %>% lapply(mutate, org.type = "ccg, practice")
+        x$data <- x$data %>% lapply(mutate, org.type = "ccg::practice")
         invisible(x)
     }
 
@@ -459,7 +459,7 @@ f__91__amend_data__add_subtotals <- function(
                     list(
                         x
                         , x %>%
-                            filter(org.type == "ccg, practice") %>%
+                            filter(org.type == "ccg::practice") %>%
                             group_by_at(vars(-value, -ccg_code, -practice_code)) %>%
                             summarise_at(vars(value), sum, na.rm = TRUE) %>%
                             ungroup() %>%
@@ -475,7 +475,10 @@ f__91__amend_data__add_subtotals <- function(
         if (length(lu.orgs.ccgs.local) > 1 | !any(is.na(lu.orgs.ccgs.local))) {
             x$data <- x$data %>%
                 lapply(function(x) {
-                    x %>% filter(ccg_code %in% lu.orgs.ccgs.local)
+                    list(
+                        x %>% filter(org.type != "ccg::practice")
+                        , x %>% filter(org.type == "ccg::practice", ccg_code %in% lu.orgs.ccgs.local)
+                    ) %>% rbindlist(use.names = TRUE)
                 })
         }
         invisible(x)
@@ -493,14 +496,14 @@ f__91__amend_data__add_subtotals <- function(
                     list(
                         x,
                         x %>%
-                            filter(org.type == "ccg, practice") %>%
+                            filter(org.type == "ccg::practice") %>%
                             group_by_at(vars(-value, -practice_code)) %>%
                             summarise_at(vars(value), sum, na.rm = TRUE) %>%
                             ungroup() %>%
                             mutate(
                                 practice_code = ccg_code
                                 , ccg_code = "ccg"
-                                , org.type = "ccg, instance"
+                                , org.type = "ccg::instance"
                             )
                     ) %>% rbindlist(use.names = TRUE)
                 })
@@ -518,16 +521,17 @@ f__91__amend_data__add_subtotals <- function(
                     x
                     , x %>%
                         # choose ccg quantities
-                        filter(org.type == "ccg") %>%
+                        filter(org.type == "ccg::instance") %>%
                         # tag ccg groups
                         merge(
                             lu.orgs.ccgs.groups %>%
-                                select(ccg_code, ccg_group_code, ccg_group_type)
+                                rename(practice_code = "ccg_code") %>%
+                                select(practice_code, ccg_group_code, ccg_group_type)
                             , all.y = TRUE
-                            , by = "ccg_code"
+                            , by = "practice_code"
                         ) %>%
                         mutate(
-                            org.type = paste(ccg_group_type, "instance", sep = ", ")
+                            org.type = paste(ccg_group_type, "instance", sep = "::")
                             , ccg_code = ccg_group_type
                             , practice_code = ccg_group_code
                         ) %>% select(-starts_with("ccg_group")) %>%
@@ -543,17 +547,22 @@ f__91__amend_data__add_subtotals <- function(
     }
 
     qof <- qof %>%
+    qof %>%
         status("INFO: - calculating england total ...") %>%
         l_add_eng(bCalcEngTotal) %>%
+
         status("INFO: - filtering local ccgs ...") %>%
-        l_filter_ccgs(c("eng", lu.orgs.ccgs.local)) %>%
+        l_filter_ccgs(c(lu.orgs.ccgs.local)) %>%
+
         status("INFO: - calculating ccg totals ...") %>%
         l_add_ccgs(bCalcCCGTotals) %>%
+
         status("INFO: - calculating ccg groups ...") %>%
         l_add_groups(lu.orgs.ccgs.groups) %>%
-        status("INFO: - done.")
 
-    invisible(qof)
+        status("INFO: - done.") %>%
+
+        invisible()
 }
 
 #
@@ -898,7 +907,7 @@ f__91__compare <- function(
     tmp.n2 <- merge(
         q.var.cast
         , qof_measures %>%
-            filter(org.type == "lep, instance", m.stat == "value") %>%
+            filter(org.type == "lep::instance", m.stat == "value") %>%
             select(-data_source, -ccg_code, -practice_code) %>%
             dcast(... ~ m.stat, value.var = "value")
         , by = c("indicator_group_code", "indicator_code", "m.type", "m.name")
@@ -910,7 +919,7 @@ f__91__compare <- function(
     tmp.ccg <- merge(
         q.var.cast
         , qof_measures %>%
-            filter(org.type == "ccg, instance", m.stat == "value") %>%
+            filter(org.type == "ccg::instance", m.stat == "value") %>%
             select(-data_source, -ccg_code) %>%
             rename(ccg_code = "practice_code") %>%
             dcast(... ~ m.stat, value.var = "value")
