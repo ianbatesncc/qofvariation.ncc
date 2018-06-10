@@ -689,6 +689,8 @@ performance, treatment,     numerator,   1,     0,     0
 performance, treatment,     denominator, 0,     1,     1
 performance, exceptions,    numerator,   0,     0,     1
 performance, exceptions,    denominator, 0,     1,     1
+performance, suboptimal_no_except,    numerator,  -1,     1,     0
+performance, suboptimal_no_except,    denominator, 0,     1,     1
 performance, suboptimal,    numerator,  -1,     1,     1
 performance, suboptimal,    denominator, 0,     1,     1
 ")
