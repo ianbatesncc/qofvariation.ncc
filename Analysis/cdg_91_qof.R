@@ -876,19 +876,19 @@ f__91__compare <- function(
     # All that is not England ####
 
     q.var.cast <- qof_measures %>%
-        filter(org.type != "england", m.stat %in% c('value', 'numerator', 'denominator')) %>%
-        dcast(... ~ m.stat, value.var = 'value')
+        filter(org.type != "england", m.stat %in% c("value", "numerator", "denominator")) %>%
+        dcast(... ~ m.stat, value.var = "value")
 
     # National reference ####
 
     tmp.nat <- merge(
         q.var.cast
         , qof_measures %>%
-            filter(org.type == 'england', m.stat %in% c('value')) %>%
+            filter(org.type == "england", m.stat == "value") %>%
             select(-data_source, -ccg_code, -practice_code) %>%
-            dcast(... ~ m.stat, value.var = 'value')
-        , by = c('indicator_group_code', 'indicator_code', "m.type", 'm.name')
-        , all.x = TRUE, suffixes = c('.var', '.ref')
+            dcast(... ~ m.stat, value.var = "value")
+        , by = c("indicator_group_code", "indicator_code", "m.type", "m.name")
+        , all.x = TRUE, suffixes = c(".var", ".ref")
     )
 
     # ccg reference ####
@@ -900,8 +900,8 @@ f__91__compare <- function(
             select(-data_source, -ccg_code) %>%
             rename(ccg_code = "practice_code") %>%
             dcast(... ~ m.stat, value.var = "value")
-        , by = c('indicator_group_code', 'indicator_code', 'ccg_code', "m.type", 'm.name')
-        , all.x = FALSE, all.y = FALSE, suffixes = c('.var', '.ref')
+        , by = c("indicator_group_code", "indicator_code", "ccg_code", "m.type", "m.name")
+        , all.x = FALSE, all.y = FALSE, suffixes = c(".var", ".ref")
     )
 
     # combine ####
