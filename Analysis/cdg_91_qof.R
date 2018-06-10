@@ -546,7 +546,6 @@ f__91__amend_data__add_subtotals <- function(
         invisible(x)
     }
 
-    qof <- qof %>%
     qof %>%
         status("INFO: - calculating england total ...") %>%
         l_add_eng(bCalcEngTotal) %>%
