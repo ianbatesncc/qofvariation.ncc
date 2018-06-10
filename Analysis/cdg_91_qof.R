@@ -891,6 +891,18 @@ f__91__compare <- function(
         , all.x = TRUE, suffixes = c(".var", ".ref")
     )
 
+    # N2 (Nottinghamshire and Nottingham) reference ####
+
+    tmp.n2 <- merge(
+        q.var.cast
+        , qof_measures %>%
+            filter(org.type == "lep, instance", m.stat == "value") %>%
+            select(-data_source, -ccg_code, -practice_code) %>%
+            dcast(... ~ m.stat, value.var = "value")
+        , by = c("indicator_group_code", "indicator_code", "m.type", "m.name")
+        , all.x = TRUE, suffixes = c(".var", ".ref")
+    )
+
     # ccg reference ####
 
     tmp.ccg <- merge(
@@ -906,7 +918,7 @@ f__91__compare <- function(
 
     # combine ####
 
-    qof.combined <- list(tmp.nat, tmp.ccg) %>%
+    qof.combined <- list(tmp.nat, tmp.n2, tmp.ccg) %>%
         rbindlist(use.names = TRUE)
 
     # compare ####
