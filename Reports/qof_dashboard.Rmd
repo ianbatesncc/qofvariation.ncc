@@ -302,40 +302,51 @@ hm__tmp_practices_list <- reactive({
 if (bRenderggplot) {
     
     hm__heatmap_dat__ggplot <- reactive({
+        
+        l__this_measure <- hm__this_measure()
+        l__this_comparator <- hm__this_comparator()
+        l__this_comparison_method <- hm__this_comparison_method()
+        l__tmp_practices_list <- hm__tmp_practices_list()
+        
         this_dat <- compare %>%
             # filter on measure and comparison
             filter(
-                m.name == hm__this_measure()
-                , org.type.ref == hm__this_comparator()
-                , compare.type == hm__this_comparison_method()
+                m.name == l__this_measure
+                , org.type.ref == l__this_comparator
+                , compare.type == l__this_comparison_method
             ) %>%
             # filter on practices of interest
-            filter(practice_code %in% hm__tmp_practices_list()) %>%
+            filter(practice_code %in% l__tmp_practices_list) %>%
             mutate(
-                xticklabel = paste(indicator_group_code, indicator_code)
-                , yticklabel = paste(ccg_code, practice_code)
+                ind_label = paste(indicator_group_code, indicator_code)
+                , org_label = paste(ccg_code, practice_code)
             ) %>%
-            select(display_order, xticklabel, yticklabel, compare.param, statsig) %>%
+            select(display_order, ind_label, org_label, compare.param, statsig) %>%
             merge(lu_statsig_num, by = "statsig") %>%
             # this handles benchmark and spc    
             #dcast(ccg_code + practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
             group_by_at(vars(-compare.param, -istatsig, -statsig)) %>%
             summarise_at(vars(istatsig), sum) %>%
             ungroup() %>%
+            mutate(value_sort = 0)
+        
+        # to add sort methods
+        orgs_ordered <- this_dat %>%
+            arrange(display_order, value_sort, org_label) %>%
+            .$org_label %>% unique()
+        
+        orgs_ordered %>% print()
+        
+        this_dat <- this_dat %>%
             # try to sort for plot
             mutate(
-                yticklabel_ordered = factor(yticklabel)
-                , yticklabel_ordered = reorder(yticklabel_ordered, desc(yticklabel))
-                , yticklabel_ordered = reorder(yticklabel_ordered, desc(display_order))
+                org_label_ordered = ordered(org_label, levels = rev(orgs_ordered))
             )
 
         this_dat %>% invisible()
-        
     })
     
     renderPlot({
-        # prepare matrix from reactive() components
-        
         require("ggplot2")
         
         p__base_size <- 12
@@ -343,7 +354,7 @@ if (bRenderggplot) {
         p <- ggplot(
             hm__heatmap_dat__ggplot()
             #, aes(x = indicator_code, y = practice_code)
-            , aes(x = xticklabel, y = yticklabel_ordered)
+            , aes(x = ind_label, y = org_label_ordered)
         ) + 
             geom_tile(aes(fill = istatsig), colour = "white") + 
             #scale_fill_gradient(low = "white", high = "steelblue") +
@@ -373,7 +384,6 @@ if (bRenderggplot) {
             )
         
         p %>% print()
-        
     })
     
 }
@@ -568,24 +578,23 @@ sb__ind_dat <- reactive({
     
     l__sort_measure <- sb__measures %>%
         filter(
-            practice_code %in% l__tmp_practices_list | 
-                ((practice_code == "ccg") & (ccg_code %in% l__tmp_practices_list))
+            practice_code %in% l__tmp_practices_list
             , indicator_code == l__this_indicator
             , measure_label == l__this_sort_measure
         )
     
     l_ind <- counts %>%
         filter(
-            practice_code %in% l__tmp_practices_list | 
-                ((practice_code == "ccg") & (ccg_code %in% l__tmp_practices_list))
+            practice_code %in% l__tmp_practices_list
             , indicator_code == l__this_indicator
         ) %>% merge(
-            l__sort_measure %>% select(-starts_with("m"))
+            l__sort_measure %>% select(-starts_with("m"), value_sort = value)
             , by = c("ccg_code", "practice_code", "indicator_code")
             # reverse value if descending
-        ) %>% mutate(
-            value = (2 * l__sort_desc - 1) * value
-        )
+        ) %>%
+        mutate(value_sort = (2 * (!l__sort_desc) - 1) * value_sort) %>%
+        # add org_label
+        mutate(org_label = paste(ccg_code, practice_code))
     
     fields_ordered <- c(
         "optimal"
@@ -595,12 +604,12 @@ sb__ind_dat <- reactive({
         , "model"
     )
     
-    practices_ordered <- l_ind %>%
-        arrange(display_order, value) %>%
-        .$practice_code
+    orgs_ordered <- l_ind %>%
+        arrange(display_order, value_sort) %>%
+        .$org_label
     
     l_ind_melt <- l_ind %>%
-        select(-value) %>%
+        select(-value_sort) %>%
         setDT() %>%
         melt(
             measure.vars = fields_ordered
@@ -611,9 +620,10 @@ sb__ind_dat <- reactive({
         # dark arts to get desired order ...
         mutate_at(vars(status), ordered, levels = fields_ordered) %>%
         mutate(
-            practice_code_ordered = ordered(practice_code, levels = rev(practices_ordered))
+            org_label_ordered = ordered(org_label, levels = rev(orgs_ordered))
         )
     
+    l_ind_melt %>% invisible()
 })
 
 renderPlot({
@@ -631,7 +641,7 @@ renderPlot({
     p <- ggplot(l_ind_melt) +
         geom_col(
             aes(
-                x = practice_code_ordered
+                x = org_label_ordered
                 , y = pvalue
                 , fill = status
             )
@@ -640,7 +650,7 @@ renderPlot({
         geom_text(
             data = subset(l_ind_melt, value > 0)
             , aes(
-                x = practice_code_ordered
+                x = org_label_ordered
                 , y = pvalue
                 , label = ifelse(
                     status %in% c("optimal", "exceptions", "model")
