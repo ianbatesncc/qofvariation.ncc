@@ -195,7 +195,11 @@ sb__lu_measures <- measures %>%
 
 sb__measures <- measures %>%
     merge(sb__lu_measures, by = c("m.type", "m.name", "m.stat"), all.x = FALSE) %>%
-    select(ccg_code, practice_code, indicator_code, m.name, m.stat, value, measure_label)
+    select(
+        ccg_code, practice_code
+        , indicator_group_code, indicator_code
+        , m.name, m.stat, value, measure_label
+    )
 
 ```
 
