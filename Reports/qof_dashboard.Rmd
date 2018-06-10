@@ -190,6 +190,20 @@ counts <- measures %>%
 
 rm("register")
 
+# for sorting stacked bars
+
+# measures %>% filter(practice_code %in% l__tmp_practices_list) %>% filter(m.stat != "denominator") %>% dcast(... ~ m.name + m.stat)
+sb__lu_measures <- measures %>% 
+    select(m.type, m.name, m.stat) %>%
+    unique() %>%
+    filter(m.stat != "denominator") %>%
+    mutate(measure_label = paste(m.name, sub("numerator", "count", m.stat))) %>%
+    filter(!measure_label %in% c("achievement count"))
+
+sb__measures <- measures %>%
+    merge(sb__lu_measures, by = c("m.type", "m.name", "m.stat"), all.x = FALSE) %>%
+    select(ccg_code, practice_code, indicator_code, m.name, m.stat, value, measure_label)
+
 ```
 
 
@@ -461,18 +475,24 @@ selectInput(
 )
 
 selectInput(
-    "sb__this_measure"
+    "sb__this_sort_measure"
     , label = "Order practices by:"
-    , choices = these_measures
-    #, selected = these_measures[1]
-    , selected = "exceptions"
+    , choices = sb__lu_measures$measure_label
+    #, selected = sb__lu_measures$measure_label[1]
+    , selected = "exceptions value"
 )
- 
+
+checkboxInput(
+    "sb__sort_desc"
+    , label = "Sort descending"
+    , value = TRUE
+)
 
 sb__this_ccg_group <- reactive(input$sb__this_ccg_group)
 sb__this_practice <- reactive(input$sb__this_practice)
-sb__this_measure <- reactive(input$sb__this_measure)
 sb__this_indicator <- reactive(input$sb__this_indicator)
+sb__this_sort_measure <- reactive(input$sb__this_sort_measure)
+sb__this_sort_desc <- reactive(input$sb__sort_desc)
 
 sb__tmp_practices_list <- reactive({
     
@@ -483,9 +503,15 @@ sb__tmp_practices_list <- reactive({
     #
     # l__this_practice <- "C84001"
     # l__this_ccg_group <- "02Q"
+    # l__this_ccg_group <- "Mid. Notts. UOP"
 
     # every time
     global_orgs <- c("eng", "n2")
+    
+    ccg_group__ccgs <- lu.orgs.ccgs.groups %>% filter(
+        ccg_group_name == l__this_ccg_group |
+            ccg_code == l__this_ccg_group
+    ) %>% .$ccg_code
     
     # relevant orgs
     relevant_orgs <- 
@@ -528,12 +554,16 @@ sb__ind_dat <- reactive({
     l__this_indicator <- sb__this_indicator()
     l__this_practice <- sb__this_practice()
     l__tmp_practices_list <- sb__tmp_practices_list()
-
+    l__this_sort_measure <- sb__this_sort_measure()
+    l__sort_desc <- sb__this_sort_desc()
+    
     # For debugging dynamic elements
     #
     # l__this_indicator <- "AF006"
     # l__this_practice <- "C84001"
     # l__tmp_practices_list <- c("eng", "n2", "02Q", "C84001", "C84008", "C84013")
+    # l__this_sort_measure <- "exceptions value"
+    # l__sort_desc = TRUE
     
     l__this_ccg <- orgref %>%
         filter(practice_code == l__this_practice) %>%
@@ -543,11 +573,25 @@ sb__ind_dat <- reactive({
         filter(indicator_code == l__this_indicator) %>%
         .$indicator_group_code
     
+    l__sort_measure <- sb__measures %>%
+        filter(
+            practice_code %in% l__tmp_practices_list | 
+                ((practice_code == "ccg") & (ccg_code %in% l__tmp_practices_list))
+            , indicator_code == l__this_indicator
+            , measure_label == l__this_sort_measure
+        )
+    
     l_ind <- counts %>%
         filter(
             practice_code %in% l__tmp_practices_list | 
                 ((practice_code == "ccg") & (ccg_code %in% l__tmp_practices_list))
             , indicator_code == l__this_indicator
+        ) %>% merge(
+            l__sort_measure %>% select(-starts_with("m"))
+            , by = c("ccg_code", "practice_code", "indicator_code")
+            # reverse value if descending
+        ) %>% mutate(
+            value = (2 * l__sort_desc - 1) * value
         )
     
     # measures %>% filter(practice_code %in% l__tmp_practices_list) %>% filter(m.stat != "denominator") %>% dcast(... ~ m.name + m.stat)
@@ -561,22 +605,23 @@ sb__ind_dat <- reactive({
         , "model"
     )
     
-    l_ind_melt <- l_ind %>% setDT() %>%
+    practices_ordered <- l_ind %>%
+        arrange(display_order, value) %>%
+        .$practice_code
+    
+    l_ind_melt <- l_ind %>%
+        select(-value) %>%
+        setDT() %>%
         melt(
             measure.vars = fields_ordered
             , variable.name = "status", variable.factor = FALSE
             , value.name = "value", value.factor = FALSE
         ) %>%
-        # dark arts to get desired order ...
-        mutate_at(vars(status), factor, levels = fields_ordered) %>%
         mutate(pvalue = value / register) %>%
-        mutate(sort_key = display_order + ifelse(display_order < 20, 0, pvalue)) %>%
+        # dark arts to get desired order ...
+        mutate_at(vars(status), ordered, levels = fields_ordered) %>%
         mutate(
-            #practice_code_ordered = factor(practice_code)
-            #, practice_code_ordered = reorder(practice_code_ordered, desc(practice_code))
-             practice_code_ordered = reorder(factor(practice_code), desc(practice_code))
-            #, practice_code_ordered = reorder(practice_code_ordered, desc(practice_code))
-            , practice_code_ordered = reorder(practice_code_ordered, desc(sort_key))
+            practice_code_ordered = ordered(practice_code, levels = rev(practices_ordered))
         )
     
 })
@@ -600,18 +645,18 @@ renderPlot({
                 , y = pvalue
                 , fill = status
             )
-            #, position = "dodge"
             , position = position_stack(reverse = TRUE)
-            #, position = position_fill(reverse = TRUE)
         ) +
         geom_text(
-            #data = subset(l_ind_melt, value > 0)
-            data = l_ind_melt %>% subset(value > 0 & status %in% c("optimal", "exceptions"))
+            data = subset(l_ind_melt, value > 0)
             , aes(
                 x = practice_code_ordered
                 , y = pvalue
-                , label = scales::comma(value)
-                #, label = subset(l_ind_melt, value > 0)scales::comma(value)
+                , label = ifelse(
+                    status %in% c("optimal", "exceptions", "model")
+                    , scales::comma(value)
+                    , ""
+                )
             )
             , position = position_stack(vjust = 0.5)
             , size = 3
@@ -619,11 +664,11 @@ renderPlot({
         #scale_colour_manual(values = cols, aesthetics = "fill") +
         scale_fill_manual(values = cols) +
         coord_flip() +
+        scale_y_continuous(labels = scales::percent) +
+        labs(x = "", y = "Counts relative to register (percent)") + 
         theme_minimal() +
-        labs(x = "", y = "") + 
         theme(legend.position = "top")
-    
-    
+
     p %>% print()
     
 })
