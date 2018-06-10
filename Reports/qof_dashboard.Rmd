@@ -434,12 +434,84 @@ Inputs {.sidebar}
 
 ```{r stackedbar_input}
 
+selectInput(
+    "sb__this_ccg_group"
+    , label = "Select Practice grouping:"
+    , choices = these_ccg_groups
+    , selected = these_ccg_groups[1]
+)
+
+selectInput(
+    "sb__this_practice"
+    , label = "Select Practice:"
+    , choices = c("[All]", these_practices)
+    #, selected = these_practices[1]
+    , selected = "[All]"
+)
+
+selectInput(
+    "sb__this_indicator"
+    , label = "Select indicator:"
+    , choices = c("[All]", these_indicators)
+    , selected = these_indicators[1]
+    #, selected = "[All]"
+)
+
+selectInput(
+    "sb__this_measure"
+    , label = "Order practices by:"
+    , choices = these_measures
+    #, selected = these_measures[1]
+    , selected = "exceptions"
+)
+ 
+
+sb__this_ccg_group <- reactive(input$sb__this_ccg_group)
+sb__this_practice <- reactive(input$sb__this_practice)
+sb__this_measure <- reactive(input$sb__this_measure)
+sb__this_indicator <- reactive(input$sb__this_indicator)
+
+sb__tmp_practices_list <- reactive({
     
+    l__this_practice <- sb__this_practice()
+    l__this_ccg_group <- sb__this_ccg_group()
     
+    # For debugging dynamic elements
+    #
+    # l__this_practice <- "C84001"
+    # l__this_ccg_group <- "02Q"
+
+    # every time
+    global_orgs <- c("eng", "n2")
+    
+    # relevant orgs
+    relevant_orgs <- 
+        lu.orgs.ccgs.groups %>%
         filter(
+            ccg_code %in% 
+                (lu.orgs.ccgs.groups %>% filter(
+                    ccg_group_name == l__this_ccg_group |
+                        ccg_code == l__this_ccg_group
+                ) %>% .$ccg_code)
         ) %>%
+        .$ccg_group_code %>% unique()
     
+    # practices
+    if (l__this_practice == "[All]") {
+        relevant_practices <-
+            practice_grouping %>%
+            filter(ccg_group_name == l__this_ccg_group) %>%
+            #.$practice_code %>%
+            select(practice_code) %>% unlist() %>% as.vector()
+    } else {
+        relevant_practices <- l__this_practice
+    }
     
+    c(global_orgs, relevant_orgs, relevant_practices) %>% unique() %>% invisible()
+    
+})
+
+```
 
 Row
 -----------------------------------------------------------------------
