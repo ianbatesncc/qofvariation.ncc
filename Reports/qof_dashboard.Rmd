@@ -48,9 +48,9 @@ lu.orgs.ccgs.groups <- fread(
 
 # Add display order
 #
-# Based on ccg_group_type.  CCGs go to 10, practices go to 20.
+# Based on ccg_group_type.  
+# Manually add CCGs go to 10, practices go to 20.
 l_add_display_order <- function(x, c1 = "org.type") {
-    #names(x) %>% print()
     x %>% 
         merge(
             lu.orgs.ccgs.groups %>% 
@@ -60,7 +60,7 @@ l_add_display_order <- function(x, c1 = "org.type") {
             , all.x = TRUE
         ) %>%
         mutate(display_order = ifelse(UQ(rlang::sym(c1)) == "england", 0, display_order)) %>%
-        mutate(display_order = ifelse(UQ(rlang::sym(c1)) == "ccg", 10, display_order)) %>%
+        mutate(display_order = ifelse(UQ(rlang::sym(c1)) == "ccg::instance", 10, display_order)) %>%
         mutate(display_order = ifelse(is.na(display_order), 20, display_order))
 }
 
@@ -155,13 +155,6 @@ counts <- measures %>%
         , by = c("ccg_code", "practice_code", "indicator_group_code")
         , all.x = TRUE
     ) %>%
-    # select(
-    #     ccg_code, practice_code, indicator_group_code, indicator_code
-    #     , register
-    #     , denominator = "achievement_denominator"
-    #     , optimal = "treatment_numerator"
-    #     , exceptions = "exceptions_numerator"
-    # ) %>%
     rename(
         denominator = "achievement_denominator"
         , optimal = "treatment_numerator"
@@ -276,29 +269,33 @@ hm__this_comparison_method <- reactive(input$hm__this_comparison_method)
 
 hm__tmp_practices_list <- reactive({
     
+    l__this_ccg_group <- hm__this_ccg_group()
+    
     # every time
     global_orgs <- c("eng", "n2")
+    
+    # relevant ccg group ccgs
+    relevant_ccg_group_ccgs <- lu.orgs.ccgs.groups %>%
+        filter(
+            ccg_group_name == l__this_ccg_group |
+                ccg_code == l__this_ccg_group
+        ) %>% .$ccg_code
     
     # relevant orgs
     relevant_orgs <- 
         lu.orgs.ccgs.groups %>%
-        filter(
-            ccg_code %in% 
-                (lu.orgs.ccgs.groups %>% filter(
-                    ccg_group_name == hm__this_ccg_group() |
-                        ccg_code == hm__this_ccg_group()
-                ) %>% .$ccg_code)
-        ) %>%
+        filter(ccg_code %in% relevant_ccg_group_ccgs) %>%
         .$ccg_group_code %>% unique()
     
     # practices
     relevant_practices <-
         practice_grouping %>%
-        filter(ccg_group_name == hm__this_ccg_group()) %>%
-        #.$practice_code %>%
-        select(practice_code) %>% unlist() %>% as.vector()
-    
-    c(global_orgs, relevant_orgs, relevant_practices) %>% unique() %>% invisible()
+        filter(ccg_group_name == l__this_ccg_group) %>%
+        .$practice_code
+
+
+    c(global_orgs, relevant_ccg_group_ccgs, relevant_orgs, relevant_practices) %>%
+        unique() %>% invisible()
 })
 
 
@@ -508,21 +505,17 @@ sb__tmp_practices_list <- reactive({
     # every time
     global_orgs <- c("eng", "n2")
     
-    ccg_group__ccgs <- lu.orgs.ccgs.groups %>% filter(
-        ccg_group_name == l__this_ccg_group |
-            ccg_code == l__this_ccg_group
-    ) %>% .$ccg_code
+    # relevant ccg group ccgs
+    relevant_ccg_group_ccgs <- lu.orgs.ccgs.groups %>%
+        filter(
+            ccg_group_name == l__this_ccg_group |
+                ccg_code == l__this_ccg_group
+        ) %>% .$ccg_code
     
     # relevant orgs
     relevant_orgs <- 
         lu.orgs.ccgs.groups %>%
-        filter(
-            ccg_code %in% 
-                (lu.orgs.ccgs.groups %>% filter(
-                    ccg_group_name == l__this_ccg_group |
-                        ccg_code == l__this_ccg_group
-                ) %>% .$ccg_code)
-        ) %>%
+        filter(ccg_code %in% relevant_ccg_group_ccgs) %>%
         .$ccg_group_code %>% unique()
     
     # practices
@@ -530,14 +523,14 @@ sb__tmp_practices_list <- reactive({
         relevant_practices <-
             practice_grouping %>%
             filter(ccg_group_name == l__this_ccg_group) %>%
-            #.$practice_code %>%
-            select(practice_code) %>% unlist() %>% as.vector()
+            .$practice_code
     } else {
         relevant_practices <- l__this_practice
     }
     
-    c(global_orgs, relevant_orgs, relevant_practices) %>% unique() %>% invisible()
     
+    c(global_orgs, relevant_ccg_group_ccgs, relevant_orgs, relevant_practices) %>%
+        unique() %>% invisible()
 })
 
 ```
