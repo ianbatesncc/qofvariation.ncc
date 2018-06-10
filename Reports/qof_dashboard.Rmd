@@ -429,10 +429,9 @@ if (bRenderD3) {
 Stacked bars
 ====
 
-Row {.tabset}
+Inputs {.sidebar}
 -----------------------------------------------------------------------
 
-### Tab 1
 
 ```{r stacked_tab1}
 # renderPlot(
@@ -481,6 +480,12 @@ sb__ind_dat <- reactive({
             , d_exc = exceptions
             , d_excl = denominator - qofprevalence
             , d_model = 0
+
+Row
+-----------------------------------------------------------------------
+
+### Stacked Bar
+
         )
     
     fields_drop <- c(
@@ -545,19 +550,6 @@ renderPlot({
 
 
 cat("INFO: tab 1", "\n")
-
-```
-
-### Tab 2
-
-```{r stacked_tab2}
-
-cat("INFO: tab 2", "\n")
-
-# only display table for values in cluster 4
-# renderTable(
-#   BicatYeast[which(res@RowxNumber[, num()]), which(res@NumberxCol[num(), ])]
-# )
 
 ```
 
