@@ -623,7 +623,7 @@ f__91__amend_orgref__ccg_groups <- function(
     qof$reference$orgref <- list(
         qof$reference$orgref
         , lu.orgs.ccgs.groups %>%
-            select(-ccg_code) %>%
+            select(-ccg_code, -type_display_order) %>%
             rename(
                 practice_code = "ccg_group_code", practice_name = "ccg_group_name"
                 , ccg_code = "ccg_group_type", ccg_name = "ccg_group_type_name"
