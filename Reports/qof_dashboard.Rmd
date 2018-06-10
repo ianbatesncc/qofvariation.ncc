@@ -126,6 +126,69 @@ Not tested,NA
 "
 )
 
+# for stacked bar
+
+register <- measures %>%
+    filter(
+        m.type == "prevalence"
+        , m.name == "qofprevalence"
+        , m.stat == "numerator"
+    ) %>%
+    select(-m.type, -m.name) %>%
+    dcast(... ~ m.stat) %>%
+    rename(register = "numerator") %>%
+    select(
+        ccg_code, practice_code, indicator_group_code
+        , register
+    )
+
+counts <- measures %>%
+    filter(
+        m.type == "performance"
+        , m.stat %in% c("numerator", "denominator")
+    ) %>%
+    select(-m.type, -org.type, -data_source) %>%
+    dcast(... ~ m.name + m.stat) %>%
+    merge(
+        register
+        , by = c("ccg_code", "practice_code", "indicator_group_code")
+        , all.x = TRUE
+    ) %>%
+    # select(
+    #     ccg_code, practice_code, indicator_group_code, indicator_code
+    #     , register
+    #     , denominator = "achievement_denominator"
+    #     , optimal = "treatment_numerator"
+    #     , exceptions = "exceptions_numerator"
+    # ) %>%
+    rename(
+        denominator = "achievement_denominator"
+        , optimal = "treatment_numerator"
+        , exceptions = "exceptions_numerator"
+    ) %>%
+    select(-ends_with("_numerator"), -ends_with("_denominator")) %>%
+    mutate(
+        suboptimal = denominator - optimal
+        # at some point attach a modelled value
+        , model = 0
+        # when patients reports as excepted, but included anyway ... National RA seems a bother
+        , exceptions__effective = pmax(pmin(register - denominator, exceptions), 0)
+        , exclusions = register - denominator - exceptions__effective
+        # where there is no register .. reconstruct
+        , register__effective = denominator + exceptions
+        , exclusions__effective = 0
+    ) %>%
+    # substitute the effective bits
+    mutate(
+        register = ifelse(is.na(register), register__effective, register)
+        , exclusions = ifelse(is.na(exclusions), exclusions__effective, exclusions)
+        , exceptions = ifelse(!is.na(exceptions__effective), exceptions__effective, exceptions)
+    ) %>%
+    select(-ends_with("__effective")) %>%
+    select(-denominator)
+
+rm("register")
+
 ```
 
 
