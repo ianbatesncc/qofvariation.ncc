@@ -581,23 +581,45 @@ sb__ind_dat <- reactive({
 renderPlot({
     
     cols <- c(
-        d_opt = "green4"
-        , d_sub = "darkorange"
-        , d_exc = "red"
-        , d_excl = "lightblue"
-        , d_model = "gray50"
+        optimal = "green4"
+        , suboptimal = "darkorange"
+        , exceptions = "red"
+        , exclusions = "lightblue"
+        , model = "gray50"
     )
+    
+    l_ind_melt <- sb__ind_dat()
     
     p <- ggplot(l_ind_melt) +
         geom_col(
-            aes(x = practice_code_ordered, y = value, fill = status)
+            aes(
+                x = practice_code_ordered
+                , y = pvalue
+                , fill = status
+            )
             #, position = "dodge"
-            #, position = position_stack(reverse = TRUE)
-            , position = position_fill(reverse = TRUE)
+            , position = position_stack(reverse = TRUE)
+            #, position = position_fill(reverse = TRUE)
         ) +
+        geom_text(
+            #data = subset(l_ind_melt, value > 0)
+            data = l_ind_melt %>% subset(value > 0 & status %in% c("optimal", "exceptions"))
+            , aes(
+                x = practice_code_ordered
+                , y = pvalue
+                , label = scales::comma(value)
+                #, label = subset(l_ind_melt, value > 0)scales::comma(value)
+            )
+            , position = position_stack(vjust = 0.5)
+            , size = 3
+        ) +
+        #scale_colour_manual(values = cols, aesthetics = "fill") +
+        scale_fill_manual(values = cols) +
         coord_flip() +
-        scale_colour_manual(values = cols, aesthetics = "fill") +
+        theme_minimal() +
+        labs(x = "", y = "") + 
         theme(legend.position = "top")
+    
     
     p %>% print()
     
