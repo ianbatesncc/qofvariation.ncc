@@ -459,6 +459,7 @@ f__91__amend_data__add_subtotals <- function(
                     list(
                         x
                         , x %>%
+                            filter(org.type == "(ccg, practice)") %>%
                             group_by_at(vars(-value, -ccg_code, -practice_code)) %>%
                             summarise_at(vars(value), sum, na.rm = TRUE) %>%
                             ungroup() %>%
@@ -488,6 +489,7 @@ f__91__amend_data__add_subtotals <- function(
                     list(
                         x,
                         x %>%
+                            filter(org.type == "(ccg, practice)") %>%
                             group_by_at(vars(-value, -practice_code)) %>%
                             summarise_at(vars(value), sum, na.rm = TRUE) %>%
                             ungroup() %>%
