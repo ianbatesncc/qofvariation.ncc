@@ -226,6 +226,20 @@ selectInput(
     , selected = these_ccg_groups[1]
 )
 
+checkboxInput(
+    "hm__bool_hide_practices"
+    , "Hide practices"
+    , FALSE
+)
+
+selectInput(
+    "hm__this_ind_group"
+    , label = "Select indicator group:"
+    , choices = c("[All]", these_ind_groups)
+    , selected = "[All]"
+    , multi = TRUE
+)
+
 selectInput(
     "hm__this_measure"
     , label = "Select measure:"
@@ -267,13 +281,16 @@ Row
 #cat("INFO: Heatmap", "\n")
 
 hm__this_ccg_group <- reactive(input$hm__this_ccg_group)
+hm__this_ind_group <- reactive(input$hm__this_ind_group)
 hm__this_measure <- reactive(input$hm__this_measure)
 hm__this_comparator <- reactive(input$hm__this_comparator)
 hm__this_comparison_method <- reactive(input$hm__this_comparison_method)
+hm__bool_hide_practices <- reactive(input$hm__bool_hide_practices)
 
 hm__tmp_practices_list <- reactive({
     
     l__this_ccg_group <- hm__this_ccg_group()
+    l__bool_hide_practices <- hm__bool_hide_practices()
     
     # every time
     global_orgs <- c("eng", "n2")
@@ -292,11 +309,15 @@ hm__tmp_practices_list <- reactive({
         .$ccg_group_code %>% unique()
     
     # practices
-    relevant_practices <-
-        practice_grouping %>%
-        filter(ccg_group_name == l__this_ccg_group) %>%
-        .$practice_code
-
+    if (l__bool_hide_practices == FALSE) {
+        relevant_practices <-
+            practice_grouping %>%
+            filter(ccg_group_name == l__this_ccg_group) %>%
+            .$practice_code
+    } else {
+        relevant_practices <- c() # NULL
+    }
+    
 
     c(global_orgs, relevant_ccg_group_ccgs, relevant_orgs, relevant_practices) %>%
         unique() %>% invisible()
@@ -307,6 +328,7 @@ if (bRenderggplot) {
     
     hm__heatmap_dat__ggplot <- reactive({
         
+        l__this_ind_group <- hm__this_ind_group()
         l__this_measure <- hm__this_measure()
         l__this_comparator <- hm__this_comparator()
         l__this_comparison_method <- hm__this_comparison_method()
@@ -318,6 +340,8 @@ if (bRenderggplot) {
                 m.name == l__this_measure
                 , org.type.ref == l__this_comparator
                 , compare.type == l__this_comparison_method
+                , any(l__this_ind_group == "[All]") |
+                    indicator_group_code %in% l__this_ind_group
             ) %>%
             # filter on practices of interest
             filter(practice_code %in% l__tmp_practices_list) %>%
@@ -469,6 +493,12 @@ selectInput(
     , selected = these_ccg_groups[1]
 )
 
+checkboxInput(
+    "sb__bool_hide_practices"
+    , "Hide practices"
+    , FALSE
+)
+
 selectInput(
     "sb__this_practice"
     , label = "Select Practice:"
@@ -501,6 +531,7 @@ checkboxInput(
 
 sb__this_ccg_group <- reactive(input$sb__this_ccg_group)
 sb__this_practice <- reactive(input$sb__this_practice)
+sb__bool_hide_practices <- reactive(input$sb__bool_hide_practices)
 sb__this_indicator <- reactive(input$sb__this_indicator)
 sb__this_sort_measure <- reactive(input$sb__this_sort_measure)
 sb__this_sort_desc <- reactive(input$sb__sort_desc)
@@ -508,6 +539,7 @@ sb__this_sort_desc <- reactive(input$sb__sort_desc)
 sb__tmp_practices_list <- reactive({
     
     l__this_practice <- sb__this_practice()
+    l__bool_hide_practices <- sb__bool_hide_practices()
     l__this_ccg_group <- sb__this_ccg_group()
     
     # For debugging dynamic elements
@@ -533,16 +565,20 @@ sb__tmp_practices_list <- reactive({
         .$ccg_group_code %>% unique()
     
     # practices
-    if (l__this_practice == "[All]") {
-        relevant_practices <-
-            practice_grouping %>%
-            filter(ccg_group_name == l__this_ccg_group) %>%
-            .$practice_code
+    if (l__bool_hide_practices == FALSE) {
+        if (l__this_practice == "[All]") {
+            relevant_practices <-
+                practice_grouping %>%
+                filter(ccg_group_name == l__this_ccg_group) %>%
+                .$practice_code
+        } else {
+            relevant_practices <- l__this_practice
+        }
     } else {
-        relevant_practices <- l__this_practice
+        relevant_practices <- c() # NULL
     }
     
-    
+
     c(global_orgs, relevant_ccg_group_ccgs, relevant_orgs, relevant_practices) %>%
         unique() %>% invisible()
 })
@@ -560,6 +596,7 @@ sb__ind_dat <- reactive({
     
     l__this_indicator <- sb__this_indicator()
     l__this_practice <- sb__this_practice()
+    l__bool_hide_practices <- sb__bool_hide_practices()
     l__tmp_practices_list <- sb__tmp_practices_list()
     l__this_sort_measure <- sb__this_sort_measure()
     l__sort_desc <- sb__this_sort_desc()
