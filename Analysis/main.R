@@ -132,6 +132,11 @@ uop,4
 #'
 test_main <- function(bProcessRaw = TRUE) {
 
+    v1 <- NA
+    v2 <- NA
+    v3 <- NA
+    v4 <- NA
+
     if (is.na(bProcessRaw) | bProcessRaw) {
         v1 <- main(qof_period = "1516", bProcessRaw = TRUE, bWriteCSV = TRUE)
         v3 <- main(qof_period = "1617", bProcessRaw = TRUE, bWriteCSV = TRUE)
@@ -142,5 +147,5 @@ test_main <- function(bProcessRaw = TRUE) {
         v4 <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
     }
 
-    return(TRUE)
+    invisible(list(v1 = v1, v2 = v2, v3 = v3, v4 = v4))
 }
