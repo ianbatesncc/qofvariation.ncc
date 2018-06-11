@@ -129,6 +129,19 @@ Not tested,NA
 
 # for stacked bar
 
+prevalence <- measures %>%
+    filter(
+        m.type == "prevalence"
+        , m.name == "qofprevalence"
+    ) %>%
+    select(-m.type) %>%
+    dcast(... ~ m.stat) %>%
+    rename(register = "numerator") %>%
+    select(
+        ccg_code, practice_code, indicator_group_code
+        , register
+    )
+
 register <- measures %>%
     filter(
         m.type == "prevalence"
