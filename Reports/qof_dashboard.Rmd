@@ -363,8 +363,6 @@ if (bRenderggplot) {
             arrange(display_order, value_sort, org_label) %>%
             .$org_label %>% unique()
         
-        orgs_ordered %>% print()
-        
         this_dat <- this_dat %>%
             # try to sort for plot
             mutate(
@@ -714,9 +712,6 @@ renderPlot({
     
 })
 
-
-cat("INFO: tab 1", "\n")
-
 ```
 
 
@@ -801,9 +796,8 @@ pd__tmp_practices_list <- reactive({
         relevant_practices <- pd__this_practice()
     }
     
-    c(global_orgs, relevant_orgs, relevant_practices) %>% unique() %>% invisible()
-
     
+    c(global_orgs, relevant_orgs, relevant_practices) %>% unique() %>% invisible()
 })
 
 ```
