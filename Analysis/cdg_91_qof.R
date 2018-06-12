@@ -48,7 +48,7 @@ setnames.clean <- function(x) {setnames(x, make.names(tolower(colnames(x))))}
 #' f__91__compare
 #'
 f__91__process__reference_measures_compare <- function(
-    qof_period = "1516" # "1617"
+    qof_period = "1516" # qof_period = "1617"
     , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
     , lu.orgs.ccgs.groups = NA
     , bWriteCSV = FALSE
