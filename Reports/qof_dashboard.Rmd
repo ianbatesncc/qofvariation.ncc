@@ -613,8 +613,8 @@ selectInput(
 selectInput(
     "sb__this_sort_measure"
     , label = "Order practices by:"
-    , choices = sb__lu_measures$measure_label
-    #, selected = sb__lu_measures$measure_label[1]
+    , choices = sb__lu$measure_label
+    #, selected = sb__lu$measure_label[1]
     , selected = "exceptions value"
 )
 
