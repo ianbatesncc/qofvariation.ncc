@@ -21,6 +21,9 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```
 
+Global page {.hidden}
+====
+
 ```{r global, include = FALSE, cache = TRUE}
 # load data in 'global' chunk so it can be shared by all users of the dashboard
 
