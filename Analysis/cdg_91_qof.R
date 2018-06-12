@@ -6,7 +6,7 @@
 
 #
 # Require certain disease areas
-# - practice level prevalnce and stat. sig. relative to England
+# - practice level prevalence and stat. sig. relative to England
 # - CDG level achievement (?treatment) and stat. sig. relative to England.
 #
 
@@ -152,8 +152,10 @@ f__91__load__reference_measures_compare <- function(
 
 # INTERNAL routines that do the work ####
 
+# : PROCESS ####
+
 #
-# COUNTS - Load QOF data ####
+# : : COUNTS - Load QOF data ####
 #
 
 #' load raw QOF data
@@ -348,91 +350,6 @@ f__91__preprocess <- function(
     ))
 }
 
-#'
-#'
-#'
-f__91__save_reference <- function(
-    qof
-    , qof_root
-    , file_suffix = "__processed"
-    , bWriteCSV = TRUE
-) {
-    cat("INFO: f__91__save_reference: saving ...", "\n")
-
-    if (bWriteCSV == TRUE) {
-        cat("INFO: f__91__save_reference: saving reference data ...", "\n")
-
-        this.file <- paste0("./Results/", qof_root, "_orgref", file_suffix, ".csv")
-        fwrite(qof$reference$orgref, file = this.file)
-
-        this.file <- paste0("./Results/", qof_root, "_indmap", file_suffix, ".csv")
-        fwrite(qof$reference$indmap, file = this.file)
-    }
-}
-
-#'
-#'
-#'
-f__91__load_reference <- function(
-    qof_root
-    , file_suffix = "__processed"
-) {
-    cat("INFO: f__91__load_reference: loading ...", "\n")
-
-    taskdir <- proj_root()
-
-    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_orgref", file_suffix, ".csv"))
-    q.orgref <- fread(file = this.file)
-
-    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_indmap", file_suffix, ".csv"))
-    q.indmap <- fread(file = this.file)
-
-    # return
-
-    return(reference = list(orgref = q.orgref, indmap = q.indmap))
-}
-
-#' load raw data
-#'
-#' Default is not to do anything further.
-#'
-#' @notes
-#' Call tree:
-#'
-#' f__91__load_raw
-#' f__91__preprocess
-#'
-f__91__load_data <- function(
-    qof_root
-) {
-    cat("INFO: f__91__load_data: loading ...", "\n")
-
-    #' Add org.type to data elements
-    l_add_orgtype <- function(x) {
-        cat("INFO: l_add_orgtype: amending ...", "\n")
-        x$data <- x$data %>% lapply(mutate, org.type = "ccg::practice")
-        invisible(x)
-    }
-
-    #' Tag on data source
-    l_add_qof_root <- function(x, qof_root) {
-        cat("INFO: l_add_qof_root: amending ...", "\n")
-        x$data <- x$data %>% lapply(mutate, data_source = qof_root)
-        x$reference <- x$reference %>% lapply(mutate, data_source = qof_root)
-        invisible(x)
-    }
-
-    qof <- f__91__load_raw(qof_root) %>%
-        # process lookups
-        f__91__preprocess() %>%
-        l_add_orgtype() %>%
-        l_add_qof_root(qof_root)
-
-    # return
-
-    return(qof)
-}
-
 #' Amend data by adding subtotals
 #'
 #' Can add england totals, ccg totals, filter for local ccgs, and group by given lookup.
@@ -564,8 +481,58 @@ f__91__amend_data__add_subtotals <- function(
         invisible()
 }
 
+#' Merge ccg groups into orgref
+#'
+#'
+f__91__amend_orgref__ccg_groups <- function(
+    qof
+    , lu.orgs.ccgs.groups = NA
+){
+    # ccg_group_type,ccg_group_name,ccg_code,ccg_group_code,ccg_group_name
+    # uop,Unit of Planning,02Q,nno,North Notts. UOP
+
+    qof$reference$orgref <- list(
+        qof$reference$orgref
+        , lu.orgs.ccgs.groups %>%
+            select(-ccg_code, -type_display_order) %>%
+            rename(
+                practice_code = "ccg_group_code", practice_name = "ccg_group_name"
+                , ccg_code = "ccg_group_type", ccg_name = "ccg_group_type_name"
+            ) %>%
+            mutate(
+                ccg_geography_code = ccg_code
+                , data_source = qof$reference$orgref$data_source %>% unique()
+            ) %>%
+            unique()
+    ) %>% rbindlist(use.names = TRUE)
+
+    invisible(qof)
+}
+
+#' Save reference
+#'
+#'
+f__91__save_reference <- function(
+    qof
+    , qof_root
+    , file_suffix = "__processed"
+    , bWriteCSV = TRUE
+) {
+    cat("INFO: f__91__save_reference: saving ...", "\n")
+
+    if (bWriteCSV == TRUE) {
+        cat("INFO: f__91__save_reference: saving reference data ...", "\n")
+
+        this.file <- paste0("./Results/", qof_root, "_orgref", file_suffix, ".csv")
+        fwrite(qof$reference$orgref, file = this.file)
+
+        this.file <- paste0("./Results/", qof_root, "_indmap", file_suffix, ".csv")
+        fwrite(qof$reference$indmap, file = this.file)
+    }
+}
+
 #
-# MEASURES ####
+# : : MEASURES ####
 #
 
 #' Calculate QOF measures
@@ -602,10 +569,10 @@ f__91__measures <- function(
     )
 
     # some practices with a zero register will have zeros for indicators
-    # ... (num, den, value) = (0, 0, NA)
+    # : : : (num, den, value) = (0, 0, NA)
     # also some achievement denominators may be zero (after exceptions)
-    # ... (num, den, value) = (0, 0, NA)
-    # ... NA and NaN behave as is.na() == TRUE ... leaving as is
+    # : : : (num, den, value) = (0, 0, NA)
+    # : : : NA and NaN behave as is.na() == TRUE ... leaving as is
 
     # combine
 
@@ -626,36 +593,8 @@ f__91__measures <- function(
     invisible(m.comb)
 }
 
-#' Merge ccg groups into orgref
-#'
-#'
-f__91__amend_orgref__ccg_groups <- function(
-    qof
-    , lu.orgs.ccgs.groups = NA
-){
-    # ccg_group_type,ccg_group_name,ccg_code,ccg_group_code,ccg_group_name
-    # uop,Unit of Planning,02Q,nno,North Notts. UOP
-
-    qof$reference$orgref <- list(
-        qof$reference$orgref
-        , lu.orgs.ccgs.groups %>%
-            select(-ccg_code, -type_display_order) %>%
-            rename(
-                practice_code = "ccg_group_code", practice_name = "ccg_group_name"
-                , ccg_code = "ccg_group_type", ccg_name = "ccg_group_type_name"
-            ) %>%
-            mutate(
-                ccg_geography_code = ccg_code
-                , data_source = qof$reference$orgref$data_source %>% unique()
-                ) %>%
-            unique()
-    ) %>% rbindlist(use.names = TRUE)
-
-    invisible(qof)
-}
-
 #
-# Indicators ####
+# : : : Indicators ####
 #
 
 #'
@@ -751,7 +690,7 @@ performance, suboptimal,    denominator, 0,     1,     1
 #qof.ind.measures <- f__measures_ind(qof)[[1]]
 
 #
-# Prevalence ####
+# : : : Prevalence ####
 #
 
 #'
@@ -820,30 +759,8 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
     return(q.prev.measures)
 }
 
-#'
-#'
-#'
-f__91__load_measures <- function(
-    qof_root
-    , file_suffix = "__eng_ccg_prac__measure_ndv"
-) {
-    cat("INFO: f__91__load_measures: loading ...", "\n")
-
-    taskdir <- proj_root()
-
-    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_ind", file_suffix, ".csv"))
-    q.ind <- fread(file = this.file)
-
-    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_prev", file_suffix, ".csv"))
-    q.prev <- fread(file = this.file)
-
-    # return
-
-    return(list(prev = q.prev, ind = q.ind) %>% rbindlist(use.names = TRUE))
-}
-
 #
-# COMPARE - Add England comparator and significance test ####
+# : : COMPARE - Add England comparator and significance test ####
 #
 
 #' Compare routines
@@ -1021,7 +938,94 @@ f__91__compare <- function(
     return(qof.comp)
 }
 
+# : LOAD ####
+
+#' load raw data
 #'
+#' Default is not to do anything further.
+#'
+#' @notes
+#' Call tree:
+#'
+#' f__91__load_raw
+#' f__91__preprocess
+#'
+f__91__load_data <- function(
+    qof_root
+) {
+    cat("INFO: f__91__load_data: loading ...", "\n")
+
+    #' Add org.type to data elements
+    l_add_orgtype <- function(x) {
+        cat("INFO: l_add_orgtype: amending ...", "\n")
+        x$data <- x$data %>% lapply(mutate, org.type = "ccg::practice")
+        invisible(x)
+    }
+
+    #' Tag on data source
+    l_add_qof_root <- function(x, qof_root) {
+        cat("INFO: l_add_qof_root: amending ...", "\n")
+        x$data <- x$data %>% lapply(mutate, data_source = qof_root)
+        x$reference <- x$reference %>% lapply(mutate, data_source = qof_root)
+        invisible(x)
+    }
+
+    qof <- f__91__load_raw(qof_root) %>%
+        # process lookups
+        f__91__preprocess() %>%
+        l_add_orgtype() %>%
+        l_add_qof_root(qof_root)
+
+    # return
+
+    return(qof)
+}
+
+#' Load reference
+#'
+#'
+f__91__load_reference <- function(
+    qof_root
+    , file_suffix = "__processed"
+) {
+    cat("INFO: f__91__load_reference: loading ...", "\n")
+
+    taskdir <- proj_root()
+
+    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_orgref", file_suffix, ".csv"))
+    q.orgref <- fread(file = this.file)
+
+    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_indmap", file_suffix, ".csv"))
+    q.indmap <- fread(file = this.file)
+
+    # return
+
+    return(reference = list(orgref = q.orgref, indmap = q.indmap))
+}
+
+#' Load measures
+#'
+#'
+f__91__load_measures <- function(
+    qof_root
+    , file_suffix = "__eng_ccg_prac__measure_ndv"
+) {
+    cat("INFO: f__91__load_measures: loading ...", "\n")
+
+    taskdir <- proj_root()
+
+    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_ind", file_suffix, ".csv"))
+    q.ind <- fread(file = this.file)
+
+    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_prev", file_suffix, ".csv"))
+    q.prev <- fread(file = this.file)
+
+    # return
+
+    return(list(prev = q.prev, ind = q.ind) %>% rbindlist(use.names = TRUE))
+}
+
+#' Load compare
 #'
 #'
 f__91__load_compare <- function(
