@@ -139,7 +139,9 @@ Not tested,NA
 "
 )
 
+#
 # for stacked bar
+#
 
 prevalence <- measures %>%
     filter(
@@ -213,23 +215,83 @@ counts <- measures %>%
 
 rm("register")
 
+#
 # for sorting stacked bars
+#
+# for each indicator attach ALL measures then filter those of interest
+# - the register/listsize measures are to be attached to indicators by indicator group
+# - where there is NO disease register, use indicator denominator for register, CAN prev denom. for listsize
+# 
+# 1. isolate performance indicators
+# 2. isolate prevalence indicators
+# 3. join prevalence indicators into performance by indicator_group
+# 
 
-# measures %>% filter(practice_code %in% l__tmp_practices_list) %>% filter(m.stat != "denominator") %>% dcast(... ~ m.name + m.stat)
-sb__lu_measures <- measures %>% 
+# List of performance measures for each indicator
+sb__lu_performance <- measures %>% 
     select(m.type, m.name, m.stat) %>%
     unique() %>%
-    filter(m.stat != "denominator") %>%
+    filter(
+        m.type == "performance"
+        , m.stat != "denominator"
+    ) %>%
     mutate(measure_label = paste(m.name, sub("numerator", "count", m.stat))) %>%
     filter(!measure_label %in% c("achievement count"))
 
-sb__measures <- measures %>%
-    merge(sb__lu_measures, by = c("m.type", "m.name", "m.stat"), all.x = FALSE) %>%
-    select(
-        ccg_code, practice_code
-        , indicator_group_code, indicator_code
-        , m.name, m.stat, value, measure_label
+
+sb__measures__performance <- measures %>%
+  filter(!indicator_code %in% lu__register_indicators) %>%
+  merge(sb__lu_performance, by = c("m.type", "m.name", "m.stat"), all.x = FALSE) %>%
+  select(
+    ccg_code, practice_code
+    , indicator_group_code
+    , indicator_code
+    , m.type, m.name, m.stat, value, measure_label
+  )
+
+
+# attach qofprevalance measure for group to all codes
+
+# List of prevalence stats for register
+sb__lu_prevalence <- measures %>%
+    filter(m.name == "qofprevalence") %>%
+    select(m.type, m.name, m.stat) %>% unique() %>%
+    mutate(measure_label = paste(
+      m.name
+      , m.stat %>% 
+        sub("numerator", "register", .) %>%
+        sub("denominator", "listsize", .)
+    ))
+
+sb__lu <- list(
+    sb__lu_performance
+    , sb__lu_prevalence
+) %>% rbindlist(use.names = TRUE)
+
+# attach to all indicators
+sb__measures__prevalence <- measures %>%
+    # generate frame
+    #filter(!indicator_code %in% lu__register_indicators) %>% 
+    select(ccg_code, practice_code, indicator_group_code, indicator_code) %>%
+    unique() %>%
+    merge(sb__lu_prevalence, all.x = TRUE) %>%
+    # merge in prevalence values
+    merge(
+        measures %>% select(-org.type, -data_source, -display_order, -indicator_code, -domain_code)
+        , by = c(
+            "ccg_code", "practice_code"
+            , "indicator_group_code"
+            , "m.type", "m.name", "m.stat"
+        )
+        , all.x = TRUE
     )
+
+
+sb__measures <- list(
+    sb__measures__performance
+    , sb__measures__prevalence
+) %>%
+    rbindlist(use.names = TRUE)
 
 ```
 
