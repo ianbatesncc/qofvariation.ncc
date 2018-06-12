@@ -64,13 +64,25 @@ l_add_display_order <- function(x, c1 = "org.type") {
         mutate(display_order = ifelse(is.na(display_order), 20, display_order))
 }
 
+#' Filter indicators by given domain codes
+#'
+#' @param domain_codes one of c("CL", "PH", "PHAS")
+#'
+l__filter_domain_codes_tokeep <- function(x, domain_codes = c("CL", "PH", "PHAS")[1]) {
+    x %>% filter(domain_code %in% domain_codes) %>% invisible()
+}
+
 setnames.display <- function(x) {setnames(x, gsub("_|\\.", " ", names(x)))}
 
 # actually load data
 orgref <- dat$reference$orgref #%>% l_add_orgtag()
 indmap <- dat$reference$indmap
-measures <- dat$measures %>% l_add_display_order() #%>% l_add_orgtag()
-compare <- dat$compare %>% l_add_display_order("org.type.var") #%>% l_add_orgtag()
+measures <- dat$measures %>%
+    l_add_display_order() %>%
+    l__filter_domain_codes_tokeep("CL") #%>% l_add_orgtag()
+compare <- dat$compare %>% 
+    l_add_display_order("org.type.var") %>%
+    l__filter_domain_codes_tokeep("CL") #%>% l_add_orgtag()
 
 practice_grouping <- list(
     orgref %>% 
@@ -142,6 +154,10 @@ prevalence <- measures %>%
         , register
     )
 
+lu__register_indicators <- indmap %>% 
+  filter(is.register == TRUE) %>%
+  .$indicator_code
+
 register <- measures %>%
     filter(
         m.type == "prevalence"
@@ -160,6 +176,7 @@ counts <- measures %>%
     filter(
         m.type == "performance"
         , m.stat %in% c("numerator", "denominator")
+        #, !(indicator_code %in% lu__register_indicators)
     ) %>%
     select(-m.type, -org.type, -data_source) %>%
     dcast(... ~ m.name + m.stat) %>%
