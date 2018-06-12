@@ -283,11 +283,11 @@ f__91__preprocess <- function(
         # tag ccg
         merge(q.orgref %>% select(practice_code, ccg_code)
               , by = "practice_code") %>%
-        # filter non-register AND tag indicator_group_code
+        # filter non-register AND tag indicator_group_code, domain_code
         merge(
             q.indmap %>%
                 filter(is.register == FALSE) %>%
-                select(indicator_code, indicator_group_code)
+                select(domain_code, indicator_code, indicator_group_code)
             , by = "indicator_code"
         )
 
@@ -318,10 +318,10 @@ f__91__preprocess <- function(
               , by = "practice_code") %>%
         #mutate(org.type = "ccg, practice") %>%
         select(-patient_list_type) %>%
-        # tag on indicator_code
+        # filter non-register AND tag indicator_code, domain_code
         merge(q.indmap %>%
                   filter(is.register == TRUE) %>%
-                  select(indicator_group_code, indicator_code)
+                  select(domain_code, indicator_group_code, indicator_code)
               , by = "indicator_group_code"
         )
 
