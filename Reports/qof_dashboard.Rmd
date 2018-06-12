@@ -163,6 +163,8 @@ lu__register_indicators <- indmap %>%
   filter(is.register == TRUE) %>%
   .$indicator_code
 
+these_indicators_noregister <- setdiff(these_indicators, lu__register_indicators)
+
 register <- measures %>%
     filter(
         m.type == "prevalence"
@@ -603,8 +605,8 @@ selectInput(
 selectInput(
     "sb__this_indicator"
     , label = "Select indicator:"
-    , choices = c("[All]", these_indicators)
-    , selected = these_indicators[1]
+    , choices = c("[All]", these_indicators_noregister)
+    , selected = these_indicators_noregister[1]
     #, selected = "[All]"
 )
 
@@ -1017,7 +1019,7 @@ pd__indmap_dat <- reactive({
             pd__this_ind_group() == "[All]" | 
             indicator_group_code == pd__this_ind_group()
         ) %>%
-        select(-indicator_group_code, -data_source, -starts_with("domain_")) %>%
+        select(-indicator_group_code, -data_source) %>%
         mutate_if(is.character, as.factor) %>%
         invisible()
 })
