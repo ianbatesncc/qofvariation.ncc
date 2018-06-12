@@ -1,5 +1,12 @@
 CHANGELOG
 
+2018-06-12
+
+* FEATURE: indicator domains
+
+    Add in domain code for indicators.  Only consider Clinical domain for
+    analysis - as others do not have a sensible register.
+
 2018-06-02
 
 * BUGFIX: ccg grouping and ccg comparison mis-match
