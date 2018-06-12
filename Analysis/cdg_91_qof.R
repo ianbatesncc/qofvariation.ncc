@@ -73,8 +73,7 @@ f__91__process__reference_measures_compare <- function(
             , lu.orgs.ccgs.local = lu.orgs.ccgs.local
             , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
         ) %>%
-        f__91__amend_orgref__ccg_groups(lu.orgs.ccgs.groups) %>%
-        f__91__amend_data__add_domain()
+        f__91__amend_orgref__ccg_groups(lu.orgs.ccgs.groups)
 
     qof %>% f__91__save_reference(qof_root, bWriteCSV = bWriteCSV)
 
@@ -508,32 +507,6 @@ f__91__amend_orgref__ccg_groups <- function(
     ) %>% rbindlist(use.names = TRUE)
 
     invisible(qof)
-}
-
-#' Merge ccg groups into orgref
-#'
-#'
-f__91__amend_data__add_domain <- function(
-    qof
-){
-    l_add_domain <- function(x) {
-        x$data <- x$data[c("ind", "prev.melt")] %>%
-            lapply(function(y) {
-                y %>%
-                    merge(
-                        x$reference$indmap %>%
-                            select(indicator_code, domain_code)
-                        , by = "indicator_code"
-                        , all.x = TRUE
-                    )
-            })
-        invisible(x)
-    }
-
-    qof %>%
-        status("INFO: - adding domain code ...") %>%
-        l_add_domain() %>%
-        invisible()
 }
 
 #' Save reference
