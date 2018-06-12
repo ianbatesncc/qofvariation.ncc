@@ -75,18 +75,21 @@ f__91__process__reference_measures_compare <- function(
         ) %>%
         f__91__amend_orgref__ccg_groups(lu.orgs.ccgs.groups)
 
-    qof %>% f__91__save_reference(qof_root, bWriteCSV = bWriteCSV)
+    qof %>% f__91__save_reference(
+        qof_root, bWriteCSV = bWriteCSV
+    )
 
     # measures and grouping
 
     qof_measures <- f__91__measures(
-        qof
-        , bWriteCSV = bWriteCSV, qof_root
+        qof, bWriteCSV = bWriteCSV, qof_root
     )
 
     # compare
 
-    qof_compare <- f__91__compare(qof_measures, bWriteCSV = bWriteCSV, qof_root)
+    qof_compare <- f__91__compare(
+        qof_measures, bWriteCSV = bWriteCSV, qof_root
+    )
 
     # return
 
@@ -272,7 +275,9 @@ f__91__preprocess <- function(
 
     # filter out non-register indicators via join with indmap
     q.ind <- qof$data$ind %>%
-        filter(!(indicator_code %in% (q.indmap %>% filter(is.register == TRUE) %>% .$indicator_code))) %>%
+        filter(!(indicator_code %in% (
+            q.indmap %>% filter(is.register == TRUE) %>% .$indicator_code))
+        ) %>%
         # lowercase measure
         # remove points
         # tag ccg, indicator group
