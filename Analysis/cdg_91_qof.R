@@ -841,7 +841,7 @@ f__91__compare <- function(
             filter(org.type == "england", m.stat == "value") %>%
             select(-data_source, -ccg_code, -practice_code) %>%
             dcast(... ~ m.stat, value.var = "value")
-        , by = c("indicator_group_code", "indicator_code", "m.type", "m.name")
+        , by = c("domain_code", "indicator_group_code", "indicator_code", "m.type", "m.name")
         , all.x = TRUE, suffixes = c(".var", ".ref")
     )
 
@@ -853,7 +853,7 @@ f__91__compare <- function(
             filter(org.type == "lep::instance", m.stat == "value") %>%
             select(-data_source, -ccg_code, -practice_code) %>%
             dcast(... ~ m.stat, value.var = "value")
-        , by = c("indicator_group_code", "indicator_code", "m.type", "m.name")
+        , by = c("domain_code", "indicator_group_code", "indicator_code", "m.type", "m.name")
         , all.x = TRUE, suffixes = c(".var", ".ref")
     )
 
@@ -866,7 +866,7 @@ f__91__compare <- function(
             select(-data_source, -ccg_code) %>%
             rename(ccg_code = "practice_code") %>%
             dcast(... ~ m.stat, value.var = "value")
-        , by = c("indicator_group_code", "indicator_code", "ccg_code", "m.type", "m.name")
+        , by = c("domain_code", "indicator_group_code", "indicator_code", "ccg_code", "m.type", "m.name")
         , all.x = FALSE, all.y = FALSE, suffixes = c(".var", ".ref")
     )
 
