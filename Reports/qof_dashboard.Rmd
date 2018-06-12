@@ -298,6 +298,13 @@ sb__measures <- list(
 ) %>%
     rbindlist(use.names = TRUE)
 
+#
+# For sorting heatmaps
+#
+#
+
+hm__sort_options <- c("practice_code", "summary_measure")
+
 ```
 
 
@@ -358,6 +365,21 @@ selectInput(
     , selected = "england" # these_comparators[1]
 )
 
+selectInput(
+    "hm__this_sort_option"
+    , label = "Order practices by:"
+    , choices = hm__sort_options
+    #, selected = hm__sort_options[1]
+    , selected = "summary_measure"
+)
+
+
+checkboxInput(
+    "hm__sort_desc"
+    , label = "Reverse sort"
+    , value = FALSE
+)
+
 if (bRenderD3) {
     
     checkboxInput("hm__group_rows", "Group rows", FALSE)
@@ -383,9 +405,16 @@ hm__this_measure <- reactive(input$hm__this_measure)
 hm__this_comparator <- reactive(input$hm__this_comparator)
 hm__this_comparison_method <- reactive(input$hm__this_comparison_method)
 hm__bool_hide_practices <- reactive(input$hm__bool_hide_practices)
+hm__sort_desc <- reactive(input$hm__sort_desc)
+hm__this_sort_option <- reactive(input$hm__this_sort_option)
+
 
 hm__tmp_practices_list <- reactive({
     
+    # For development
+    l__this_ccg_group <- "Mid. Notts. UOP"
+    l__bool_hide_practices <- FALSE
+
     l__this_ccg_group <- hm__this_ccg_group()
     l__bool_hide_practices <- hm__bool_hide_practices()
     
@@ -430,6 +459,8 @@ if (bRenderggplot) {
         l__this_comparator <- hm__this_comparator()
         l__this_comparison_method <- hm__this_comparison_method()
         l__tmp_practices_list <- hm__tmp_practices_list()
+        l__hm__this_sort_option <- hm__this_sort_option()
+        l__hm__sort_desc <- hm__sort_desc()
         
         this_dat <- compare %>%
             # filter on measure and comparison
@@ -455,10 +486,48 @@ if (bRenderggplot) {
             ungroup() %>%
             mutate(value_sort = 0)
         
-        # to add sort methods
-        orgs_ordered <- this_dat %>%
+        # Decide how to sort
+        if (l__hm__this_sort_option == "summary_measure") {
+            this_sort <- this_dat %>%
+                #filter(!is.na(istatsig)) %>%
+                group_by_at(vars(-ind_label, -istatsig)) %>%
+                summarise_at(
+                    vars(istatsig)
+                    , funs(
+                        m2 = sum(. < -1, na.rm = TRUE)
+                        , m1 = sum(. == -1, na.rm = TRUE)
+                        , z = sum(. == 0, na.rm = TRUE)
+                        , p1 = sum(. == 1, na.rm = TRUE)
+                        , p2 = sum(. > 1, na.rm = TRUE)
+                        , na = sum(is.na(.))
+                    )
+                ) %>%
+                ungroup() %>%
+                mutate(n = m2 + m1 + z + p1 + p2 + na) %>%
+                # Lots of ways of doing this - this is reasonable
+                #mutate(value_sort = -(4*m2 + 2*m1 + 0*(z + na) - 2*p1 - 4*p2) / n)
+                #mutate(value_sort = -(1*m2 + 1*m1 + 0*(z + na) - 1*p1 - 1*p2) / n)
+                #mutate(value_sort = -(2*m2 + 1*m1 + 0*(z + na) - 1*p1 - 2*p2) / n)
+                mutate(value_sort = (3*m2 + 2*m1 + 0*(z + na) - 2*p1 - 3*p2) / n)
+        } else {
+            this_sort <- this_dat %>%
+                #filter(!is.na(istatsig)) %>%
+                select_at(vars(-ind_label, -istatsig)) %>%
+                unique() %>%
+                mutate(value_sort = 0)
+        }
             arrange(display_order, value_sort, org_label) %>%
             .$org_label %>% unique()
+        # to add sort methods
+        if (l__hm__sort_desc == TRUE) {
+            orgs_ordered <- this_sort %>%
+                arrange(display_order, desc(value_sort), desc(org_label)) %>%
+                .$org_label %>% unique()
+        } else {
+            orgs_ordered <- this_sort %>%
+                arrange(display_order, value_sort, org_label) %>%
+                .$org_label %>% unique()
+        }
         
         this_dat <- this_dat %>%
             # try to sort for plot
