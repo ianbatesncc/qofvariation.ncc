@@ -4,10 +4,10 @@ MILESTONES
 
 Basic calculations
 
- - load raw qof data
- - group by ccgs
- - calculate meausures - prevalence and indicators
- - compare - benchmark and spc
+ * load raw qof data
+ * grouping by ccgs
+ * calculate meausures - prevalence and indicators
+ * compare - benchmark and spc
 
 1.1
 
@@ -26,13 +26,13 @@ Track practices over time
 
 Basic Dashboard - Minimal
 
- - Rushcliffe CCG
- - heatmap of variation (SPC, benchmark)
- - stacked 100% barcharts of variation (indicator_code, CCG, GP)
-    - treated (Gre), suboptimal (Ora), excepted (Red), excluded (Blu)
+ * Rushcliffe CCG
+ * heatmap of variation (SPC, benchmark)
+ * stacked 100% barcharts of variation (indicator_code, CCG, GP)
+    * treated (Gre), suboptimal (Ora), excepted (Red), excluded (Blu)
 
 Future
 
- - dynamic choice of CCG
- - View QOF indicator metadata
+ * dynamic choice of CCG
+ * View QOF indicator metadata
  - Summary of variation (CCG)
