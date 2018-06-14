@@ -830,6 +830,16 @@ Fila
 
 sb__ind_dat <- reactive({
     
+    # For debugging dynamic elements
+
+    l__this_indicator <- "CHD005" # "AF006"
+    l__this_practice <- "C84001"
+    l__bool_hide_practices <- FALSE
+    l__tmp_practices_list <- c("eng", "n2", "02Q", "C84001", "C84008", "C84013")
+    l__this_sort_measure <- "exceptions value"
+    l__sort_desc = TRUE
+    l__sb__scale_counts_largest_gp <- TRUE # FALSE
+    
     l__this_indicator <- sb__this_indicator()
     l__this_practice <- sb__this_practice()
     l__bool_hide_practices <- sb__bool_hide_practices()
@@ -837,14 +847,6 @@ sb__ind_dat <- reactive({
     l__this_sort_measure <- sb__this_sort_measure()
     l__sort_desc <- sb__this_sort_desc()
     l__sb__scale_counts_largest_gp <- sb__scale_counts_largest_gp()
-    
-    # For debugging dynamic elements
-    #
-    # l__this_indicator <- "AF006"
-    # l__this_practice <- "C84001"
-    # l__tmp_practices_list <- c("eng", "n2", "02Q", "C84001", "C84008", "C84013")
-    # l__this_sort_measure <- "exceptions value"
-    # l__sort_desc = TRUE
     
     l__this_ccg <- orgref %>%
         filter(practice_code == l__this_practice) %>%
@@ -920,6 +922,8 @@ sb__ind_dat <- reactive({
 
 renderPlot({
     
+    l_ind_melt <- sb__ind_dat()
+    
     cols <- c(
         optimal = "green4"
         , suboptimal = "darkorange"
@@ -927,8 +931,6 @@ renderPlot({
         , exclusions = "lightblue"
         , model = "gray50"
     )
-    
-    l_ind_melt <- sb__ind_dat()
     
     p <- ggplot(l_ind_melt) +
         geom_col(
@@ -1202,7 +1204,7 @@ DT::renderDataTable({
 
 
 
-Debug
+Debug {.hidden}
 ====
 
 Fila {.tabset}
