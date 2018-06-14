@@ -868,7 +868,8 @@ sb__ind_dat <- reactive({
             practice_code %in% l__tmp_practices_list
             , indicator_code == l__this_indicator
         ) %>% merge(
-            l__sort_measure %>% select(-starts_with("m"), value_sort = value)
+            l__sort_measure %>%
+                select(-starts_with("m"), -indicator_group_code, value_sort = value)
             , by = c("ccg_code", "practice_code", "indicator_code")
             # reverse value if descending
         ) %>%
