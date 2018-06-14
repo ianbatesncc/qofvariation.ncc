@@ -758,12 +758,19 @@ checkboxInput(
     , value = TRUE
 )
 
+checkboxInput(
+    "sb__scale_counts_largest_gp"
+    , label = "For GPs scale counts to largest overall GP register"
+    , value = FALSE
+)
+
 sb__this_ccg_group <- reactive(input$sb__this_ccg_group)
 sb__this_practice <- reactive(input$sb__this_practice)
 sb__bool_hide_practices <- reactive(input$sb__bool_hide_practices)
 sb__this_indicator <- reactive(input$sb__this_indicator)
 sb__this_sort_measure <- reactive(input$sb__this_sort_measure)
 sb__this_sort_desc <- reactive(input$sb__sort_desc)
+sb__scale_counts_largest_gp <- reactive(input$sb__scale_counts_largest_gp)
 
 sb__tmp_practices_list <- reactive({
     
@@ -829,6 +836,7 @@ sb__ind_dat <- reactive({
     l__tmp_practices_list <- sb__tmp_practices_list()
     l__this_sort_measure <- sb__this_sort_measure()
     l__sort_desc <- sb__this_sort_desc()
+    l__sb__scale_counts_largest_gp <- sb__scale_counts_largest_gp()
     
     # For debugging dynamic elements
     #
@@ -893,6 +901,20 @@ sb__ind_dat <- reactive({
             org_label_ordered = ordered(org_label, levels = rev(orgs_ordered))
         )
     
+    if (l__sb__scale_counts_largest_gp == TRUE) {
+        # find largest GP register ... then scale all GPs by that value
+        register_max <- l_ind %>%
+            filter(practice_code %like% "[CY].....") %>%
+            .$register %>% max()
+        
+        l_ind_melt <- l_ind_melt %>%
+            mutate(pvalue = ifelse(
+                practice_code %like% "[CY]....."
+                , value / register_max
+                , pvalue)
+            )
+    }
+    
     l_ind_melt %>% invisible()
 })
 
@@ -935,9 +957,14 @@ renderPlot({
         scale_fill_manual(values = cols) +
         coord_flip() +
         scale_y_continuous(labels = scales::percent) +
-        labs(x = "", y = "Counts relative to register (percent)") + 
         theme_minimal() +
-        theme(legend.position = "top")
+        theme(legend.position = "top") +
+        labs(x = "", y = "Counts scaled relative to register (percent)")
+    
+        #ylabel <- "Counts scaled relative to register (percent)"
+    if (sb__scale_counts_largest_gp() == TRUE)
+        p <- p + labs(y = "Counts scaled relative to largest GP register overall (percent)") 
+
 
     p %>% print()
     
