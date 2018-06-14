@@ -309,6 +309,71 @@ hm__sort_options <- c("practice_code", "summary_measure")
 ```
 
 
+About
+====
+
+Fila {.tabset}
+-----------------------------------------------------------------------
+
+### About
+
+This dashboard investigates variation in QOF based on publically available QOF data.
+
+### Introduction
+
+QOF Data: NHS Digital QOF 16/17.
+
+#### What is in QOF
+
+QOF contains information about the quality of care provided by GP practices in England.
+There are a number of domains within QOF, relating to different aspects of care, but for this report only the CLINICAL DOMAIN, relating to patient care, is considered.
+
+The clinical domain contains information for separate DISEASE GROUPS.  It does not consider multimorbidity i.e. patients with one or more of these diseases.
+
+Each disease group has a REGISTER of patients diagnosed with that disease.
+
+Within each disease group are a number of INDICATORS relating to specific aspects of care for those patients.
+
+Where the aspect of care refers to a subset of patients, e.g. those newly registered, then those other patients who are not in the subset will not be included in the indicator.  These are called EXCLUSIONS.
+
+Where the aspect of care is relevant to a patient, but there is a recognised reason for the patient not to receive the aspect of care, e.g. informed dissent, medical contra-indication, then the patient is not included in the indicator.  Patients where this is the case are called EXCEPTIONS.
+
+QOF reports are by:
+
+ - ccg, practice
+ - domain, group and indicator
+ 
+Performance and prevalence is reported:
+
+ - prevalence by group
+ - performance by indicators
+
+
+A disease group will have a REGISTER of patients.
+Each indicator represents a particular aspect of care for those patients.
+
+
+
+### Methodology
+
+Statistical methods: based on PHE/APHO methodology.
+
+Confidence level of 95% used for confidence intervals.
+
+SPC limits taken to be 2 and 3 standard deviations.
+
+Measures considered are:
+
+ - 
+ 
+ 
+### Results
+
+
+### Discussion
+
+
+
 Heatmap
 ====
 
@@ -1160,12 +1225,3 @@ indmap %>% select(-ends_with("description")) %>% mutate_if(is.character, as.fact
 ```
 
 
-About
-====
-
-Row 1
------------------------------------------------------------------------
-
-### About
-
-Here is some content.
