@@ -1,0 +1,11 @@
+Package: qofvariation.ncc
+Title: Analysis of variation in QOF data
+Version: 0.0.0.9000
+Authors@R: person("Ian", "Bates", email = "ian.bates@nottscc.gov.uk", role = c("aut", "cre"))
+Description: Analysis of variation in QOF data
+Depends: R (>= 3.4.0)
+License: GPL-3 + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1
+Suggests: testthat
