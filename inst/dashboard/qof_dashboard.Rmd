@@ -334,12 +334,13 @@ selectInput(
     , label = "Select Practice grouping:"
     , choices = these_ccg_groups
     , selected = these_ccg_groups[1]
+    , selectize = FALSE
 )
 
 checkboxInput(
     "hm__bool_hide_practices"
-    , "Hide practices"
-    , FALSE
+    , label = "Hide practices"
+    , value = FALSE
 )
 
 selectInput(
@@ -348,6 +349,7 @@ selectInput(
     , choices = c("[All]", these_ind_groups)
     , selected = "[All]"
     , multi = TRUE
+    , selectize = FALSE
 )
 
 selectInput(
@@ -355,6 +357,7 @@ selectInput(
     , label = "Select measure:"
     , choices = these_measures
     , selected = "exceptions" # these_measures[1]
+    , selectize = FALSE
 )
 
 selectInput(
@@ -362,6 +365,7 @@ selectInput(
     , label = "Select comparison method:"
     , choices = these_comparisons
     , selected = "spc" # these_comparisons[1]
+    , selectize = FALSE
 )
 
 selectInput(
@@ -369,6 +373,7 @@ selectInput(
     , label = "Select comparator:"
     , choices = these_comparators
     , selected = "england" # these_comparators[1]
+    , selectize = FALSE
 )
 
 selectInput(
@@ -377,6 +382,7 @@ selectInput(
     , choices = hm__sort_options
     #, selected = hm__sort_options[1]
     , selected = "summary_measure"
+    , selectize = FALSE
 )
 
 
