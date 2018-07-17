@@ -27,8 +27,10 @@ Global page {.hidden}
 ```{r global, include = FALSE, cache = TRUE}
 # load data in 'global' chunk so it can be shared by all users of the dashboard
 
+taskdir <- normalizePath(".")
 taskdir <- normalizePath("..")
-source(file = paste(taskdir, "Analysis/main.R", sep = "/"))
+taskdir <- normalizePath("../..")
+source(file = paste(taskdir, "./R/main.R", sep = "/"))
 #source(file = paste(taskdir, "Analysis/cdg_91_qof.R", sep = "/"))
 
 #dat <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
@@ -46,7 +48,7 @@ l_add_orgtag <- function(x, c1 = "ccg_code", c2 = "practice_code") {
 
 # Add ccg group lookup
 lu.orgs.ccgs.groups <- fread(
-    file = paste_paths(taskdir, "./Results/lu__ccg_groups.csv")
+    file = paste_paths(taskdir, "./data-raw/lu__ccg_groups.csv")
 ) #%>% l_add_orgtag("ccg_group_type", "ccg_group_code")
 
 # Add display order

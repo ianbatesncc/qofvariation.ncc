@@ -172,18 +172,18 @@ f__91__load_raw <- function(
 
     taskdir <- proj_root()
 
-    this.file <- paste_paths(taskdir, "./Data/", paste0(qof_root, "-csv/ORGANISATION_REFERENCE.csv"))
+    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "-csv/ORGANISATION_REFERENCE.csv"))
     qof.orgref <- fread(file = this.file) %>% setnames.clean()
 
-    this.file <- paste_paths(taskdir, "./Data/", paste0(qof_root, "-csv/INDICATOR_MAPPINGS.csv"))
+    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "-csv/INDICATOR_MAPPINGS.csv"))
     qof.indmap <- fread(file = this.file) %>% setnames.clean()
 
-    this.file <- paste_paths(taskdir, "./Data/", paste0(qof_root, "-csv/PREVALENCE.csv"))
+    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "-csv/PREVALENCE.csv"))
     qof.prev <- fread(file = this.file) %>% setnames.clean()
 
-    this.file <- paste_paths(taskdir, "./Data/", paste0(qof_root, "-csv/ACHIEVEMENT_EXCEPTIONS.csv"))
+    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "-csv/ACHIEVEMENT_EXCEPTIONS.csv"))
     if (!(file.exists(this.file)))
-        this.file <- paste_paths(taskdir, "./Data/", paste0(qof_root, "-csv/ACHIEVEMENT.csv"))
+        this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "-csv/ACHIEVEMENT.csv"))
     qof.ind <- fread(file = this.file) %>% setnames.clean()
 
     # return
@@ -528,10 +528,10 @@ f__91__save_reference <- function(
     if (bWriteCSV == TRUE) {
         cat("INFO: f__91__save_reference: saving reference data ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_orgref", file_suffix, ".csv")
+        this.file <- paste0("./data-raw/", qof_root, "_orgref", file_suffix, ".csv")
         fwrite(qof$reference$orgref, file = this.file)
 
-        this.file <- paste0("./Results/", qof_root, "_indmap", file_suffix, ".csv")
+        this.file <- paste0("./data-raw/", qof_root, "_indmap", file_suffix, ".csv")
         fwrite(qof$reference$indmap, file = this.file)
     }
 }
@@ -588,7 +588,7 @@ f__91__measures <- function(
     if (bWriteCSV) {
         cat("INFO: f__91__measures: saving m.comb ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_all", file_suffix, ".csv")
+        this.file <- paste0("./data-raw/", qof_root, "_all", file_suffix, ".csv")
         fwrite(m.comb, file = this.file)
 
     } else {
@@ -668,7 +668,7 @@ performance, suboptimal,    denominator, 0,     1,     1
     if (bWriteCSV) {
         cat("INFO: f__91__measures_ind: saving q.ind.measures ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
+        this.file <- paste0("./data-raw/", qof_root, "_ind", file_suffix, ".csv")
         fwrite(q.ind.measures, file = this.file)
 
     } else {
@@ -752,7 +752,7 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
     if (bWriteCSV) {
         cat("INFO: f__91__measures_prev: saving q.prev.measures ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
+        this.file <- paste0("./data-raw/", qof_root, "_prev", file_suffix, ".csv")
         fwrite(q.prev.measures, file = this.file)
 
     } else {
@@ -784,8 +784,8 @@ f__91__compare <- function(
 
     taskdir <- proj_root()
 
-    source(file = paste_paths(taskdir, "/Analysis/calcci.R"))
-    source(file = paste_paths(taskdir, "./Analysis/testci.R"))
+    source(file = paste_paths(taskdir, "./R/calcci.R"))
+    source(file = paste_paths(taskdir, "./R/testci.R"))
 
     ##
     ## QOF
@@ -921,17 +921,17 @@ f__91__compare <- function(
     if (bWriteCSV) {
         cat("INFO: saving qof.comp ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_all", file_suffix, ".csv")
+        this.file <- paste0("./data-raw/", qof_root, "_all", file_suffix, ".csv")
         fwrite(qof.comp, file = this.file)
 
         cat("INFO: saving qof.prev.comp ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_prev", file_suffix, ".csv")
+        this.file <- paste0("./data-raw/", qof_root, "_prev", file_suffix, ".csv")
         fwrite(qof.comp %>% filter(m.type == "prevalence"), file = this.file)
 
         cat("INFO: saving qof.ind.comp ...", "\n")
 
-        this.file <- paste0("./Results/", qof_root, "_ind", file_suffix, ".csv")
+        this.file <- paste0("./data-raw/", qof_root, "_ind", file_suffix, ".csv")
         fwrite(qof.comp %>% filter(m.type == "performance"), file = this.file)
 
     } else {
@@ -997,10 +997,10 @@ f__91__load_reference <- function(
 
     taskdir <- proj_root()
 
-    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_orgref", file_suffix, ".csv"))
+    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_orgref", file_suffix, ".csv"))
     q.orgref <- fread(file = this.file)
 
-    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_indmap", file_suffix, ".csv"))
+    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_indmap", file_suffix, ".csv"))
     q.indmap <- fread(file = this.file)
 
     # return
@@ -1019,11 +1019,17 @@ f__91__load_measures <- function(
 
     taskdir <- proj_root()
 
-    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_ind", file_suffix, ".csv"))
-    q.ind <- fread(file = this.file)
+    #this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_ind", file_suffix, ".csv"))
+    #q.ind <- fread(file = this.file)
 
-    this.file <- paste_paths(taskdir, "./Results/", paste0(qof_root, "_prev", file_suffix, ".csv"))
-    q.prev <- fread(file = this.file)
+    #this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_prev", file_suffix, ".csv"))
+    #q.prev <- fread(file = this.file)
+
+    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_all", file_suffix, ".csv"))
+    q.all <- data.table::fread(file = this.file)
+
+    q.ind <- q.all %>% filter(m.type == "performance")
+    q.prev <- q.all %>% filter(m.type == "prevalence")
 
     # return
 
@@ -1041,11 +1047,17 @@ f__91__load_compare <- function(
 
     taskdir <- proj_root()
 
-    this.file <- paste_paths(taskdir, "./Results", paste0(qof_root, "_ind", file_suffix, ".csv"))
-    q.ind <- fread(file = this.file)
+    #this.file <- paste_paths(taskdir, "./data-raw", paste0(qof_root, "_ind", file_suffix, ".csv"))
+    #q.ind <- fread(file = this.file)
 
-    this.file <- paste_paths(taskdir, "./Results", paste0(qof_root, "_prev", file_suffix, ".csv"))
-    q.prev <- fread(file = this.file)
+    #this.file <- paste_paths(taskdir, "./data-raw", paste0(qof_root, "_prev", file_suffix, ".csv"))
+    #q.prev <- fread(file = this.file)
+
+    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_all", file_suffix, ".csv"))
+    q.all <- data.table::fread(file = this.file)
+
+    q.ind <- q.all %>% filter(m.type == "performance")
+    q.prev <- q.all %>% filter(m.type == "prevalence")
 
     # return
 
