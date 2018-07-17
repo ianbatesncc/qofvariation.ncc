@@ -74,7 +74,11 @@ l_add_display_order <- function(x, c1 = "org.type") {
 #' @param domain_codes one of c("CL", "PH", "PHAS")
 #'
 l__filter_domain_codes_tokeep <- function(x, domain_codes = c("CL", "PH", "PHAS")[1]) {
-    x %>% filter(domain_code %in% domain_codes) %>% invisible()
+    if ("domain_code" %in% colnames(x)) {
+        x %>% filter(domain_code %in% domain_codes) %>% invisible()
+    } else {
+        x
+    }
 }
 
 setnames.display <- function(x) {setnames(x, gsub("_|\\.", " ", names(x)))}
@@ -284,7 +288,7 @@ sb__measures__prevalence <- measures %>%
     merge(sb__lu_prevalence, all.x = TRUE) %>%
     # merge in prevalence values
     merge(
-        measures %>% select(-org.type, -data_source, -display_order, -indicator_code, -domain_code)
+        measures %>% select(-org.type, -data_source, -display_order, -indicator_code) # , -domain_code)
         , by = c(
             "ccg_code", "practice_code"
             , "indicator_group_code"
@@ -518,8 +522,8 @@ if (bRenderggplot) {
                 unique() %>%
                 mutate(value_sort = 0)
         }
-            arrange(display_order, value_sort, org_label) %>%
-            .$org_label %>% unique()
+            #arrange(display_order, value_sort, org_label) %>%
+            #.$org_label %>% unique()
         # to add sort methods
         if (l__hm__sort_desc == TRUE) {
             orgs_ordered <- this_sort %>%
