@@ -8,14 +8,14 @@ options(warn = 1)
 
 #
 # Concept of 'root directory' depends on context.
-# - from project root is ./Analysis
-# - from ./Reports/dashboard it is, not surprisingly, ./Reports ...
+# - from project root is ./R
+# - from ./inst/dashboard it is, not surprisingly, ./R ...
 #
 proj_root <- function() {
     if (interactive()) {
         getwd()
     } else {
-        normalizePath("..")
+        normalizePath("../..")
     }
 }
 
@@ -28,9 +28,9 @@ paste_paths <- function(...) {
 
 taskdir <- proj_root()
 
-source(file = paste_paths(taskdir, "Analysis/cdg_91_qof.R"))
-source(file = paste_paths(taskdir, "Analysis/calcci.R"))
-source(file = paste_paths(taskdir, "Analysis/testci.R"))
+source(file = paste_paths(taskdir, "R/cdg_91_qof.R"))
+source(file = paste_paths(taskdir, "R/calcci.R"))
+source(file = paste_paths(taskdir, "R/testci.R"))
 
 # Main ####
 
