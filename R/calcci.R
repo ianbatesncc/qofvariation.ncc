@@ -1,19 +1,52 @@
-# calcci.R
-#
-# Routines to calculate confidence intervals.
-#
-
-options(warn = 1)
-
 #' Family of calculate routines
 #'
 #' Container for calculate routines
 #'
+#' Routines to calculate confidence intervals.
+#'
+#' Implementation details
+#'
+#' APHO CI routines - but in R
+#'
+#' Need to protect against some corner cases
+#'
+#' prop.test
+#'
+#' (x, 0) (NA, x) (x, NA) generates an error (0,  >0..<10) generates a warning
+#'
+#' poisson.test
+#'
+#' (0, 0) ci : (NaN, Inf) (x, 0) ci : (Inf, Inf) (NA, x) (x, NA) generates an
+#' error
+#'
+#' binom.test ??
+#'
+#' For vectors, need to assemble as 1D list of pairs of (num, den, mult,
+#' ci_type) return type compatible with data.frame.  Use "t" prefix for
+#' data.table use.
+#'
+#'
+#'
 #' @family calculate routines
-#' @family sections
+#' @family confidence interval routines
 #'
 #' @name calcci
 NULL
+
+
+# CONFIDENCE INTERVAL METHODS ####
+#
+
+#' Statistic test routines
+#'
+# @family calculate routines
+#' @family confidence interval routines
+#' @family statistic test routines
+#'
+#' @name stat_test
+NULL
+
+
 
 #' Byars approximation to poission
 #'
@@ -26,8 +59,11 @@ NULL
 #'
 #' @importFrom stats qnorm
 #'
-#' @export
-
+# @family confidence interval routines
+#' @family statistic test routines
+#'
+# @export
+#'
 poisson_byars.test <- function(x, T, conf.level = 0.95) {
     if (conf.level == 0.95) {
         z <- 1.959664
@@ -52,8 +88,11 @@ poisson_byars.test <- function(x, T, conf.level = 0.95) {
 #'
 #' @importFrom stats qnorm
 #'
-#' @export
-
+# @family confidence interval routines
+#' @family statistic test routines
+#'
+# @export
+#'
 prop_wilson.test <- function(x, n, conf.level = 0.95) {
     if (conf.level == 0.95) {
         z <- 1.959664
@@ -78,30 +117,9 @@ prop_wilson.test <- function(x, n, conf.level = 0.95) {
     return(list(conf.int = c(pd.lower, pd.upper) / d1))
 }
 
-#
-# Generic calculation routine ####
-#
 
-#' Implementation details
-#'
-#' APHO CI routines - but in R
-#'
-#' Need to protect against some corner cases
-#'
-#' prop.test
-#'
-#' (x, 0) (NA, x) (x, NA) generates an error (0,  >0..<10) generates a warning
-#'
-#' poisson.test
-#'
-#' (0, 0) ci : (NaN, Inf) (x, 0) ci : (Inf, Inf) (NA, x) (x, NA) generates an
-#' error
-#'
-#' binom.test ??
-#'
-#' For vectors, need to assemble as 1D list of pairs of (num, den, mult,
-#' ci.type) return type compatible with data.frame.  Use "t" prefix for
-#' data.table use.
+# GENERIC CALCULATION ROUTINES ####
+
 
 #' Calculate confidence intervals.
 #'
@@ -114,15 +132,18 @@ prop_wilson.test <- function(x, n, conf.level = 0.95) {
 #' @param multiplier Multiplier.  Optional - default 1.
 #' @param level Confidence level (\code{0 < level <= 1}).  Optional - default
 #'   0.95
-#' @param ci.type Type of confidence interval.  Optional - default "poisson"
+#' @param ci_type Type of confidence interval.  Optional - default "poisson"
 #'   Possible values {"poisson", "proportion", "poisson_byars", "prop_wilson",
 #'   "poisson_native", "proportion_native", "binomial_native"}. Also byars and
 #'   wilson can be used (aliased to poisson_byars and prop_wilson respectively).
 #' @param bTransposeResults Boolean.  Only used when vector options are passed.
 #'   If TRUE spin results around.  See \code{return}.  Defaults to FALSE.
+#' @param return_type Specify list of vectors (default) or data.frame or
+#'   data.table.
 #'
-#' @note poisson and proportion use the apho defintions by default.  OVerride to
-#'   use the native r exact methods by appending "_native" e.g. poission_native.
+#' @note poisson and proportion use the apho definitions by default.  Override
+#'   to use the native r exact methods by appending "_native" e.g.
+#'   poission_native.
 #'
 #' @note The native proportion test applies a continuity correction by default.
 #'   We do not want this to occur so this case is treated specially.
@@ -149,12 +170,17 @@ prop_wilson.test <- function(x, n, conf.level = 0.95) {
 #'     , mult = 10^stats::runif(n, min = 1, max = 3)
 #'     , level = stats::runif(n, min = 0.95, max = 0.99)
 #' )
-#' dat[, ci := aphoci_prop(num, den, mult, level)]
-#' dat[, c("cilo", "cihi") := aphoci_prop(num, den, mult, level, bTransposeResults = TRUE)]
+#' dat[, ci := qofvariation.ncc:::aphoci_prop(num, den, mult, level)]
+#' dat[, c("cilo", "cihi") :=
+#'     qofvariation.ncc:::aphoci_prop(
+#'         num, den, mult, level, bTransposeResults = TRUE
+#'     )
+#' ]
 #' # or equivalently
-#' dat[, c("cilo", "cihi") := transpose_list_vector(aphoci_prop(num, den, mult, level))]
-#' dat[, c("cilo", "cihi") := transpose_list_vector(ci)]
-#' dat[, c("cilo", "cihi") := ci_ci2comps(ci)]
+#' dat[, c("cilo", "cihi") := transpose(
+#'     qofvariation.ncc:::aphoci_prop(num, den, mult, level)
+#' )]
+#' dat[, c("cilo", "cihi") := transpose(ci)]
 #' }
 #'
 #' ## for data.frame
@@ -169,29 +195,32 @@ prop_wilson.test <- function(x, n, conf.level = 0.95) {
 #'     , mult = 10^stats::runif(n, min = 1, max = 3)
 #'     , level = stats::runif(n, min = 0.95, max = 0.99)
 #' )
-#' dat <- dat %>% dplyr::mutate(ci = aphoci_prop(num, den, mult, level))
-#' dat$cilo <- transpose_list_vector(dat$ci)[[1]]
-#' dat$cihi <- transpose_list_vector(dat$ci)[[2]]
+#' dat <- dat %>% dplyr::mutate(
+#'     ci = qofvariation.ncc:::aphoci_prop(num, den, mult, level)
+#' )
+#' dat$cilo <- transpose(dat$ci)[[1]]
+#' dat$cihi <- transpose(dat$ci)[[2]]
 #' }
 #'
 #' @note If any parameter is a vector remaining parameters will be recycled and
 #'   the return value will be a list of vectors.
 #'
+#' @family confidence interval routines
 #' @family calculate routines
 #' @family generic routines
 #'
-#' @export
+# @export
 #'
 aphoci_gen <- function(
-    num, den, multiplier = 1, level = 0.95, ci.type = "poisson"
+    num, den, multiplier = 1, level = 0.95, ci_type = "poisson"
     , bTransposeResults = FALSE
-    , return.type = "minimal" # "data.frame"
+    , return_type = "minimal" # "data.frame"
 ) {
     ci <- c(NA, NA)
     #cat("DEBUG: aphoci_gen: (num, den) = (", num, ", ", den, ")", "\n")
 
     # The worker routine
-    calcci <- function(l_num, l_den, l_mult, l_level, l_ci_type) {
+    l_calcci <- function(l_num, l_den, l_mult, l_level, l_ci_type) {
         ci <- as.numeric(c(NA, NA))
 
         if (!is.na(l_ci_type)) {
@@ -238,43 +267,44 @@ aphoci_gen <- function(
                     a <- f.test(l_num, l_den, conf.level = l_level)
                 }
                 ci <- a[["conf.int"]][1:2] * l_mult
-                ci2 <- a$conf.int[1:2] * l_mult
+                #ci <- a$conf.int[1:2] * l_mult
             }
         }
 
         return(ci)
     }
 
-    #' Convert  2d matrix to a lsit of vectors, optionally transposing along the way
+    #' Convert 2d matrix to a list of vectors, optionally transposing along the way
     #'
     #' to convert output of mapply to use with data.frame objects
     #'
-    mat2list <- function(m, bTranspose = FALSE) {
+    l_mat2list <- function(m, bTranspose = FALSE) {
         if (!bTranspose)
             m <- t(m)
         lapply(seq_len(dim(m)[1]), function(i){m[i, ]})
     }
 
-if (is.installed("data.table")) {
+if (is_installed("data.table")) {
 
-    dat <- data.table(
-        num, den, multiplier, level, ci.type
-    ) %>%
-        .[, c("cilo", "cihi") := mat2list(
-            mapply(calcci, num, den, multiplier, level, ci.type), bTranspose = TRUE
-        )]
+    dat <- data.table::data.table(
+        num, den, multiplier, level, ci_type
+    )
+    dat[, c("cilo", "cihi") := l_mat2list(
+        mapply(l_calcci, num, den, multiplier, level, ci_type), bTranspose = TRUE
+    )]
 
-    ci <- list(dat$cilo, dat$cihi) %>% transpose()
+    ci <- dat %>% {list(.$cilo, .$cihi)} %>% transpose()
 
 } else {
 
     dat <- data.frame(
-        num, den, multiplier, level, ci.type
+        num, den, multiplier, level, ci_type
         , stringsAsFactors = FALSE
-    ) %>%
-        mutate(ci = mat2list(
-            mapply(calcci, num, den, multiplier, level, ci.type)
-        ))
+    ) %>% mutate(
+        ci = l_mat2list(
+            mapply(l_calcci, num, den, multiplier, level, ci_type)
+        )
+    )
 
     ci <- dat$ci
 }
@@ -284,123 +314,47 @@ if (is.installed("data.table")) {
 
     # return
 
-    if (return.type == "data.table" & !is.installed("data.table"))
-        return.type = "data.frame"
+    if (return_type == "data.table" & !is_installed("data.table"))
+        return_type = "data.frame"
 
     return(switch(
-        return.type
+        return_type
         , data.frame = dat
         , data.table = data.table::setDT(dat)
         , ci
     ))
 }
 
-#
-# Instances of the generic routine ####
-#
 
+# INSTANCES OF THE GENERIC ROUTINE ####
+
+
+#' @describeIn aphoci_gen
 #' Instance to use poisson method (for rates)
 #'
 #' @inheritParams aphoci_gen
 #'
-#' @family calculate routines
-#' @family instances of generic routines
+# @family confidence interval routines
+# @family calculate routines
+# @family instances of generic routines
 #'
-#' @export
+# @export
 #'
 aphoci_rate <- function(num, den, multiplier = 1, level = 0.95, bTransposeResults = FALSE) {
     return(aphoci_gen(num, den, multiplier, level, "poisson", bTransposeResults))
 }
 
+#' @describeIn aphoci_gen
 #' Instance to use method for proportions
 #'
 #' @inheritParams aphoci_gen
 #'
-#' @family calculate routines
-#' @family instances of generic routines
+# @family confidence interval routines
+# @family calculate routines
+# @family instances of generic routines
 #'
-#' @export
+# @export
 #'
 aphoci_prop <- function(num, den, multiplier = 1, level = 0.95, bTransposeResults = FALSE) {
     return(aphoci_gen(num, den, multiplier, level, "proportion", bTransposeResults))
-}
-
-#
-# Integration ####
-#
-
-## Functions work for individual cases.  Different story when integrating with
-# e.g data.table.  Need wrappers to "vectorise".
-
-# Considers vectors of num, den and calculates ci's based on (ni, di) -> ci
-# prop.test, poisson.test not "vectorised" - must be an efficient work around
-# this is the best I've arrived at without fully vectorising x.test
-
-#' Convenience to transpose return value
-#'
-#' @inheritParams aphoci_gen
-#'
-#' @family calculate routines
-#' @family generic routines
-#'
-#' @export
-#'
-#' @templateVar fun taphoci_gen
-#' @template template-depr_fun
-NULL
-
-#' @templateVar old taphoci_gen
-#' @templateVar new aphoci_gen
-#' @template template-depr_pkg
-#'
-#' @export
-taphoci_gen <- function(num, den, multiplier = 1, level = 0.95, ci.type = "poisson") {
-    .Deprecated("aphoci_gen", "aphoci")
-    return(aphoci_gen(num, den, multiplier, level, ci.type, bTransposeResults = TRUE))
-}
-
-#' Instance to use poisson method (for rates)
-#'
-#' @inheritParams taphoci_gen
-#'
-#' @family calculate routines
-#' @family instances of generic routines
-#'
-#' @export
-#'
-#' @templateVar fun taphoci_rate
-#' @template template-depr_fun
-NULL
-
-#' @templateVar old taphoci_rate
-#' @templateVar new aphoci_gen
-#' @template template-depr_pkg
-#'
-#' @export
-taphoci_rate <- function(num, den, multiplier = 1, level = 0.95) {
-    .Deprecated("aphoci_gen", "aphoci")
-    return(aphoci_gen(num, den, multiplier, level, ci.type = "poisson", bTransposeResults = TRUE))
-}
-
-#'  Instance to use method for proportions
-#'
-#' @inheritParams taphoci_gen
-#'
-#' @family calculate routines
-#' @family instances of generic routines
-#'
-#' @export
-#'
-#' @templateVar fun taphoci_prop
-#' @template template-depr_fun
-NULL
-
-#' @templateVar old taphoci_prop
-#' @templateVar new aphoci_gen
-#' @template template-depr_pkg
-#'
-#' @export
-taphoci_prop <- function(num, den, multiplier = 1, level = 0.95) {
-    .Deprecated("aphoci_gen", "aphoci")
-    return(aphoci_gen(num, den, multiplier, level, ci.type = "proportion", bTransposeResults = TRUE))
 }
