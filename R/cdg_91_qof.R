@@ -1,43 +1,50 @@
-#
-# cdg_91_qof.R
-#
-# Process QOF for visualisation (interactive?)
-#
-
-#
-# Require certain disease areas
-# - practice level prevalence and stat. sig. relative to England
-# - CDG level achievement (?treatment) and stat. sig. relative to England.
-#
-
-cat("INFO: cdg_91_qof: starting...", "\n")
-
-#
 # HELPERS ####
-#
 
-require("data.table")
-require("dplyr")
-
-# progress with a pipe
+#' Progress within a pipe
+#'
+#' Show a message then pass on the object invisibly.
+#'
+#' @note \code{"\\n"} added to message.
+#'
+#' @param x data object
+#' @param ... message elements.  Passed to cat().
+#'
+#' @examples
+#' \dontrun{
+#'     data %>% status("Processing ...") %>% some_long_calc()
+#' }
+#'
+#' @family Helper routines
+#'
 status <- function(x, ...){cat(..., "\n");invisible(x)}
 
-# For use in e.g. dcast to ignore NAs
+#' Sum ignoring NAs
+#'
+#' For use in e.g. dcast to ignore NAs
+#'
+#' @param x vector object
+#'
+#' @family Helper routines
+#'
 sum.rmna <- function(x) return(sum(x, na.rm = TRUE))
 
-# to clean table/frame names
+#' Clean data.frame field names
+#'
+#' To clean table/frame names
+#'
+#' @param x data.frame object
+#'
+#' @family Helper routines
+#'
 setnames.clean <- function(x) {setnames(x, make.names(tolower(colnames(x))))}
 
+# EXTERNAL ####
 
-# EXPORT routines that string these together ####
-
-#' process all
+#' Process all
 #'
 #' Load raw data and produce measures and compare against england.
 #'
-#' @export
-#'
-#' @notes
+#' @note
 #' Call tree:
 #'
 #' f__91__load_data
@@ -47,22 +54,37 @@ setnames.clean <- function(x) {setnames(x, make.names(tolower(colnames(x))))}
 #' f__91__measures
 #' f__91__compare
 #'
+#' @param qof_period Of the form "YYZZ"
+#' @param lu.orgs.ccgs.local vector of strings for health codes e.g. c("04K", "04E")
+#' @param lu.orgs.ccgs.groups lookup table (see #code{\link{main}})
+#' @param bWriteCSV Flag to indicate to write results to file.
+#'
+#' @return a list with named items
+#' \describe{
+#'     \item{data}{Raw numbers}
+#'     \item{reference}{Reference tables}
+#'     \item{measures}{Measures}
+#'     \item{compare}{Comparisons}
+#' }
+#'
+#' @family External routines
+#' @family Process routines
+#'
+#' @export
+#'
 f__91__process__reference_measures_compare <- function(
-    qof_period = "1516" # qof_period = "1617"
+    qof_period = c("1516", "1617")
     , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
     , lu.orgs.ccgs.groups = NA
     , bWriteCSV = FALSE
 ) {
     cat("INFO: f__91__process__reference_measures_compare: processing ...", "\n")
 
+    qof_period <- match.arg(qof_period)
+
     cat("INFO: bWriteCSV =", bWriteCSV, "\n")
 
-    if (qof_period %in% c("1516", "1617")) {
-        qof_root <- paste("qof", qof_period, sep = "-")
-    } else {
-        cat("WARNING: qof period", qof_period, "unknown ...", "\n")
-        return(FALSE)
-    }
+    qof_root <- paste("qof", qof_period, sep = "-")
 
     # raw data and reference
 
@@ -101,26 +123,39 @@ f__91__process__reference_measures_compare <- function(
     ))
 }
 
-#' load processed
+#' Load processed
 #'
-#' @export
+#' Load pre-processed measures.  Optionally load the raw numbers behind the
+#' measures.
 #'
-#' @notes
-#' Call tree:
+#' @note Call tree:
 #'
 #' f__91__load_reference
 #' f__91__load_measures
 #' f__91__load_compare
 #' f__91__load_data
 #'
+#' @param qof_period of the form "ZZYY"
+#' @param bLoadData Specify to load raw numbers too.
+#'
+#' @return a list with named items
+#' \describe{
+#'     \item{data}{Raw numbers}
+#'     \item{reference}{Reference tables}
+#'     \item{measures}{Measures}
+#'     \item{compare}{Comparisons}
+#' }
+#'
+#' @family External routines
+#' @family Load routines
+#'
+#' @export
+#'
 f__91__load__reference_measures_compare <- function(
     qof_period = "1516" # "1617"
     , bLoadData = FALSE
 ) {
     cat("INFO: f__91__load__reference_measures_compare: loading ...", "\n")
-
-    require("data.table")
-    require("dplyr")
 
     if (qof_period %in% c("1516", "1617")) {
         qof_root <- paste("qof", qof_period, sep = "-")
@@ -153,17 +188,33 @@ f__91__load__reference_measures_compare <- function(
     ))
 }
 
-# INTERNAL routines that do the work ####
+# INTERNAL ####
 
 # : PROCESS ####
 
-#
 # : : COUNTS - Load QOF data ####
-#
 
 #' load raw QOF data
 #'
 #' put in an R list for later analysis
+#'
+#' @param qof_root
+#'
+#'   Directory root for loading and saving any processed data.  Of the form
+#'   "qof-YYZZ"
+#'
+#' @return a list of lists with named items
+#' \describe{
+#'     \item{reference}{
+#'         \itemize{\item{orgref}\item{indmap}}
+#'     }
+#'     \item{data}{
+#'         \itemize{\item{prev}\item{ind}}
+#'     }
+#' }
+#'
+#' @family Internal routines
+#' @family Load routines
 #'
 f__91__load_raw <- function(
     qof_root
@@ -200,10 +251,25 @@ f__91__load_raw <- function(
     ))
 }
 
-#' preprocess
+#' Preprocess
 #'
 #' optionally save tweaked reference data
 #'
+#' @param qof list of lists (see \code{\link{f__91__load_raw}})
+#' @param bWriteCSV Flag to indicate to write results to file.
+#'
+#' @return a list of lists with named items
+#' \describe{
+#'     \item{reference}{
+#'         \itemize{\item{orgref}\item{indmap}}
+#'     }
+#'     \item{data}{
+#'         \itemize{\item{prev}\item{ind}\item{prev.melt}}
+#'     }
+#' }
+#'
+#' @family Internal routines
+#' @family Process routines
 #'
 f__91__preprocess <- function(
     qof
@@ -232,7 +298,7 @@ f__91__preprocess <- function(
     # drop uneeded columns
     q.orgref <- qof$reference$orgref %>%
         select(starts_with("practice"), starts_with("ccg")) %>%
-        setDT()
+        data.table::setDT()
 
     # indmap - qof indicator lookups ####
 
@@ -271,7 +337,7 @@ f__91__preprocess <- function(
                 .$indicator_code %>%
                 unique()
         ))) %>%
-        setDT()
+        data.table::setDT()
 
     # filter out non-register indicators via join with indmap
     q.ind <- qof$data$ind %>%
@@ -283,7 +349,7 @@ f__91__preprocess <- function(
         # tag ccg, indicator group
         mutate(measure = tolower(measure)) %>%
         filter(!(measure == tolower("ACHIEVED_POINTS"))) %>%
-        setDT() %>%
+        data.table::setDT() %>%
         # tag ccg
         merge(q.orgref %>% select(practice_code, ccg_code)
               , by = "practice_code") %>%
@@ -359,10 +425,16 @@ f__91__preprocess <- function(
 #'
 #' Can add england totals, ccg totals, filter for local ccgs, and group by given lookup.
 #'
+#' @param qof list of lists (see \code{\link{f__91__load_raw}})
 #' @param bCalcEngTotal Add an 'eng' that is total over all practices.
 #' @param bCalcCCGTotals Add CCG totals (group practices by ccg_code)
 #' @param lu.orgs.ccgs.local Filter on these ccgs (ccg_code)
-#' @param lu.orgs.ccgs.group Groups of ccgs (ccg_code, practice_code -> type, instance)
+#' @param lu.orgs.ccgs.groups Groups of ccgs (ccg_code, practice_code -> type, instance)
+#'
+#' @return list of lists (see \code{\link{f__91__load_raw}})
+#'
+#' @family Internal routines
+#' @family Process routines
 #'
 f__91__amend_data__add_subtotals <- function(
     qof
@@ -386,7 +458,7 @@ f__91__amend_data__add_subtotals <- function(
                             summarise_at(vars(value), sum, na.rm = TRUE) %>%
                             ungroup() %>%
                             mutate(ccg_code = "eng", practice_code = "eng", org.type = "england")
-                    ) %>% rbindlist(use.names = TRUE)
+                    ) %>% bind_rows()
                 })
         }
         invisible(x)
@@ -400,7 +472,7 @@ f__91__amend_data__add_subtotals <- function(
                     list(
                         x %>% filter(org.type != "ccg::practice")
                         , x %>% filter(org.type == "ccg::practice", ccg_code %in% lu.orgs.ccgs.local)
-                    ) %>% rbindlist(use.names = TRUE)
+                    ) %>% bind_rows()
                 })
         }
         invisible(x)
@@ -427,7 +499,7 @@ f__91__amend_data__add_subtotals <- function(
                                 , ccg_code = "ccg"
                                 , org.type = "ccg::instance"
                             )
-                    ) %>% rbindlist(use.names = TRUE)
+                    ) %>% bind_rows()
                 })
         }
         invisible(x)
@@ -461,7 +533,7 @@ f__91__amend_data__add_subtotals <- function(
                         group_by_at(vars(-value)) %>%
                         summarise_at(vars(value), sum, na.rm = TRUE) %>%
                         ungroup()
-                ) %>% rbindlist(use.names = TRUE)
+                ) %>% bind_rows()
             }
             x$data <- x$data[c("ind", "prev.melt")] %>% lapply(l_group)
         }
@@ -488,6 +560,13 @@ f__91__amend_data__add_subtotals <- function(
 
 #' Merge ccg groups into orgref
 #'
+#' @param qof list of lists (see \code{\link{f__91__load_raw}})
+#' @param lu.orgs.ccgs.groups ccg group lookup (see \code{\link{main}})
+#'
+#' @return list of lists (see \code{\link{f__91__load_raw}})
+#'
+#' @family Internal routines
+#' @family Process routines
 #'
 f__91__amend_orgref__ccg_groups <- function(
     qof
@@ -509,13 +588,29 @@ f__91__amend_orgref__ccg_groups <- function(
                 , data_source = qof$reference$orgref$data_source %>% unique()
             ) %>%
             unique()
-    ) %>% rbindlist(use.names = TRUE)
+    ) %>% bind_rows()
 
     invisible(qof)
 }
 
 #' Save reference
 #'
+#' Save reference data
+#'
+#' @param qof list of lists (see \code{\link{f__91__load_raw}})
+#' @param qof_root
+#'
+#'   Directory root for loading and saving any processed data.  Of the form
+#'   "qof-YYZZ"
+#'
+#' @param file_suffix For loading and saving of any processed data
+#' @param bWriteCSV Flag to indicate to write results to file.
+#'
+#' @return Not sure, possibly NULL.
+#'
+#' @family Internal routines
+#' @family Save routines
+#' @family Reference routines
 #'
 f__91__save_reference <- function(
     qof
@@ -536,9 +631,7 @@ f__91__save_reference <- function(
     }
 }
 
-#
 # : : MEASURES ####
-#
 
 #' Calculate QOF measures
 #'
@@ -547,11 +640,24 @@ f__91__save_reference <- function(
 #' Separate at this stage as ind and prev although a  lot of similarity have
 #' different underlying data structure.
 #'
-#' @notes
+#' @note
 #' Call tree:
 #'
 #' f__91__measures_ind
 #' f__91__measures_prev
+#'
+#' @param qof list of lists (see \code{\link{f__91__load_raw}})
+#' @param bWriteCSV Flag to indicate to write results to file.
+#' @param qof_root
+#'
+#'   Directory root for loading and saving any processed data.  Of the form
+#'   "qof-YYZZ"
+#'
+#' @param file_suffix For loading and saving of any processed data
+#'
+#' @family Internal routines
+#' @family Process routines
+#' @family Measure routines
 #'
 f__91__measures <- function(
     qof
@@ -565,7 +671,7 @@ f__91__measures <- function(
         qof
         , bWriteCSV = bWriteCSV
         , qof_root, file_suffix
-    ) %>% setDT()
+    ) %>% data.table::setDT()
 
     m.prev <- f__91__measures_prev(
         qof
@@ -581,7 +687,7 @@ f__91__measures <- function(
 
     # combine
 
-    m.comb <- list(m.ind, m.prev) %>% rbindlist(use.names = TRUE)
+    m.comb <- list(m.ind, m.prev) %>% bind_rows()
 
     # Save
 
@@ -598,12 +704,24 @@ f__91__measures <- function(
     invisible(m.comb)
 }
 
-#
 # : : : Indicators ####
-#
 
+#' Create QOF performance measures
 #'
+#' @param qof list of lists (see \code{\link{f__91__load_raw}})
+#' @param bWriteCSV Flag to indicate to write results to file.
+#' @param qof_root
 #'
+#'   Directory root for loading and saving any processed data.  Of the form
+#'   "qof-YYZZ"
+#'
+#' @param file_suffix For loading and saving of any processed data
+#'
+#' @return performance data frame
+#'
+#' @family Internal routines
+#' @family Process routines
+#' @family Measure routines
 #'
 f__91__measures_ind <- function(
     qof
@@ -650,13 +768,13 @@ performance, suboptimal,    denominator, 0,     1,     1
     q.ind.measures <- q.ind.combined %>%
         filter(!is.na(value)) %>%
         # spin up numerator, denominator, exceptions
-        dcast(... ~ measure, fun = sum, value.var = "value") %>%
+        dcast(... ~ measure, fun.aggregate = sum, value.var = "value") %>%
         # cross join measures and combine and remove intermediate columns
         merge(lu_measures %>% filter(m.type == "performance")) %>%
         mutate(value = (i.num * numerator + i.den * denominator + i.exc * exceptions)) %>%
         select(-matches("num|den|exc")) %>%
         # spin up m.numerator, m.denominator, ensure double and calculate m.value
-        dcast(... ~ m.stat, fun = sum, value.var = "value") %>%
+        dcast(... ~ m.stat, fun.aggregate = sum, value.var = "value") %>%
         mutate(value = 100.0 * numerator / denominator) %>%
         # melt down numerator, denominator and value on m.stat
         melt(measure.vars = c("numerator", "denominator", "value")
@@ -692,14 +810,24 @@ performance, suboptimal,    denominator, 0,     1,     1
     return(q.ind.measures)
 }
 
-#qof.ind.measures <- f__measures_ind(qof)[[1]]
-
-#
 # : : : Prevalence ####
-#
 
+#' Create QOF prevalance measures
 #'
+#' @param qof list of lists (see \code{\link{f__91__load_raw}})
+#' @param bWriteCSV Flag to indicate to write results to file.
+#' @param qof_root
 #'
+#'   Directory root for loading and saving any processed data.  Of the form
+#'   "qof-YYZZ"
+#'
+#' @param file_suffix For loading and saving of any processed data
+#'
+#' @return prevalence data frame
+#'
+#' @family Internal routines
+#' @family Process routines
+#' @family Measure routines
 #'
 f__91__measures_prev <- function(
     qof
@@ -733,13 +861,13 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
     q.prev.measures <- qof.prev.combined %>%
         filter(!is.na(value)) %>%
         # spin up numerator, denominator, exceptions
-        dcast(... ~ measure, fun = sum, value.var = "value") %>%
+        dcast(... ~ measure, fun.aggregate = sum, value.var = "value") %>%
         # cross join measures and combine and remove intermediate columns
         merge(lu_measures %>% filter(m.type == "prevalence")) %>%
         mutate(value = (i.num * register + i.den * patient_list_size)) %>%
         select(-matches("num|den|exc|register|list_size")) %>%
         # spin up m.numerator, m.denominator, ensure double and calculate m.value
-        dcast(... ~ m.stat, fun = sum, value.var = "value") %>%
+        dcast(... ~ m.stat, fun.aggregate = sum, value.var = "value") %>%
         mutate_at(c("numerator", "denominator"), as.double) %>%
         mutate(value = 100 * numerator / denominator) %>%
         # melt down numerator, denominator and value on m.stat
@@ -764,15 +892,27 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
     return(q.prev.measures)
 }
 
-#
 # : : COMPARE - Add England comparator and significance test ####
-#
 
 #' Compare routines
 #'
 #' Benchmark against reference value e.g. England - CI overlap with reference
-#' SPC methods - comapre point value with control limits
+#' SPC methods - compare point value with control limits
 #'
+#' @param qof_measures measures data frame
+#' @param bWriteCSV Flag to indicate to write results to file.
+#' @param qof_root
+#'
+#'   Directory root for loading and saving any processed data.  Of the form
+#'   "qof-YYZZ"
+#'
+#' @param file_suffix For loading and saving of any processed data
+#'
+#' @return compare data frame
+#'
+#'
+#' @family Internal routines
+#' @family Compare routines
 #'
 f__91__compare <- function(
     qof_measures
@@ -783,9 +923,6 @@ f__91__compare <- function(
     cat("INFO: f__91__compare: processing statistical significance comparison ...", "\n")
 
     taskdir <- proj_root()
-
-    source(file = paste_paths(taskdir, "./R/calcci.R"))
-    source(file = paste_paths(taskdir, "./R/testci.R"))
 
     ##
     ## QOF
@@ -809,7 +946,7 @@ f__91__compare <- function(
 
     q.var.cast <- qof_measures %>%
         filter(org.type != "england", m.stat %in% c("value", "numerator", "denominator")) %>%
-        dcast(... ~ m.stat, value.var = "value")
+        reshape2::dcast(... ~ m.stat, value.var = "value")
 
     # National reference ####
 
@@ -818,7 +955,7 @@ f__91__compare <- function(
         , qof_measures %>%
             filter(org.type == "england", m.stat == "value") %>%
             select(-data_source, -ccg_code, -practice_code) %>%
-            dcast(... ~ m.stat, value.var = "value")
+            reshape2::dcast(... ~ m.stat, value.var = "value")
         , by = c("domain_code", "indicator_group_code", "indicator_code", "m.type", "m.name")
         , all.x = TRUE, suffixes = c(".var", ".ref")
     )
@@ -830,7 +967,7 @@ f__91__compare <- function(
         , qof_measures %>%
             filter(org.type == "lep::instance", m.stat == "value") %>%
             select(-data_source, -ccg_code, -practice_code) %>%
-            dcast(... ~ m.stat, value.var = "value")
+            reshape2::dcast(... ~ m.stat, value.var = "value")
         , by = c("domain_code", "indicator_group_code", "indicator_code", "m.type", "m.name")
         , all.x = TRUE, suffixes = c(".var", ".ref")
     )
@@ -843,7 +980,7 @@ f__91__compare <- function(
             filter(org.type == "ccg::instance", m.stat == "value") %>%
             select(-data_source, -ccg_code) %>%
             rename(ccg_code = "practice_code") %>%
-            dcast(... ~ m.stat, value.var = "value")
+            reshape2::dcast(... ~ m.stat, value.var = "value")
         , by = c("domain_code", "indicator_group_code", "indicator_code", "ccg_code", "m.type", "m.name")
         , all.x = FALSE, all.y = FALSE, suffixes = c(".var", ".ref")
     )
@@ -851,7 +988,7 @@ f__91__compare <- function(
     # combine ####
 
     qof.combined <- list(tmp.nat, tmp.n2, tmp.ccg) %>%
-        rbindlist(use.names = TRUE)
+        bind_rows()
 
     # compare ####
 
@@ -859,11 +996,11 @@ f__91__compare <- function(
 
     benchmark.level <- 0.95
 
-    qof.comp.bench <- copy(qof.combined) %>%
+    qof.comp.bench <- data.table::copy(qof.combined) %>%
         status("INFO: - confidence intervals (", benchmark.level, ") ...") %>%
         .[, c('cilo', 'cihi') := aphoci_gen(
             numerator, denominator, multiplier = 100
-            , ci.type = 'proportion', level = benchmark.level
+            , ci_type = 'proportion', level = benchmark.level
             , bTransposeResults = TRUE
         )] %>%
         status("INFO: - prevalence ...") %>%
@@ -883,11 +1020,11 @@ f__91__compare <- function(
 
     spc.sd <- 3
 
-    qof.comp.spc.3 <- copy(qof.combined) %>%
+    qof.comp.spc.3 <- data.table::copy(qof.combined) %>%
         status("INFO: - control limits (", spc.sd, ") ...") %>%
         .[, statsig := testspc_hilo_s(
             value.var, value.ref, denominator.var = denominator, multiplier = 100
-            , ci.type = "proportion", sd = spc.sd
+            , ci_type = "proportion", sd = spc.sd
         )] %>%
         status("INFO: - cleaning ...") %>%
         mutate(compare.type = "spc", compare.param = spc.sd) %>%
@@ -895,11 +1032,11 @@ f__91__compare <- function(
 
     spc.sd <- 2
 
-    qof.comp.spc.2 <- copy(qof.combined) %>%
+    qof.comp.spc.2 <- data.table::copy(qof.combined) %>%
         status("INFO: - control limits (", spc.sd, ") ...") %>%
         .[, statsig := testspc_hilo_s(
             value.var, value.ref, denominator.var = denominator, multiplier = 100
-            , ci.type = "proportion", sd = spc.sd
+            , ci_type = "proportion", sd = spc.sd
         )] %>%
         status("INFO: - cleaning ...") %>%
         mutate(compare.type = "spc", compare.param = spc.sd) %>%
@@ -909,7 +1046,7 @@ f__91__compare <- function(
         qof.comp.bench
         , qof.comp.spc.3
         , qof.comp.spc.2
-    ) %>% rbindlist(use.names = TRUE) %>%
+    ) %>% bind_rows() %>%
         # drop values and counts - can join with measures or raw if needed.
         select(
             -starts_with("value")
@@ -949,25 +1086,36 @@ f__91__compare <- function(
 #'
 #' Default is not to do anything further.
 #'
-#' @notes
+#' @note
 #' Call tree:
 #'
 #' f__91__load_raw
 #' f__91__preprocess
+#'
+#' @param qof_root
+#'
+#'   Directory root for loading and saving any processed data.  Of the form
+#'   "qof-YYZZ"
+#'
+#' @return list of lists (see \code{\link{f__91__load_raw}})
+#'
+#'
+#' @family Internal routines
+#' @family Load routines
 #'
 f__91__load_data <- function(
     qof_root
 ) {
     cat("INFO: f__91__load_data: loading ...", "\n")
 
-    #' Add org.type to data elements
+    # Add org.type to data elements
     l_add_orgtype <- function(x) {
         cat("INFO: l_add_orgtype: amending ...", "\n")
         x$data <- x$data %>% lapply(mutate, org.type = "ccg::practice")
         invisible(x)
     }
 
-    #' Tag on data source
+    # Tag on data source
     l_add_qof_root <- function(x, qof_root) {
         cat("INFO: l_add_qof_root: amending ...", "\n")
         x$data <- x$data %>% lapply(mutate, data_source = qof_root)
@@ -988,6 +1136,19 @@ f__91__load_data <- function(
 
 #' Load reference
 #'
+#' @param qof_root
+#'
+#'   Directory root for loading and saving any processed data.  Of the form
+#'   "qof-YYZZ"
+#'
+#' @param file_suffix For loading and saving of any processed data
+#'
+#' @return reference list with named items \itemize{\item{orgref}\item{indmap}}
+#'
+#'
+#' @family Internal routines
+#' @family Load routines
+#' @family Reference routines
 #'
 f__91__load_reference <- function(
     qof_root
@@ -1010,6 +1171,19 @@ f__91__load_reference <- function(
 
 #' Load measures
 #'
+#' @param qof_root
+#'
+#'   Directory root for loading and saving any processed data.  Of the form
+#'   "qof-YYZZ"
+#'
+#' @param file_suffix For loading and saving of any processed data
+#'
+#' @return measures data frame
+#'
+#'
+#' @family Internal routines
+#' @family Load routines
+#' @family Measure routines
 #'
 f__91__load_measures <- function(
     qof_root
@@ -1033,11 +1207,24 @@ f__91__load_measures <- function(
 
     # return
 
-    return(list(prev = q.prev, ind = q.ind) %>% rbindlist(use.names = TRUE))
+    return(list(prev = q.prev, ind = q.ind) %>% bind_rows())
 }
 
 #' Load compare
 #'
+#' @param qof_root
+#'
+#'   Directory root for loading and saving any processed data.  Of the form
+#'   "qof-YYZZ"
+#'
+#' @param file_suffix For loading and saving of any processed data
+#'
+#' @return compare data frame
+#'
+#'
+#' @family Internal routines
+#' @family Load routines
+#' @family Compare routines
 #'
 f__91__load_compare <- function(
     qof_root
@@ -1061,10 +1248,8 @@ f__91__load_compare <- function(
 
     # return
 
-    return(list(prev = q.prev, ind = q.ind) %>% rbindlist(use.names = TRUE))
+    return(list(prev = q.prev, ind = q.ind) %>% bind_rows())
 }
 
 
 # Done. ####
-
-cat("INFO: cdg_91_qof: done.", "\n")

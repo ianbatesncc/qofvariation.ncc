@@ -2,4 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-./data-raw/*.zip
+data-raw/*.zip
+inst/dashboard/*.html
+inst/dashboard/qof_dashboard_cache/*

@@ -8,7 +8,7 @@
 #' Container for testci routines
 #'
 #' @family testci routines
-#' @family sections
+#' @family confidence interval routines
 #'
 #' @name testci
 NULL
@@ -18,13 +18,10 @@ NULL
 #' Container for testspc routines
 #'
 #' @family testspc routines
-#' @family sections
+#' @family confidence interval routines
 #'
 #' @name testspc
 NULL
-
-#DEBUG_TESTCI <- TRUE
-DEBUG_TESTCI <- FALSE
 
 #
 # Generic test routine ####
@@ -34,11 +31,16 @@ DEBUG_TESTCI <- FALSE
 #'
 #' Generic Version.
 #'
+#' @inheritParams aphoci_gen
+#'
 #' @param ci.ref Reference point estimate or value range (vector(2))
 #' @param ci.var Variable point estimate or value range (vector(2))
 #' @param bAsString bool to specify string over numeric
 #' @param bSenseHigherisBetter bool to determine any sense checking.  Default is
 #'   NA - no sense check.
+# @param return_type Specify list of vectors (default) or data.frame or
+#   data.table.
+#' @param verbose set to TRUE to print some debug output.
 #'
 #' @return Value indicating relative position of variable to reference value.
 #'   Numeric by default, string if \code{bAsString == TRUE}
@@ -75,6 +77,7 @@ DEBUG_TESTCI <- FALSE
 #'   * if bHigherisBetter == TRUE or FALSE then sense of value is considered and 2 -
 #'   Better, -2 - Worse.
 #'
+# @family confidence interval routines
 #' @family testci routines
 #' @family generic routines
 #' @family returns hilo
@@ -83,15 +86,18 @@ DEBUG_TESTCI <- FALSE
 #' @family returns string
 #'
 #' @md
-#' @export
+# @export
 #'
 testci_gen <- function(
     ci.ref, ci.var
     , bAsString = FALSE, bSenseHigherisBetter = NA
-    , return.type = "minimal" # "data.frame" "data.table"
+    , return_type = c("minimal", "data.frame", "data.table")
+    , verbose = FALSE
 ) {
 
-    if (DEBUG_TESTCI) {
+    return_type <- match.arg(return_type)
+
+    if (verbose) {
         cat("DEBUG: testci_gen:", "ci.ref =", paste(ci.ref), "\n")
         cat("DEBUG: testci_gen:", "ci.var =", paste(ci.var), "\n")
         cat("DEBUG: testci_gen:", "bAsString =", bAsString, "\n")
@@ -175,11 +181,11 @@ testci_gen <- function(
 
     # return
 
-    if (return.type == "data.table" & !is.installed("data.table"))
-        return.type = "data.frame"
+    if (return_type == "data.table" & !is_installed("data.table"))
+        return_type = "data.frame"
 
     return(switch(
-        return.type
+        return_type
         , data.frame = dat
         , data.table = data.table::setDT(dat)
         , retval
@@ -191,11 +197,19 @@ testci_gen <- function(
 #' special cause variation detection using SPC methods
 #' Variable value is compared to control limits around a reference value
 #'
-#' @param sd sds to consider for limit.  2 corresponds to level 95.44997%, 3 to 99.73002%.
+#' @inheritParams testci_gen
+#' @inheritParams aphoci_gen
+#'
+#' @param value.var variable value
+#' @param value.ref reference value
+#' @param denominator.var variable denominator
+#' @param sd sds to consider for limit.  2 corresponds to level 95.44997\%, 3 to
+#'   99.73002\%.
 #'
 #' @return c(-1, 0, 1)
 #' @return c("Lower", "Similar", "Higher")
 #'
+# @family confidence interval routines
 #' @family testspc routines
 #' @family generic routines
 #' @family returns hilo
@@ -203,38 +217,42 @@ testci_gen <- function(
 #' @family returns numeric
 #' @family returns string
 #'
+#' @importFrom stats pnorm
+#'
 #' @md
-#' @export
+# @export
 #'
 testspc_gen <- function(
     value.var, value.ref
     , denominator.var, multiplier = 1
-    , ci.type = "poisson", sd = 3
+    , ci_type = "poisson", sd = 3
     , bAsString = FALSE
-    , return.type = "minimal" # "data.frame" "data.table"
+    , return_type = c("minimal", "data.frame", "data.table")
 ) {
+
+    return_type <- match.arg(return_type)
 
     dat <- data.frame(
         value.var, value.ref, denominator.var
-        , ci.type, sd
+        , ci_type, sd
         #, bAsString
         , stringsAsFactors = FALSE) %>%
         mutate(
             numerator = denominator.var * value.ref / multiplier
-            , level.spc = 2 * pnorm(sd) - 1
+            , level.spc = 2 * stats::pnorm(sd) - 1
         ) %>%
         mutate(ci.ref = aphoci_gen(
-            numerator, denominator.var, multiplier, level.spc, ci.type
+            numerator, denominator.var, multiplier, level.spc, ci_type
         )) %>%
         mutate(comp = testci_gen(ci.ref, value.var, bAsString = bAsString))
 
     # return
 
-    if (return.type == "data.table" & !is.installed("data.table"))
-        return.type = "data.frame"
+    if (return_type == "data.table" & !is_installed("data.table"))
+        return_type = "data.frame"
 
     return(switch(
-        return.type
+        return_type
         , data.frame = dat
         , data.table = data.table::setDT(dat)
         , dat$comp
@@ -243,149 +261,89 @@ testspc_gen <- function(
 
 #' Tranpose a list of vectors
 #'
-#' Wrapper around transpose routines.  data.table or purrr.  No 'native' yet.
+#' Takes a list of length m of vectors length n and returns a list of length n
+#' of vectors length m
 #'
-transpose <- function(l) {
+#' Native transpose of list of vectors.  Was a wrapper around transpose
+#' routines.  data.table or purrr.
+#'
+#' @param l list of length m of vectors length n
+#' @param method method to use.  Currently ignored.  Default "native".
+#'
+#' @return list of length n of vectors length m
+#'
+# @importFrom data.table transpose
+# @importFrom purrr transpose
+#'
+#' @family Helper routines
+#'
+transpose <- function(l, method = c("native", "data.table", "purrr")) {
+    #method <- match.arg(method)
+
     #ftranspose <- purrr::transpose
-    ftranspose <- data.table::transpose
+    #ftranspose <- data.table::transpose
+    ftranspose <- function(x) {
+        stopifnot(class(x) =="list")
+        x <- sapply(x, unlist)
+        lapply(seq_len(dim(x)[1]), function(i, y){y[i, ]}, x)
+    }
 
     ftranspose(l)
 }
 
 #' check if package is installed
 #'
+#' @param p name of package (character)
 #'
-is.installed <- function(p) {
+#' @importFrom utils installed.packages
+#'
+#' @family Helper routines
+#'
+is_installed <- function(p) {
     is.element(p, utils::installed.packages()[, 1])
-}
-
-#' Test routine for testspc_gen
-#'
-#'
-testing__spc <- function() {
-    require("dplyr")
-
-    n <- 16
-    xn <- runif(n, 10, 90)
-    yn <- xn + runif(n, 100, 900)
-    multiplier = 1000
-    ci.type = "poisson"
-    level = 0.95
-
-
-    cat("INFO: setting up data frame ...", "\n")
-
-    dat <- data.frame(
-        num = xn, den = yn, multiplier, ci.type, level
-        , stringsAsFactors = FALSE
-    )
-
-    cat("INFO: aphoci_gen OUTSIDE data frame ...", "\n")
-
-    ci <- aphoci_gen(xn, yn, multiplier, level, ci.type)
-    cit <- aphoci_gen(xn, yn, multiplier, level, ci.type, bTransposeResults = TRUE)
-
-    cat("INFO: aphoci_gen WITHIN data frame ...", "\n")
-
-    calc1 <- dat %>% mutate(ci.var = aphoci_gen(num, den, multiplier, level, ci.type))
-
-    value.var = xn * multiplier / yn
-    value.ref = median(value.var)
-    sd = 3
-
-    cat("INFO: aphoci_gen WITHIN data frame ...", "\n")
-
-    calc2 <- calc1 %>% mutate(
-        value.var = value.var
-        , value.ref = value.ref
-        , ci.ref = aphoci_gen(value.ref * den / multiplier, den, multiplier, level, ci.type)
-    )
-
-    cat("INFO: testci_gen OUTSIDE data frame ... (minimal)", "\n")
-
-    retval_minimal <- testci_gen(calc2$ci.ref, calc2$value.var)
-
-    cat("INFO: testci_gen OUTSIDE data frame ... (data.frame)", "\n")
-
-    retval_data.frame <- testci_gen(
-        calc2$ci.ref, calc2$value.var, return.type = "data.frame"
-    )
-
-    cat("INFO: testci_gen OUTSIDE data frame ... (data.table)", "\n")
-
-    retval_data.table <- testci_gen(
-        calc2$ci.ref, calc2$value.var, return.type = "data.table"
-    )
-
-    cat("INFO: testci_gen WITHIN data frame ... (minimal)", "\n")
-
-    calc3 <- calc2 %>%
-        mutate(retval_comp = testci_gen(ci.ref, value.var))
-
-    cat("INFO: testspc_gen OUTSIDE data frame ... ", "\n")
-
-    retval <- testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd)
-    retval.df <- testspc_gen(
-        value.var, value.ref, yn, multiplier, ci.type, sd
-        , return.type = "data.frame"
-    )
-    retval.str.df <- testspc_gen(
-        value.var, value.ref, yn, multiplier, ci.type, sd
-        , bAsString = TRUE, return.type = "data.frame"
-    )
-
-    cat("INFO: testspc_gen WITHIN data frame ... ", "\n")
-
-    calc4 <- calc3 %>%
-        mutate(comp.spc = testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd))
-
-    calc4.string <- calc3 %>%
-        mutate(comp.spc = testspc_gen(value.var, value.ref, yn, multiplier, ci.type, sd, bAsString = TRUE))
-
-    return(list(
-        calc4 = calc4
-        , calc4.string = calc4.string
-        , retval = retval
-        , retval.df = retval.df
-        , retval.str.df = retval.str.df
-    ))
 }
 
 #
 # Instances of the generic routine ####
 #
 
+#' @describeIn testci_gen
 #' Return simple hilo comparison
 #'
 #' @inheritParams testci_gen
 #'
+# @family confidence interval routines
 #' @family testci routines
 #' @family returns hilo
 #' @family returns numeric
 #'
-#' @export
+# @export
 testci_hilo <- function(ci.ref, ci.var) {
     return(testci_gen(ci.ref, ci.var))
 }
 
+#' @describeIn testspc_gen
 #' Return simple hilo comparison
 #'
 #' @inheritParams testspc_gen
 #'
-#' @family testspc routines
-#' @family returns hilo
-#' @family returns numeric
+# @family confidence interval routines
+# @family testspc routines
+# @family returns hilo
+# @family returns numeric
 #'
-#' @export
+# @export
+#'
 testspc_hilo <- function(
     value.var, value.ref
     , denominator.var, multiplier = 1
-    , ci.type = "poisson", sd = 3
-    , return.type = "minimal" # "data.frame" "data.table"
+    , ci_type = "poisson", sd = 3
+    , return_type = c("minimal", "data.frame", "data.table")[1]
 ) {
-    testspc_gen(value.var, value.ref, denominator.var, multiplier, ci.type, sd, bAsString = FALSE, return.type)
+    testspc_gen(value.var, value.ref, denominator.var, multiplier, ci_type, sd, bAsString = FALSE, return_type)
 }
 
+#' @describeIn testci_gen
 #' Apply sense (Better / Worse) to testci comparison
 #'
 #' @inheritParams testci_gen
@@ -397,182 +355,71 @@ testspc_hilo <- function(
 #' * -2 - Worse
 #' * NA - Not tested
 #'
+# @family confidence interval routines
 #' @family testci routines
 #' @family instances of generic routines
 #' @family returns sense
 #' @family returns numeric
 #'
 #' @md
-#' @export
+# @export
 #'
 testci_sense <- function(ci.ref, ci.var, bSenseHigherisBetter = NA) {
     return(testci_gen(ci.ref, ci.var, bSenseHigherisBetter = bSenseHigherisBetter))
 }
 
+#' @describeIn testci_gen
 #' Return a string to denote higher/lower/similar/not tested
 #'
 #' @inheritParams testci_hilo
 #'
+# @family confidence interval routines
 #' @family testci routines
 #' @family instances of generic routines
 #' @family returns hilo
 #' @family returns string
 #'
-#' @export
+# @export
 #'
 testci_hilo_s <- function(ci.ref, ci.var) {
     return(testci_gen(ci.ref, ci.var, bAsString = TRUE))
 }
 
+#' @describeIn testspc_gen
 #' Return a string to denote higher/lower/similar/not tested
 #'
 #' @inheritParams testspc_hilo
 #'
-#' @family testspc routines
-#' @family instances of generic routines
-#' @family returns hilo
-#' @family returns string
+# @family confidence interval routines
+# @family testspc routines
+# @family instances of generic routines
+# @family returns hilo
+# @family returns string
 #'
-#' @export
+# @export
 #'
 testspc_hilo_s <- function(
     value.var, value.ref
     , denominator.var, multiplier = 1
-    , ci.type = "poisson", sd = 3
-    , return.type = "minimal" # "data.frame" "data.table"
+    , ci_type = "poisson", sd = 3
+    , return_type = c("minimal", "data.frame", "data.table")[1]
 ) {
-    testspc_gen(value.var, value.ref, denominator.var, multiplier, ci.type, sd, bAsString = TRUE, return.type)
+    testspc_gen(value.var, value.ref, denominator.var, multiplier, ci_type, sd, bAsString = TRUE, return_type)
 }
 
+#' @describeIn testci_gen
 #' Return a string to denote better/worse/similar/not tested
 #'
 #' @inherit testci_sense
 #'
+# @family confidence interval routines
 #' @family testci routines
 #' @family instances of generic routines
 #' @family returns sense
 #' @family returns string
 #'
-#' @export
+# @export
 #'
 testci_sense_s <- function(ci.ref, ci.var, bSenseHigherisBetter = NA) {
-    return(testci_gen(ci.ref, ci.var, bAsString = TRUE, bSenseHigherisBetter = bSenseHigherisBetter))
-}
-
-#
-# Integration ####
-#
-
-#' Take a list of ci.ref's and ci.var's and mapply() them
-#'
-#' Instance that considers high and low and returns an integer
-#'
-#' @inherit testci_hilo
-#'
-#' @family testci routines
-#' @family instances of generic routines
-#' @family returns hilo
-#' @family returns numeric
-#'
-#' @export
-#'
-#' @templateVar fun vtestci_hilo
-#' @template template-depr_fun
-NULL
-
-#' @templateVar old vtestci_hilo
-#' @templateVar new testci_gen
-#' @template template-depr_pkg
-#'
-#' @export
-vtestci_hilo <- function(ci.ref, ci.var) {
-    .Deprecated("testci_gen", "aphoci")
-    return(testci_gen(ci.ref, ci.var))
-}
-
-#' Take a list of ci.ref's and ci.var's and mapply() them
-#'
-#' Instance to considers sense and returns an integer.
-#'
-#' @inherit testci_sense
-#'
-#' @family testci routines
-#' @family instances of generic routines
-#' @family returns sense
-#' @family returns numeric
-#'
-# #' @family deprecated
-#'
-#' @export
-#'
-#' @templateVar fun vtestci_sense
-#' @template template-depr_fun
-NULL
-
-#' @templateVar old vtestci_sense
-#' @templateVar new testci_gen
-#' @template template-depr_pkg
-#'
-#' @export
-vtestci_sense <- function(ci.ref, ci.var, bSenseHigherisBetter = NA) {
-    .Deprecated("testci_gen", "aphoci")
-    return(testci_gen(ci.ref, ci.var, bSenseHigherisBetter = bSenseHigherisBetter))
-}
-
-#' Take a list of ci.ref's and ci.var's and mapply() them
-#'
-#' Instance that considers high and low and returns a string.
-#'
-#' @inherit testci_hilo
-#'
-#' @family testci routines
-#' @family instances of generic routines
-#' @family returns hilo
-#' @family returns string
-#'
-# #' @family deprecated
-#'
-#' @export
-#'
-#' @templateVar fun vtestci_hilo_s
-#' @template template-depr_fun
-NULL
-
-#' @templateVar old vtestci_hilo_s
-#' @templateVar new testci_gen
-#' @template template-depr_pkg
-#'
-#' @export
-vtestci_hilo_s <- function(ci.ref, ci.var) {
-    .Deprecated("testci_gen", "aphoci")
-    return(testci_gen(ci.ref, ci.var, bAsString = TRUE))
-}
-
-#' Take a list of ci.ref's and ci.var's and mapply() them
-#'
-#' Instance that considers sense and returns a string.
-#'
-#' @inherit testci_sense
-#'
-#' @family testci routines
-#' @family instances of generic routines
-#' @family returns sense
-#' @family returns string
-#'
-# #' @family deprecated
-#'
-#' @export
-#'
-#' @templateVar fun vtestci_sense_s
-#' @template template-depr_fun
-NULL
-
-#' @templateVar old vtestci_sense_s
-#' @templateVar new testci_gen
-#' @template template-depr_pkg
-#'
-#' @export
-vtestci_sense_s <- function(ci.ref, ci.var, bSenseHigherisBetter = NA) {
-    .Deprecated("testci_gen", "aphoci")
     return(testci_gen(ci.ref, ci.var, bAsString = TRUE, bSenseHigherisBetter = bSenseHigherisBetter))
 }
