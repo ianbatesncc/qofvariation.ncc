@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+data-raw/*.zip
+inst/dashboard/*.html
+inst/dashboard/qof_dashboard_cache/*

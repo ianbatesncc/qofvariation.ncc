@@ -1,0 +1,8 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.Rmd$
+^README-.*\.png$
+^data-raw$
+^R/scratch.R$
+MILESTONES
+^inst/dashboard/qof_dashboard_cache/$
