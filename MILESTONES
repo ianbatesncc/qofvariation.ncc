@@ -4,6 +4,14 @@ MILESTONES
 
 Package up!
 
+ * separate into
+  * extract (get into R objects)
+  * transform (reshape, join fields)
+  * process (subtotals, measures, compare)
+
+ * use data-raw and data mechanisms
+ * avoid use of taskdir and use devtools::package_file() equivalent
+
 1.0
 
 Basic calculations
