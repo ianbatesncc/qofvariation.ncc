@@ -1,31 +1,3 @@
-#' Concept of 'root directory' depends on context.
-#'
-#' - from project root is ./R
-#' - from ./inst/dashboard it is, not surprisingly, ./R ...
-#'
-#' @family Helper routines
-#'
-proj_root <- function() {
-    if (interactive()) {
-        getwd()
-    } else {
-        #normalizePath("../..")
-        #normalizePath("..")
-        normalizePath(".")
-    }
-}
-
-#' Shortcut for constructing paths
-#'
-#' @param ... path elemnents.  Passed to paste.
-#'
-#' @family Helper routines
-#'
-paste_paths <- function(...) {
-    normalizePath(gsub("//", "/", paste(..., sep = "/")), mustWork = FALSE)
-}
-
-
 #' Process raw datasets
 #'
 #' Options to specify year. Option to specify if to run the raw process routines
@@ -60,7 +32,7 @@ main <- function(
     , bWriteCSV = FALSE
     , bLoadData = FALSE
 ) {
-    qof_period <- match.arg(qof_period, several.ok = FALSE)
+    qof_period <- match.arg(qof_period)
 
     lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
 
@@ -108,17 +80,16 @@ uop,4
         )
 
     if (bWriteCSV) {
+        this_csv <- proj_path("./data-raw", "lu__ccg_groups.csv")
 
-        taskdir <- proj_root()
+        cat("INFO: saving", this_file, "...", "\n")
 
-        this_file <- paste_paths(taskdir, "./data-raw", "lu__ccg_groups.csv")
-
-        data.table::fwrite(lu.orgs.ccgs.groups, file = this_file)
+        data.table::fwrite(lu.orgs.ccgs.groups, file = this_csv)
     }
 
     # short inspection of lookup
     lu.orgs.ccgs.groups %>%
-        dcast(... ~ ccg_code, fun.aggregate = length, value.var = "ccg_group_code") %>%
+        reshape2::dcast(... ~ ccg_code, fun.aggregate = length, value.var = "ccg_group_code") %>%
         print()
 
     retval <- NULL
