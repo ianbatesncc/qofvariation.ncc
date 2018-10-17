@@ -11,12 +11,12 @@ testspc_gen(value.var, value.ref, denominator.var, multiplier = 1,
   return_type = c("minimal", "data.frame", "data.table"))
 
 testspc_hilo(value.var, value.ref, denominator.var, multiplier = 1,
-  ci_type = "poisson", sd = 3, return_type = c("minimal", "data.frame",
-  "data.table")[1])
+  ci_type = "poisson", sd = 3, return_type = c("minimal",
+  "data.frame", "data.table")[1])
 
 testspc_hilo_s(value.var, value.ref, denominator.var, multiplier = 1,
-  ci_type = "poisson", sd = 3, return_type = c("minimal", "data.frame",
-  "data.table")[1])
+  ci_type = "poisson", sd = 3, return_type = c("minimal",
+  "data.frame", "data.table")[1])
 }
 \arguments{
 \item{value.var}{variable value}
@@ -69,3 +69,9 @@ Other returns numeric: \code{\link{testci_gen}}
 
 Other returns string: \code{\link{testci_gen}}
 }
+\concept{generic routines}
+\concept{returns hilo}
+\concept{returns numeric}
+\concept{returns sense}
+\concept{returns string}
+\concept{testspc routines}

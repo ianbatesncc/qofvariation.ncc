@@ -37,3 +37,5 @@ Other confidence interval routines: \code{\link{aphoci_gen}},
   \code{\link{aphoci}}, \code{\link{stat_test}},
   \code{\link{testci}}, \code{\link{testspc}}
 }
+\concept{calculate routines}
+\concept{confidence interval routines}

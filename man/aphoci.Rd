@@ -21,3 +21,4 @@ Other confidence interval routines: \code{\link{aphoci_gen}},
   \code{\link{calcci}}, \code{\link{stat_test}},
   \code{\link{testci}}, \code{\link{testspc}}
 }
+\concept{confidence interval routines}

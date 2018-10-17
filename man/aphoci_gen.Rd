@@ -6,8 +6,9 @@
 \alias{aphoci_prop}
 \title{Calculate confidence intervals.}
 \usage{
-aphoci_gen(num, den, multiplier = 1, level = 0.95, ci_type = "poisson",
-  bTransposeResults = FALSE, return_type = "minimal")
+aphoci_gen(num, den, multiplier = 1, level = 0.95,
+  ci_type = "poisson", bTransposeResults = FALSE,
+  return_type = "minimal")
 
 aphoci_rate(num, den, multiplier = 1, level = 0.95,
   bTransposeResults = FALSE)
@@ -120,3 +121,11 @@ Other confidence interval routines: \code{\link{aphoci}},
 
 Other calculate routines: \code{\link{calcci}}
 }
+\concept{calculate routines}
+\concept{confidence interval routines}
+\concept{generic routines
+
+
+Convert 2d matrix to a list of vectors, optionally transposing along the way
+
+to convert output of mapply to use with data.frame objects}

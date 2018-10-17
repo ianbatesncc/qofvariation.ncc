@@ -14,3 +14,5 @@ Other confidence interval routines: \code{\link{aphoci_gen}},
 Other statistic test routines: \code{\link{poisson_byars.test}},
   \code{\link{prop_wilson.test}}
 }
+\concept{confidence interval routines}
+\concept{statistic test routines}

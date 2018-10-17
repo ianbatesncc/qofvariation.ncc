@@ -19,8 +19,9 @@ round to nearest whole number
 }
 \seealso{
 Other Helper routines: \code{\link{families}},
-  \code{\link{is_installed}}, \code{\link{paste_paths}},
+  \code{\link{is_installed}}, \code{\link{proj_path}},
   \code{\link{proj_root}}, \code{\link{setnames.clean}},
   \code{\link{status}}, \code{\link{sum.rmna}},
   \code{\link{transpose}}
 }
+\concept{Helper routines}

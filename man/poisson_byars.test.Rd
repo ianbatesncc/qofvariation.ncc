@@ -24,3 +24,4 @@ Byars approximation to poission
 Other statistic test routines: \code{\link{prop_wilson.test}},
   \code{\link{stat_test}}
 }
+\concept{statistic test routines}

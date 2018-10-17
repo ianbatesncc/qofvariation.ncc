@@ -13,26 +13,10 @@
 \title{Families}
 \description{
 List of families.
-
-Family of Helper routines
-
-Family of External routines
-
-Family of Internal routines
-
-Family of Load routines
-
-Family of Save routines
-
-Family of Measure routines
-
-Family of Compare routines
-
-Family of Reference routines
 }
 \seealso{
 Other Helper routines: \code{\link{is_installed}},
-  \code{\link{paste_paths}}, \code{\link{proj_root}},
+  \code{\link{proj_path}}, \code{\link{proj_root}},
   \code{\link{round_nearest}},
   \code{\link{setnames.clean}}, \code{\link{status}},
   \code{\link{sum.rmna}}, \code{\link{transpose}}
@@ -75,7 +59,7 @@ Other Compare routines: \code{\link{f__91__compare}},
   \code{\link{f__91__load_compare}}
 
 Other Helper routines: \code{\link{is_installed}},
-  \code{\link{paste_paths}}, \code{\link{proj_root}},
+  \code{\link{proj_path}}, \code{\link{proj_root}},
   \code{\link{round_nearest}},
   \code{\link{setnames.clean}}, \code{\link{status}},
   \code{\link{sum.rmna}}, \code{\link{transpose}}
@@ -117,3 +101,11 @@ Other Compare routines: \code{\link{f__91__compare}},
 Other Reference routines: \code{\link{f__91__load_reference}},
   \code{\link{f__91__save_reference}}
 }
+\concept{Compare routines}
+\concept{External routines}
+\concept{Helper routines}
+\concept{Internal routines}
+\concept{Load routines}
+\concept{Measure routines}
+\concept{Reference routines}
+\concept{Save routines}

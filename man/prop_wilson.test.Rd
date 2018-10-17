@@ -24,3 +24,4 @@ Wilson approximation to proportion
 Other statistic test routines: \code{\link{poisson_byars.test}},
   \code{\link{stat_test}}
 }
+\concept{statistic test routines}

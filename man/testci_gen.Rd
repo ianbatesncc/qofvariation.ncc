@@ -8,8 +8,9 @@
 \alias{testci_sense_s}
 \title{Test if two confidence intervals overlap.}
 \usage{
-testci_gen(ci.ref, ci.var, bAsString = FALSE, bSenseHigherisBetter = NA,
-  return_type = c("minimal", "data.frame", "data.table"), verbose = FALSE)
+testci_gen(ci.ref, ci.var, bAsString = FALSE,
+  bSenseHigherisBetter = NA, return_type = c("minimal", "data.frame",
+  "data.table"), verbose = FALSE)
 
 testci_hilo(ci.ref, ci.var)
 
@@ -129,3 +130,10 @@ Other returns sense: \code{\link{testspc_gen}}
 
 Other returns string: \code{\link{testspc_gen}}
 }
+\concept{generic routines}
+\concept{instances of generic routines}
+\concept{returns hilo}
+\concept{returns numeric}
+\concept{returns sense}
+\concept{returns string}
+\concept{testci routines}
