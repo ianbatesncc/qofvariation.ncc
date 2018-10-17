@@ -1,5 +1,11 @@
 #' Download raw QOF data
 #'
+#' Programatically download QOF data for given periods. Different periods have
+#' different format and layout and none are easily discoverable - this is the
+#' result of manual inspection and collection.
+#'
+#' Download of the files is the first step.  Extracting them is a second step.
+#'
 #' @importFrom tools file_ext
 #'
 download_qof <- function(
@@ -95,7 +101,7 @@ all,https://digital.nhs.uk/data-and-information/publications/statistical/quality
 "
     )
 
-    these_urls <- urls[qof_period %in% period]
+    these_urls <- urls[qof_period %in% period, ]
 
     datadir = "./data-raw/"
 
@@ -166,6 +172,7 @@ all,https://digital.nhs.uk/data-and-information/publications/statistical/quality
     }
 
     return(list(
-        these_files = these_files, these_files_unzipped = these_files_unzipped
+        these_files = these_files
+        , these_files_unzipped = these_files_unzipped
     ))
 }
