@@ -11,7 +11,7 @@
 #'
 proj_root <- function() {
     require("devtools")
-    devtools::package_file()
+    normalizePath(devtools::package_file(), winslash = "/", mustWork = TRUE)
 }
 
 #' Shortcut for constructing paths
@@ -22,7 +22,7 @@ proj_root <- function() {
 #'
 proj_path <- function(...) {
     require("devtools")
-    devtools::package_file(...)
+    normalizePath(devtools::package_file(...), winslash = "/", mustWork = FALSE)
 }
 
 #' Contruct paths
