@@ -4,6 +4,8 @@
 # Extract data and put into R data object
 #
 
+options(warn = 1)
+
 #' load raw QOF data
 #'
 #' put in an R list for later analysis
@@ -43,6 +45,8 @@ f__extract__load_raw <- function(
     if (qof_root %in% c("qof-1617", "qof-1516")) {
 
         # 1617, 1516 ####
+        # qof_root <- "qof-1617" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
+        # qof_root <- "qof-1516" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
         this.file <- proj_path(qof_data_path, "ORGANISATION_REFERENCE.csv")
         qof.orgref <- fread(file = this.file) %>% setnames.clean()
@@ -62,6 +66,7 @@ f__extract__load_raw <- function(
     } else if (qof_root %in% c("qof-1415")) {
 
         # 1415 ####
+        # qof_root <- "qof-1415" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
         cat("WARNING: extract WIP for", qof_root, "\n")
 
@@ -164,6 +169,7 @@ f__extract__load_raw <- function(
     } else if (qof_root %in% c("qof-1314")) {
 
         # 1314 ####
+        # qof_root <- "qof-1314" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
         cat("WARNING: extract WIP for", qof_root, "\n")
 
@@ -304,7 +310,7 @@ f__extract__load_raw <- function(
 
     generic_names <- c("meta_org", "meta_ind", "data_prev", "data_ind")
 
-    # save
+    # save ####
 
     if (bSaveData == TRUE) {
 
