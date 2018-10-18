@@ -23,6 +23,9 @@
 #'     }
 #' }
 #'
+# @importFrom purrr walk2
+# @importFrom devtools use_data
+#'
 #' @family Internal routines
 #' @family Load routines
 #'
@@ -57,17 +60,14 @@ f__extract__load_raw <- function(
         , data_ind <- qof.ind
     )
 
-    generic_names <- c("meta-org", "meta-ind", "data-prev", "data-ind")
+    generic_names <- c("meta_org", "meta_ind", "data_prev", "data_ind")
 
     # save
 
     if (bSaveData == TRUE) {
 
-        require(purrr)
-        require(devtools)
 
-        these_names <- paste(qof_root, generic_names, sep = "-") %>%
-            gsub("-", "_", .)
+        these_names <- paste(gsub("-", "_", qof_root), generic_names, sep = "_")
 
         names(retval) <- these_names
 
