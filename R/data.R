@@ -59,6 +59,10 @@
 #'
 "qof_1617_data_prev"
 
+#' @inherit qof_1617_data_prev
+#'
+"qof_1516_data_prev"
+
 
 #' QOF data for indicators
 #'

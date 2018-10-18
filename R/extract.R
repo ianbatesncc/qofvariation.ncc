@@ -33,28 +33,40 @@
 #' @family Load routines
 #'
 f__extract__load_raw <- function(
-    qof_root
+    qof_root = c("qof-1617", "qof-1516", "qof-1415", "qof-1314")[4]
     , bSaveData = FALSE
 ) {
     cat("INFO: f__extract__load_raw: loading data ...", "\n")
 
-    require("data.table")
+    qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
-    taskdir <- proj_root()
+    if (qof_root %in% c("qof-1617", "qof-1516")) {
 
-    this.file <- paste_paths("./data-raw/", paste0(qof_root, "-csv/ORGANISATION_REFERENCE.csv"))
-    qof.orgref <- fread(file = this.file) %>% setnames.clean()
+        # 1617, 1516 ####
 
-    this.file <- paste_paths("./data-raw/", paste0(qof_root, "-csv/INDICATOR_MAPPINGS.csv"))
-    qof.indmap <- fread(file = this.file) %>% setnames.clean()
+        this.file <- proj_path(qof_data_path, "ORGANISATION_REFERENCE.csv")
+        qof.orgref <- fread(file = this.file) %>% setnames.clean()
 
-    this.file <- paste_paths("./data-raw/", paste0(qof_root, "-csv/PREVALENCE.csv"))
-    qof.prev <- fread(file = this.file) %>% setnames.clean()
+        this.file <- proj_path(qof_data_path, "INDICATOR_MAPPINGS.csv")
+        qof.indmap <- fread(file = this.file) %>% setnames.clean()
 
-    this.file <- paste_paths("./data-raw/", paste0(qof_root, "-csv/ACHIEVEMENT_EXCEPTIONS.csv"))
-    if (!(file.exists(this.file)))
-        this.file <- paste_paths("./data-raw/", paste0(qof_root, "-csv/ACHIEVEMENT.csv"))
-    qof.ind <- fread(file = this.file) %>% setnames.clean()
+        this.file <- proj_path(qof_data_path, "PREVALENCE.csv")
+        qof.prev <- fread(file = this.file) %>% setnames.clean()
+
+        this.file <- proj_path(qof_data_path, "ACHIEVEMENT_EXCEPTIONS.csv")
+        if (!(file.exists(this.file)))
+            this.file <- proj_path(qof_data_path, "ACHIEVEMENT.csv")
+        qof.ind <- fread(file = this.file) %>% setnames.clean()
+
+    } else {
+
+        cat("WARNING: extract not defined for", qof_root, "\n")
+
+        qof.orgref <- NA
+        qof.indmap <- NA
+        qof.prev <- NA
+        qof.ind <- NA
+    }
 
     retval <- list(
         meta_org <- qof.orgref
