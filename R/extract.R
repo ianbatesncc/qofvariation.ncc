@@ -26,11 +26,11 @@
 #' @family Internal routines
 #' @family Load routines
 #'
-f__91__load_raw <- function(
+f__extract__load_raw <- function(
     qof_root
     , bSaveData = FALSE
 ) {
-    cat("INFO: f__91__load_raw: loading data ...", "\n")
+    cat("INFO: f__extract__load_raw: loading data ...", "\n")
 
     require("data.table")
 

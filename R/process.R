@@ -169,7 +169,7 @@ f__91__load__reference_measures_compare <- function(
 #' f__91__measures_ind
 #' f__91__measures_prev
 #'
-#' @param qof list of lists (see \code{\link{f__91__load_raw}})
+#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
 #' @param bWriteCSV Flag to indicate to write results to file.
 #' @param qof_root
 #'
@@ -231,7 +231,7 @@ f__91__measures <- function(
 
 #' Create QOF performance measures
 #'
-#' @param qof list of lists (see \code{\link{f__91__load_raw}})
+#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
 #' @param bWriteCSV Flag to indicate to write results to file.
 #' @param qof_root
 #'
@@ -337,7 +337,7 @@ performance, suboptimal,    denominator, 0,     1,     1
 
 #' Create QOF prevalance measures
 #'
-#' @param qof list of lists (see \code{\link{f__91__load_raw}})
+#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
 #' @param bWriteCSV Flag to indicate to write results to file.
 #' @param qof_root
 #'
@@ -612,7 +612,7 @@ f__91__compare <- function(
 #' @note
 #' Call tree:
 #'
-#' f__91__load_raw
+#' f__extract__load_raw
 #' f__91__preprocess
 #'
 #' @param qof_root
@@ -620,7 +620,7 @@ f__91__compare <- function(
 #'   Directory root for loading and saving any processed data.  Of the form
 #'   "qof-YYZZ"
 #'
-#' @return list of lists (see \code{\link{f__91__load_raw}})
+#' @return list of lists (see \code{\link{f__extract__load_raw}})
 #'
 #'
 #' @family Internal routines
@@ -646,7 +646,7 @@ f__91__load_data <- function(
         invisible(x)
     }
 
-    qof <- f__91__load_raw(qof_root) %>%
+    qof <- f__extract__load_raw(qof_root) %>%
         # process lookups
         f__91__preprocess() %>%
         l_add_orgtype() %>%
