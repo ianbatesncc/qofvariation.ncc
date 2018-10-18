@@ -161,6 +161,130 @@ f__extract__load_raw <- function(
 
         rm(qof.reg)
 
+    } else if (qof_root %in% c("qof-1314")) {
+
+        # 1314 ####
+
+        cat("WARNING: extract WIP for", qof_root, "\n")
+
+        # qof.orgref
+
+        this.file <- proj_path(qof_data_path, "PRAC_CONTROL.csv")
+        qof.orgref <- fread(file = this.file) %>% setnames.clean()
+
+        names(qof.orgref) <- gsub("(code|name)$", "_\\1", names(qof.orgref))
+        add_names <- c(
+            "ccg_geography_code"
+            , "subregion_code", "subregion_geography_code", "subregion_name"
+            , "region_geography_code"
+            , "country"
+            , "revised_maximum_points"
+        )
+        df_new_names <- data.frame(matrix(NA_character_, nrow(qof.orgref), length(add_names)))
+        names(df_new_names) <- add_names
+
+        qof.orgref <- bind_cols(qof.orgref, df_new_names) %>%
+            rename(stp_code = "at_code", stp_name = "at_name") %>%
+            mutate_at(vars(revised_maximum_points), as.numeric) %>%
+            mutate_if(is.factor, as.character)
+
+        rm(add_names, df_new_names)
+
+        # qof.indmap
+
+        this.file <- proj_path(qof_data_path, "INDICATOR_REFERENCE.csv")
+        qof.ind <- fread(file = this.file) %>% setnames.clean()
+
+        this.file <- proj_path(qof_data_path, "INDICATOR_GRP_REFERENCE.csv")
+        qof.grp <- fread(file = this.file) %>% setnames.clean()
+
+        this.file <- proj_path(qof_data_path, "INDICATOR_DOM_REFERENCE.csv")
+        qof.dom <- fread(file = this.file) %>% setnames.clean()
+
+        qof.indmap <- qof.ind %>%
+            select(
+                -ends_with("_threshold")
+                , -indicator_type
+                , -indicator_version
+                , indicator_group_code = "indicator_group"
+                , indicator_description = "indicator_desc"
+            ) %>%
+            merge(
+                qof.grp %>% select(starts_with("indicator_group_"), domain_code)
+                , by = "indicator_group_code"
+                , all.x = TRUE, all.y = FALSE
+            ) %>%
+            rename(indicator_group_description = "indicator_group_desc") %>%
+            merge(
+                qof.dom %>% select(starts_with("domain_"), -domain_points)
+                , by = "domain_code"
+                , all.x = TRUE, all.y = FALSE
+            ) %>%
+            rename(domain_description = "domain_desc") %>%
+            mutate(patient_list_type = NA_character_)
+
+        rm(qof.ind, qof.grp, qof.dom)
+
+        # qof.prev
+
+        #' @note HF double counted - register_description has HF and HF with LVD
+        #'   - keep just HF
+
+        this.file <- proj_path(qof_data_path, "PREVALENCEBYPRAC.csv")
+        qof.prev <- fread(file = this.file) %>% setnames.clean() %>%
+            filter(register_description != "Heart Failure due to LVD") %>%
+            select(
+                -ends_with("_description")
+                , -prevalence
+                , practice_code = practicecode
+                , indicator_group_code = indicator_group
+                , register = disease_register_size
+                , patient_list_size = practice_listsize
+            ) %>%
+            mutate(patient_list_type = NA_character_) %>%
+            mutate_at(vars(register), as.numeric)
+
+        # qof.ind
+
+        # Need to merge in register and exceptions
+
+        this.file <- proj_path(qof_data_path, "exception_output_all_denoms.csv")
+        qof.exc <- fread(file = this.file) %>% setnames.clean() %>%
+            select(
+                practice_code = practicecode
+                , indicator_code
+                , exceptions = exception_count
+            )
+
+        this.file <- proj_path(qof_data_path, "INDICATORSBYPRAC.csv")
+        qof.ind <- fread(file = this.file) %>% setnames.clean() %>%
+            rename(
+                indicator_group_code = "indicator_group"
+                , practice_code = "practicecode"
+                , indicator_code = "indicatorcode"
+            ) %>%
+            setDT() %>%
+            merge(
+                qof.prev %>% select(ends_with("_code"), register)
+                , by = c("practice_code", "indicator_group_code")
+                , all.x = TRUE
+            ) %>%
+            merge(
+                qof.exc %>% select(ends_with("_code"), exceptions)
+                , by = c("practice_code", "indicator_code")
+                , all.x = TRUE
+            ) %>%
+            mutate_if(is.numeric, as.numeric) %>%
+            setDT() %>%
+            melt(
+                id.vars = grep("_code$", names(.))
+                , variable.name = "measure", variable.factor = FALSE
+            ) %>%
+            mutate(measure = toupper(measure)) %>%
+            select(-indicator_group_code)
+
+        rm(qof.exc)
+
     } else {
 
         cat("WARNING: extract not defined for", qof_root, "\n")
