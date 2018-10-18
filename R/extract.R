@@ -11,7 +11,10 @@
 #' @param qof_root
 #'
 #'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
+#'   \code{qof-YYZZ}
+#'
+#' @param bSaveData (boolean) Flag to determine whether to save datasets as
+#'   \code{devtools::use_data}
 #'
 #' @return a list of lists with named items
 #' \describe{
