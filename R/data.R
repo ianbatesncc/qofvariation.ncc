@@ -69,6 +69,13 @@
 #' $ value         : num
 #' }
 #'
+#' \describe{
+#'   \item{\code{measure}}{
+#'   One of \code{ACHIEVED_POINTS}, \code{DENOMINATOR}, \code{EXCEPTIONS},
+#'   \code{NUMERATOR}, \code{REGISTER}
+#'   }
+#' }
+#'
 #' @family qof_data
 #'
 "qof_1617_data_ind"
