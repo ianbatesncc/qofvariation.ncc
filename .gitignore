@@ -2,6 +2,14 @@
 .Rhistory
 .RData
 .Ruserdata
-data-raw/*.zip
+# downloaded qof data
+data-raw/*/*.zip
+data-raw/qof*/*
+# processed package data
+data/*.rda
+# dashboards
 inst/dashboard/*.html
 inst/dashboard/qof_dashboard_cache/*
+# xl
+*.xls
+*.xls[xm]

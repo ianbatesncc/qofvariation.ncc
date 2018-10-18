@@ -12,3 +12,5 @@ Suggests: testthat
 Imports: dplyr
     , reshape2
     , data.table
+    , devtools
+    , purrr
