@@ -30,6 +30,7 @@ options(warn = 1)
 #'
 # @importFrom purrr walk2
 # @importFrom devtools use_data
+#' @imports readxl
 #'
 #' @family Internal routines
 #' @family Load routines
@@ -290,6 +291,408 @@ f__extract__load_raw <- function(
             select(-indicator_group_code)
 
         rm(qof.exc)
+
+    } else if (qof_root %in% c("qof-1213")) {
+
+        # 1213 ####
+        # qof_root <- "qof-1213" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
+
+        qof_stem <- sub("([0-9]{2})([0-9]{2})", "\\1-\\2", qof_root)
+
+        cat("WARNING: extract WIP for", qof_root, "\n")
+
+        # File layout
+        #
+        # {National,CCG,Practice}
+        # - {Clinical, Prevalence, ...}
+        #  - {qof-12-13-data-tab-prac-xxxx}
+        #
+        # * orgref from clinical summary
+        # * indmap incremental
+        # * prev from Prevlance
+        # * ind from Clinical
+        #
+
+        these_orgs <- c(eng = "National", ccg = "CCG", prac = "Practice")
+        these_doms <- c(clin = "Clinical", prev = "Prevalence")
+
+        # qof.orgref ####
+
+        # get orgref from Clinical summary
+
+        this.file <- proj_path(
+            qof_data_path
+            , these_orgs["prac"]
+            , paste0(qof_stem, "-data-tab-prac-clin-summ.xlsx")
+        )
+        xl <- list(wb = this.file, sheets = excel_sheets(this.file))
+        ws <- read_excel(path = xl$wb, sheet = xl$sheets[1], skip = 13) %>% setnames.clean()
+
+        qof.orgref <- ws %>%
+            select_if(is.character) %>%
+            rename_all(function(x){gsub("\\.", "_", x)})
+
+        add_names <- c(
+            "ccg_geography_code"
+            , "subregion_code", "subregion_geography_code", "subregion_name"
+            , "region_geography_code"
+            , "country"
+            , "revised_maximum_points"
+        )
+        df_new_names <- data.frame(matrix(NA_character_, nrow(qof.orgref), length(add_names)))
+        names(df_new_names) <- add_names
+
+        qof.orgref <- bind_cols(qof.orgref, df_new_names) %>%
+            rename(stp_code = "at_code", stp_name = "at_name") %>%
+            mutate_at(vars(revised_maximum_points), as.numeric) %>%
+            mutate_if(is.factor, as.character)
+
+        rm(add_names, df_new_names)
+
+        # qof.indmap ####
+
+        # Start with manual extract from technical annex for descriptions
+
+        # Depression: there is no indicator to hold the register - create DEP00
+        # Depression: Depression1 Indicator register - implicit in DEP01
+        # indicator - so drop
+        # Heart Failure: HF01 is the register.  LVD regisetr implicit in HF03 -
+        # so drop
+        # CVDPP : there is no indicator to hold the register - create PP00
+
+        this.file <- proj_path(qof_data_path, paste0(qof_root, "-meta-ind.xlsx"))
+        xl <- list(wb = this.file, sheets = excel_sheets(this.file))
+        qof.indmap <- read_excel(path = xl$wb, sheet = xl$sheets[1]) %>%
+            setnames.clean() %>%
+            select(starts_with("indicator_"), -ends_with("2"))
+
+        qof.indmap.manual <- fread(input = "
+indicator_code,indicator_description,indicator_group_description
+DEP00,The practice can produce a register of patients with Depression - pseudo-register,Depression
+PP00,The practice can produce a register of patients with Cardiovascular Disease Primary Prevention - pseudo-register,Cardiovascular Disease Primary Prevention
+PC00,The practice can produce a register of patients with Palliative Care - pseudo-register,Palliative Care
+SMOKE00,The practice can produce a register of patients with Smoking - pseudo-register,Smoking Indicators
+")
+
+        qof.indmap <- qof.indmap %>%
+            status("INFO: manual insertion: DEP00 for pseudo-register") %>%
+            bind_rows(qof.indmap.manual) %>%
+            mutate(
+                indicator_group_code = gsub("[0-9]*", "", indicator_code)
+                , indicator_point_value = NA_integer_
+                , domain_code = "CL"
+                , domain_description = "Clinical"
+                , patient_list_type = "TOTAL"
+                ) %>%
+            status("INFO: manual override: THYROI -> THYROID") %>%
+            mutate(indicator_group_code = sub("^(THYROI)$", "\\1D", indicator_group_code)) %>%
+            status("INFO: patient_list_type to be updated once prevalence extracted")
+
+        # store pure group
+        #
+        # at this point the group description is a cut and paste from the QOF
+        # technical annex
+
+        qof.grpmap <- qof.indmap %>%
+            filter(!indicator_code %like% "[0-9]") %>%
+            select(
+                indicator_group_code = indicator_code
+                , indicator_group_desc_prev = indicator_group_description
+                , indicator_group_description = indicator_description
+            )
+
+        # drop pure group
+        # tag with indicator group description
+
+        qof.indmap <- qof.indmap %>%
+            select(-indicator_group_description) %>%
+            filter(indicator_code %like% "[0-9]") %>%
+            merge(
+                qof.grpmap %>% select(-ends_with("_desc_prev"))
+                , by = "indicator_group_code", all.x = TRUE
+            )
+
+        # qof.ind ####
+
+        # Recursive extraction through a list of xl files
+
+        these_files <- list.files(
+            proj_path(qof_data_path, these_orgs["prac"], these_doms["clin"])
+            , pattern = "^qof.*\\.xlsx$"
+            , include.dirs = FALSE
+            , recursive = FALSE
+            , full.names = TRUE
+        )
+
+        qof.ind <- these_files %>% lapply(
+            function(this.file) {
+                xl <- list(wb = this.file, sheets = excel_sheets(this.file))
+                cat("INFO: workbook: [", basename(this.file), "]", "\n")
+                xl$sheets %>% lapply(
+                    function(this.sheet, this.file) {
+                        cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
+                        ws <- read_excel(
+                            path = this.file
+                            , sheet = this.sheet
+                            , skip = 13
+                        )
+
+                        all_fields <- names(ws)
+                        id_fields <- ws[FALSE, ] %>% select(ends_with(" Code"), ends_with(" Name")) %>% names()
+
+                        is_prac <- intersect(id_fields, "Practice Code")
+                        is_num <- setdiff(all_fields, id_fields)
+                        is_ndep <- grep(" (Numerator|Denominator|Exceptions|Points)$", is_num, value = TRUE)
+
+                        is_char <- ws[FALSE, ] %>% select_if(is.character) %>% names()
+                        is_ndep_char <- intersect(is_ndep, is_char)
+                        if (length(is_ndep_char) > 0) {
+                            # want to convert char to num, any str goes to NA
+                            suppressWarnings(
+                                ws <- ws %>% mutate_at(vars(is_ndep_char), as.numeric)
+                            )
+                        }
+
+                        cat(", measures [", paste(is_ndep, collapse = " | "), "]", "\n")
+
+                        dat <- ws %>%
+                            select_at(vars(is_prac, is_ndep)) %>%
+                            #mutate_at(vars(is_ndep), as.numeric) %>%
+                            setDT() %>%
+                            melt(
+                                id.vars = is_prac
+                                #, measure.vars = is_ndep
+                                , variable = "qof_measure", variable.factor = FALSE
+                            ) %>%
+                            rename(practice_code = "Practice Code")
+                    }
+                    , this.file
+                ) %>% bind_rows()
+            }
+        ) %>% bind_rows() %>%
+            setDT() %>%
+            status("INFO: creating indicator_code, measure fields") %>%
+            .[, c("indicator_code", "measure") := tstrsplit(qof_measure, " ")] %>%
+            mutate_at(vars(measure), tolower) %>%
+            select(-qof_measure)
+
+        # qof.prev ####
+
+        these_files <- list.files(
+            proj_path(qof_data_path, these_orgs["prac"], these_doms["prev"])
+            , pattern = "^qof.*\\.xlsx$"
+            , include.dirs = FALSE
+            , recursive = FALSE
+            , full.names = TRUE
+        )
+
+        qof.prev <- these_files %>% lapply(
+            function(this.file) {
+                xl <- list(wb = this.file, sheets = excel_sheets(this.file))
+                cat("INFO: workbook: [", basename(this.file), "]", "\n")
+                xl$sheets %>% lapply(
+                    function(this.sheet, this.file) {
+                        cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
+                        ws <- read_excel(
+                            path = this.file
+                            , sheet = this.sheet
+                            , skip = 13
+                            , col_types = "text"
+                        ) %>% mutate(sheet = this.sheet)
+
+                        all_fields <- names(ws)
+                        id_fields <- ws[FALSE, ] %>%
+                            select(ends_with(" Code"), ends_with(" Name"), sheet) %>%
+                            names()
+
+                        is_prac <- intersect(id_fields, c("Practice Code", "sheet"))
+                        is_num <- setdiff(all_fields, id_fields)
+
+                        # suppress expected warnings issued when encountering NA in numeric fields.
+                        suppressWarnings(
+                            ws <- ws %>% mutate_at(vars(is_num), as.numeric)
+                        )
+
+                        cat(", measures [", paste(is_num, collapse = " | "), "]", "\n")
+
+                        dat <- ws %>%
+                            select_at(vars(is_prac, is_num)) %>%
+                            setDT() %>%
+                            melt(
+                                id.vars = is_prac
+                                #, measure.vars = is_num
+                                , variable = "tbl_heading", variable.factor = FALSE
+                            ) %>%
+                            rename(practice_code = "Practice Code")
+                    }
+                    , this.file
+                ) %>% bind_rows()
+            }
+        ) %>% bind_rows() %>%
+            setDT()
+
+        # '- metadata update and prev data reshaping ####
+        #
+        # lot of information embedded ... need some clarity to extract
+        #
+        # * disease : needs to map to qof vocabulary from indmap
+        #
+        # Need patient_list_size and patient_list_type ... information will be
+        # contained in indmap ... but at this point is incomplete ... age info
+        # embedded in prev fields ... but indicator group is a free text field
+        # ... use that free text field to link into indmap to get
+        # indicator_group_code ... then inspect prev fields to get
+        # indicator_group and list_type link ... then finally update indmap ...
+
+        # '- amend prev field labels to something more uniform ####
+
+        qof.prev.labels <- qof.prev %>%
+            count(sheet, tbl_heading) %>% select(-n) %>%
+            #rename(id = "tbl_heading") %>%
+            mutate(
+                s1 = gsub(" (Prevalence|Register|\\(per cent\\))", ";\\1", tbl_heading)
+                , s1 = sub("^Sum of ", "", s1)
+                , s1 = sub("(Register) ", "\\1;", s1)
+                , s1 = sub("^(Estimated) (%age|number) (.*)$", "\\1;\\3;\\2", s1)
+                , s1 = sub("%age", "(per cent)", s1)
+                , s1 = sub("(Prevalence|Register)$", "\\1;(count)", s1)
+                , s1 = sub(";(number)$", ";(\\1)", s1)
+                , s1 = sub("^(Register);for ([a-zA-Z0-9]* Indicator[s]*)$", "\\2;\\1;(count)", s1)
+            ) %>% setDT() %>%
+            .[, c("disease", "measure", "statistic") := tstrsplit(s1, ";")] %>%
+            .[, disease := tstrsplit(disease, ":", keep = 1)] %>%
+            .[, statistic := gsub("[\\(\\)]", "", statistic)] %>%
+            .[tolower(disease) == "list size", measure := "all ages"] %>%
+            mutate(list_type = ifelse(statistic %like% "age", statistic, "all ages")) %>%
+            mutate_at(vars(disease, measure, statistic), trimws) %>%
+            select(-s1)
+
+        # '- Split into List and Register
+        #
+        # ensure qof vocabulary used - indicator_group_code, patient_list_type
+
+        lu_age <- fread(input = "
+list_type,patient_list_type
+all ages,TOTAL
+ages 16+,16OV
+ages 17+,17OV
+ages 18+,18OV
+ages 50+,50OV
+")
+
+        # '-- List ####
+
+        qof.prev.labels.list <- qof.prev.labels %>%
+            filter(
+                sheet == "Prac_AgeSpecificPrevalence"
+                , tolower(disease) %like% "estimated|list"
+            ) %>% setDT() %>%
+            .[is.na(statistic), statistic := "number"] %>%
+            .[tbl_heading %like% "^Estimated", list_type := paste("ages", measure)] %>%
+            filter(statistic == "number") %>%
+            mutate(disease = "List size") %>%
+            rename(indicator_group_description = "disease") %>%
+            merge(lu_age, by = "list_type", all.x = TRUE) %>%
+            select(-list_type, -measure, -statistic)
+
+        qof.prev.list <- qof.prev %>%
+            merge(
+                qof.prev.labels.list
+                , by = c("sheet", "tbl_heading")
+                , all.x = FALSE, all.y = TRUE
+            ) %>%
+            select(-sheet, -tbl_heading, -indicator_group_description)
+
+        # '-- Register ####
+
+        qof.prev.labels.reg <- qof.prev.labels %>%
+            filter(
+                sheet == "Prac_Prevalence"
+                , measure == "Register"
+            ) %>% setDT() %>%
+            merge(lu_age, by = "list_type", all.x = TRUE) %>%
+            select(-list_type) %>%
+            rename(indicator_group_desc_prev = "disease") %>%
+            merge(qof.grpmap, by = "indicator_group_desc_prev", all.x = TRUE) %>%
+            select(-indicator_group_desc_prev) %>%
+            status("INFO: dropping depression1 hf lvd pseudo-registers") %>%
+            filter(!is.na(indicator_group_description)) %>%
+            select(-measure, -statistic, -indicator_group_description)
+
+        qof.prev.reg <- qof.prev %>%
+            merge(
+                qof.prev.labels.reg
+                , by = c("sheet", "tbl_heading")
+                , all.x = FALSE, all.y = TRUE
+            ) %>%
+            select(-sheet, -tbl_heading)
+
+        # '-- Combine ####
+
+        qof.prev <- qof.prev.reg %>%
+            rename(register = "value") %>%
+            setDT() %>%
+            merge(
+                qof.prev.list %>% rename(patient_list_size = "value")
+                , by = c("practice_code", "patient_list_type")
+                , all.x = TRUE
+                , suffixes = c(".reg", ".list")
+            )
+
+        # '- update indmap with list_type ####
+        # can update indmap with patient_list_type
+
+        qof.indmap <- qof.indmap %>%
+            status("INFO: updating indmap with patient_list_type from prev") %>%
+            select(-patient_list_type) %>%
+            merge(
+                qof.prev.labels.reg %>%
+                    select(indicator_group_code, patient_list_type)
+                , by = "indicator_group_code"
+                , all.x = TRUE
+            )
+
+        # '- update ind with register for relevant indicators ####
+        # can update ind with register
+
+        qof.indmap.isregister <- qof.indmap %>%
+            filter(indicator_description %like% "produce a register") %>%
+            select(indicator_code, indicator_group_code)
+
+        qof.ind <- list(
+            qof.ind
+            , qof.prev.reg %>%
+                select(practice_code, value, indicator_group_code) %>%
+                mutate(measure = "register") %>%
+                setDT() %>%
+                merge(
+                    qof.indmap.isregister
+                    , by = "indicator_group_code"
+                    , all.x = TRUE
+                ) %>%
+                select(-indicator_group_code)
+        ) %>% rbindlist(use.names = TRUE)
+
+        # Cross check data and metadata ####
+
+        ind.data <- qof.ind$indicator_code %>% unique()
+        ind.meta <- qof.indmap$indicator_code %>% unique()
+
+        if (!setequal(ind.data, ind.meta)) {
+            cat(
+                "WARNING: indicator mismatch between data and meta:", "\n"
+                , " - in data but not meta:"
+                , paste(setdiff(ind.data, ind.meta), sep = ", "), "\n"
+                , " - in meta but not data:"
+                , paste(setdiff(ind.meta, ind.data), sep = ", "), "\n"
+            )
+        }
+
+        rm(
+            qof.prev.labels
+            , qof.prev.labels.list, qof.prev.list
+            , qof.prev.labels.reg, qof.prev.reg
+        )
 
     } else {
 
