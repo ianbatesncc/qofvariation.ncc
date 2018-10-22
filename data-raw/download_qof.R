@@ -9,114 +9,50 @@
 #' @importFrom tools file_ext
 #'
 download_qof <- function(
-    period = c("1617", "1516", "1415", "1314", "1213", "1112")
+    period = NULL
+    , exts = NULL
+    , recursive = TRUE
+    , bWriteCSV = FALSE
+    , junkpaths = TRUE
+    , dryrun = FALSE
 ) {
-    period <- match.arg(period, several.ok = TRUE)
 
     require("data.table")
     require("dplyr")
 
-    urls <- fread(
-        blank.lines.skip = TRUE
-        , input = "
-qof_period,url
-
-all,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data
-
-1617,https://files.digital.nhs.uk/zip/p/i/qof-1617-csv.zip
-
-1516,https://files.digital.nhs.uk/publicationimport/pub22xxx/pub22266/qof-1516-csv.zip
-
-1415,https://files.digital.nhs.uk/publicationimport/pub18xxx/pub18887/qof-1415-csvfiles-v2.zip
-
-1314,https://files.digital.nhs.uk/publicationimport/pub15xxx/pub15751/qof-1314-csvfilescqrsdata.zip
-
-1213,https://files.digital.nhs.uk/publicationimport/pub12xxx/pub12262/qof-12-13-data-tab-eng.zip
-1213,https://files.digital.nhs.uk/publicationimport/pub12xxx/pub12262/qof-12-13-data-tab-ccg.zip
-1213,https://files.digital.nhs.uk/publicationimport/pub12xxx/pub12262/qof-12-13-data-tab-prac.zip
-
-#1112,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2011-12-england-level
-#1112,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2011-12-practice-level
-
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-nat-prev.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-atfib.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-end-asthma.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-canc.xlsx
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-clin-cvd.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-ckd.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-copd.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-clin-chd.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-dem.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-end-dm.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-dep.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-epil.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-hf.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-bp.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-nat-thy.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-ld.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-mh.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-obes.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-nat-pc.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-nat-smoking.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08661/qof-11-12-data-tab-eng-nat-stroke.xls
-
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qual-outc-fram-11-12-prac-prev.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-at-fib.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-asth.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-cancer.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-set-pracs-cardio.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-kid-dis.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-copd.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-con-hea-dis.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-dem.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-dep.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tabs-pracs-diab-mel.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-epil.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-heart-fail.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-hyper.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-thyroid.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-learn-dis.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tabs-pracs-men-heal.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-obes.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-pall-care.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-smoking.xls
-1112,https://files.digital.nhs.uk/publicationimport/pub08xxx/pub08715/qof-11-12-data-tab-pracs-stroke.xls
-
-#1011,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2010-11-england-level
-#1011,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2010-11-practice-level
-
-#0910,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2009-10-england-level
-#0910,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2009-10-practice-level
-
-#0809,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2008-09-england-level
-#0809,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2008-09-practice-level
-
-#0708,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2007-08-england-level
-#0708,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2007-08-practice-level
-
-#0607,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2006-07-england-level
-#0607,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2006-07-practice-level
-
-0506,https://files.digital.nhs.uk/publicationimport/pub01xxx/pub01950/qof-eng-05-06-gp-code-tab-anx.xls
-"
-    )
-
-    these_urls <- urls[qof_period %in% period, ]
+    these_urls <- scrape_urls(period = period, exts = exts, recursive = recursive)
 
     datadir = "./data-raw/"
 
-    l_download <- function(this_period, this_url, this_datadir, bOverwrite = FALSE) {
-        this_dir <- paste0(this_datadir, "qof-", this_period, "-csv")
-        this_path <- paste0(this_dir, "/", basename(this_url))
+    # download worker routine for one url
+    l_download <- function(
+        this_period
+        , this_url
+        , this_datadir
+        , bOverwrite = FALSE
+        , bjunkpaths = junkpaths
+        , bdryrun = dryrun
+    ) {
 
-        if (!dir.exists(this_dir)) {
-            cat("INFO: creating", this_dir, "...", "\n")
-            dir.create(this_dir)
+        this_dir <- paste0(this_datadir, "qof-", this_period, "-csv")
+
+        if (bjunkpaths == TRUE) {
+            this_path <- paste0(this_dir, "/", basename(this_url))
+        } else {
+            this_url_parent <- basename(dirname(this_url))
+            this_path <- paste0(this_dir, "/", this_url_parent, "/", basename(this_url))
         }
 
-        if (!file.exists(this_path) | bOverwrite == TRUE) {
+        this_path_dir <- dirname(this_path)
+
+        if (!dir.exists(this_path_dir)) {
+            cat("INFO: creating", this_path_dir, "...", "\n")
+            dir.create(this_path_dir, recursive = TRUE)
+        }
+
+        if (!bdryrun & ((!file.exists(this_path)) | (bOverwrite == TRUE))) {
             cat("INFO: downloading", this_url, "...", "\n")
-            download.file(this_url, destfile = this_path, mode = "wb")
+            download.file(this_url, destfile = this_path, mode = "wb", quiet = "TRUE")
         } else {
             cat("INFO: NOT downloading", this_url, "...", "\n")
         }
@@ -130,18 +66,48 @@ all,https://digital.nhs.uk/data-and-information/publications/statistical/quality
 
     these_files <- these_urls %>% {
         mapply(
-            l_download, .$qof_period, .$url, datadir, bOverwrite = FALSE
+            l_download, .$qof_period, .$url, datadir, bOverwrite = FALSE, bdryrun = dryrun
             , SIMPLIFY = FALSE, USE.NAMES = FALSE
         )
     } %>% bind_rows()
 
+    # write out list of files as .csv
+    if (bWriteCSV == TRUE) {
+        these_urls$qof_period %>%
+            unique() %>%
+            sapply(function(x, d, datadir) {
+                this_df <- d %>% filter(qof_period == x)
+
+                this_dir <- paste0(datadir, "qof-", x, "-csv")
+                this_csv <- paste0(
+                    this_dir, "/"
+                    , "qof-", x, "-list-of-files" , ".csv"
+                )
+
+                if (file.exists(this_csv)) {
+                    cat("INFO: merging with existing list", "\n")
+                    existing_list <- fread(this_csv, colClasses = "character")
+                    this_df <- bind_rows(existing_list, this_df) %>% unique()
+                    rm(existing_list)
+                }
+
+                cat("INFO: saving", this_csv, "...", "\n")
+                fwrite(this_df %>% arrange(qof_period, url), this_csv)
+
+                invisible(this_csv)
+            }
+            , d = these_urls
+            , datadir = datadir
+            )
+    }
 
     #unzip_method = "/usr/bin/unzip"
     #unzip_method = "C:/Program Files/7-Zip/7z.exe"
     #unzip_method = "C:/Program Files/Git/usr/bin/unzip.exe"
     unzip_method = "internal"
 
-    l_unzip <- function(this_period, this_path, bOverwrite = FALSE) {
+    # unzip worker routine for one zip file
+    l_unzip <- function(this_period, this_path, bOverwrite = FALSE, bdryrun = dryrun) {
         retval <- NULL
         this_dir <- dirname(this_path)
         if (this_period %in% c("1617", "1516", "1415", "1314", "1213")) {
@@ -150,13 +116,21 @@ all,https://digital.nhs.uk/data-and-information/publications/statistical/quality
 
             if (tools::file_ext(this_path) %in% c("zip")) {
                 prev_opt_warn <- getOption("warn") ; options(warn = 1)
-                unzip(
-                    this_path
-                    , junkpaths = l_junkpaths
-                    , overwrite = bOverwrite
-                    , exdir = this_dir
-                    , unzip = unzip_method
-                ) %>% list() -> retval
+                if (!bdryrun) {
+                    unzip(
+                        this_path
+                        , junkpaths = l_junkpaths
+                        , overwrite = bOverwrite
+                        , exdir = this_dir
+                        , unzip = unzip_method
+                    ) %>% list() -> retval
+                } else {
+                    data.frame(
+                        Name = as.character()
+                        , Length = as.integer()
+                        , Date = as.POSIXct(Sys.Date()[FALSE]), stringsAsFactors = FALSE
+                    ) %>% list() -> retval
+                }
                 options(warn = prev_opt_warn)
 
             }
@@ -166,7 +140,7 @@ all,https://digital.nhs.uk/data-and-information/publications/statistical/quality
 
     these_files_unzipped <- these_files %>% {
         mapply(
-            l_unzip, .$period, .$path
+            l_unzip, .$period, .$path, bdryrun = dryrun
             , SIMPLIFY = FALSE, USE.NAMES = FALSE
         )
     }
@@ -175,4 +149,138 @@ all,https://digital.nhs.uk/data-and-information/publications/statistical/quality
         these_files = these_files
         , these_files_unzipped = these_files_unzipped
     ))
+}
+
+#' Scrape NHSD QOF pages for data workbooks
+#'
+#' Specifying a url overrides the internal dtabase.  Still need to specify the
+#' period though.
+#'
+scrape_urls <- function(
+    period = c(
+        "all", "all_post1213", "all_pre1213"
+        , "1617", "1516", "1415", "1314", "1213"
+        , "1112", "1011", "0910", "0809", "0708", "0607", "0506", "0405"
+    )
+    , url = NULL
+    , exts = c("xls", "pdf", "zip")
+    , recursive = FALSE
+) {
+    require("rvest")
+
+    period <- match.arg(period, several.ok = TRUE)
+    exts <- match.arg(exts, several.ok = TRUE)
+
+    urls <- fread(
+        blank.lines.skip = TRUE
+        , input = "
+qof_period,url
+
+all_post1213,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data
+all_pre1213,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data
+
+1617,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data/quality-and-outcomes-framework-qof-2016-17
+1516,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data/quality-and-outcomes-framework-qof-2015-16
+1415,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data/quality-and-outcomes-framework-qof-2014-15
+1314,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data/quality-and-outcomes-framework-qof-2013-14
+1213,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2012-13
+1112,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2011-12
+1011,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2010-11
+0910,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2009-10
+0809,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2008-09
+0708,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2007-08
+0607,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/quality-and-outcomes-framework-2006-07
+0506,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/national-quality-and-outcomes-framework-achievement-data-england-2005-06
+0405,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data/national-quality-and-outcomes-framework-statistics-for-england-2004-05
+0405,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data/quality-and-outcomes-framework-statistics-england-2004-05-sha-level
+        "
+    ) %>% filter(!qof_period %like% "^#")
+
+    if (!missing(url)) {
+        cat("INFO: using specified url", "\n")
+        #period <- period
+        urls <- data.frame(
+            qof_period = period
+            , url = url
+            , stringsAsFactors = FALSE
+        )
+    } else {
+        cat("INFO: using internal url database", "\n")
+    }
+
+    retval <- urls %>%
+        filter((qof_period %in% period) | any(period %like% "^all")) %>% {
+            mapply(
+                function(this_period, this_url, these_exts) {
+                    this_dest <- paste0("./data-raw/", "qof-", this_period, "-csv/", basename(this_url), ".html")
+                    this_dest_dir <- dirname(this_dest)
+                    if (!dir.exists(this_dest_dir))
+                        dir.create(this_dest_dir, recursive = TRUE)
+
+                    if (!file.exists(this_dest)) {
+                        cat("INFO: downloading", basename(this_url), "...", "\n")
+                        download.file(url = this_url, destfile = this_dest, quiet = TRUE)
+                    }
+
+                    cat("INFO: reading", this_dest, "...", "\n")
+
+                    this_html <- read_html(this_dest)
+                    these_urls <- this_html %>%
+                        html_nodes("a") %>%
+                        html_attr("href")
+
+                    these_urls_ext <- these_urls %>%
+                        grep(paste(exts, collapse = "|"), ., value = TRUE)
+
+                    links_subdirs_df <- NULL
+
+                    if (recursive == TRUE) {
+                        n_thisurl <- nchar(this_url)
+                        lookslikedir <- paste0(
+                            "https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-"
+                            , "[^/]*", "/"
+                            , "[a-z-]*quality-and-outcomes-framework-"
+                        )
+                        these_urls_subdirs <- these_urls %>%
+                            # skip and self references and shorter paths
+                            # keep others that look like dirs ...
+                            setdiff(., this_url) %>%
+                            grep(
+                                paste0(c(dirname(this_url), lookslikedir), collapse = "|")
+                                , .
+                                , value = TRUE
+                            ) %>%
+                            .[nchar(.) > n_thisurl]
+
+                        if (length(these_urls_subdirs) > 0) {
+                            links_subdirs_df <- scrape_urls(
+                                period = this_period
+                                , url = these_urls_subdirs %>% sort()
+                                , exts = exts
+                                , recursive = recursive
+                            )
+                        } else {
+                            links_subdirs_df <- NULL
+                        }
+                    }
+
+                    these_urls_df <- NULL
+                    if (length(these_urls_ext) > 0) {
+                        these_urls_df <- data.frame(
+                            qof_period = this_period
+                            , url = these_urls_ext
+                            , stringsAsFactors = FALSE
+                        )
+                    }
+
+                    bind_rows(these_urls_df, links_subdirs_df) %>% unique()
+                }
+                , this_period = .$qof_period
+                , this_url = .$url
+                , MoreArgs = list(these_exts = exts)
+                , SIMPLIFY = FALSE
+            ) %>%
+                bind_rows() %>%
+                unique()
+        }
 }
