@@ -30,7 +30,7 @@ options(warn = 1)
 #'
 # @importFrom purrr walk2
 # @importFrom devtools use_data
-#' @imports readxl
+#' @import readxl
 #'
 #' @family Internal routines
 #' @family Load routines
