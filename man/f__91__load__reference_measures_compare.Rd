@@ -40,8 +40,8 @@ Other External routines: \code{\link{f__91__process__reference_measures_compare}
 Other Load routines: \code{\link{f__91__load_compare}},
   \code{\link{f__91__load_data}},
   \code{\link{f__91__load_measures}},
-  \code{\link{f__91__load_raw}},
   \code{\link{f__91__load_reference}},
+  \code{\link{f__extract__load_raw}},
   \code{\link{families}}
 }
 \concept{External routines}

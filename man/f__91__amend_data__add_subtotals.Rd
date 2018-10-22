@@ -9,7 +9,7 @@ f__91__amend_data__add_subtotals(qof, bCalcEngTotal = FALSE,
   lu.orgs.ccgs.groups = NA)
 }
 \arguments{
-\item{qof}{list of lists (see \code{\link{f__91__load_raw}})}
+\item{qof}{list of lists (see \code{\link{f__extract__load_raw}})}
 
 \item{bCalcEngTotal}{Add an 'eng' that is total over all practices.}
 
@@ -20,7 +20,7 @@ f__91__amend_data__add_subtotals(qof, bCalcEngTotal = FALSE,
 \item{lu.orgs.ccgs.groups}{Groups of ccgs (ccg_code, practice_code -> type, instance)}
 }
 \value{
-list of lists (see \code{\link{f__91__load_raw}})
+list of lists (see \code{\link{f__extract__load_raw}})
 }
 \description{
 Can add england totals, ccg totals, filter for local ccgs, and group by given lookup.
@@ -31,13 +31,13 @@ Other Internal routines: \code{\link{f__91__amend_orgref__ccg_groups}},
   \code{\link{f__91__load_compare}},
   \code{\link{f__91__load_data}},
   \code{\link{f__91__load_measures}},
-  \code{\link{f__91__load_raw}},
   \code{\link{f__91__load_reference}},
   \code{\link{f__91__measures_ind}},
   \code{\link{f__91__measures_prev}},
   \code{\link{f__91__measures}},
   \code{\link{f__91__preprocess}},
   \code{\link{f__91__save_reference}},
+  \code{\link{f__extract__load_raw}},
   \code{\link{families}}
 }
 \concept{Internal routines}
