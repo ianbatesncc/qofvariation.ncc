@@ -69,8 +69,6 @@ f__extract__load_raw <- function(
         # 1415 ####
         # qof_root <- "qof-1415" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
-        cat("WARNING: extract WIP for", qof_root, "\n")
-
         # qof.orgref
 
         this.file <- proj_path(qof_data_path, "PRAC_CONTROL.csv")
@@ -171,8 +169,6 @@ f__extract__load_raw <- function(
 
         # 1314 ####
         # qof_root <- "qof-1314" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
-
-        cat("WARNING: extract WIP for", qof_root, "\n")
 
         # qof.orgref
 
