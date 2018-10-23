@@ -50,11 +50,16 @@ download_qof <- function(
             dir.create(this_path_dir, recursive = TRUE)
         }
 
-        if (!bdryrun & ((!file.exists(this_path)) | (bOverwrite == TRUE))) {
+
+        if ((!file.exists(this_path)) | (bOverwrite == TRUE)) {
             cat("INFO: downloading", this_url, "...", "\n")
-            download.file(this_url, destfile = this_path, mode = "wb", quiet = "TRUE")
+            if (!bdryrun) {
+                download.file(this_url, destfile = this_path, mode = "wb", quiet = TRUE)
+            } else {
+                cat("INFO: NOT downloading (dryrun)", this_url, "...", "\n")
+            }
         } else {
-            cat("INFO: NOT downloading", this_url, "...", "\n")
+            cat("INFO: NOT downloading (file exists)", this_url, "...", "\n")
         }
 
         return(data.frame(
