@@ -6,6 +6,194 @@
 
 options(warn = 1)
 
+#' local worker to loop through list of xls
+#'
+#' @param this.file pathname of xl workbook
+#' @param f_readxl_ws function to parse the workbook
+#' @param skipsheets list of sheet anems to skip
+#' @param ... additional arguments passed to f_readxl_ws
+#'
+#' @return (data.frame likely) results of parsing workbook with
+#'   \code{f_readxl_ws}
+#'
+#' @import readxl
+#'
+#' @family Extract routines
+#'
+l_readxl_wb <- function(
+    this.file
+    , f_readxl_ws = NULL
+    , skipsheets = NULL
+    , ...
+) {
+    if (is.null(f_readxl_ws)) {
+        #stop("need to specify a function to loop over the workbook")
+        f_readxl_ws <- function(...){}
+    }
+
+    l_fileexists_canreadsheets <- function(this.file) {
+        bFileExists <- file.exists(this.file)
+        if (bFileExists)
+            bCanReadSheets <- !("try-error" %in% class(try(readxl::excel_sheets(this.file), silent = TRUE)))
+        else
+            bCanReadSheets <- FALSE
+
+        return(bFileExists && bCanReadSheets)
+    }
+
+    # try alternative .xl version, i.e. .xls if .xlsx, .xlsx if .xls
+    if (!l_fileexists_canreadsheets(this.file)) {
+        msg <- "WARNING: specified xl not found"
+
+        this_ext <- tools::file_ext(this.file)
+        alt_ext <- switch(this_ext, xlsx = "xls", xls = "xlsx", NULL)
+
+        this.file.alt <- paste(
+            tools::file_path_sans_ext(this.file), alt_ext
+            , sep = "."
+        )
+
+        if (l_fileexists_canreadsheets(this.file.alt)) {
+            msg <- paste(msg, "...", "alternative found")
+            this.file <- this.file.alt
+        } else {
+            msg <- paste(msg, "...", "alternative NOT found")
+        }
+
+        cat(msg, "\n")
+    }
+
+    cat("INFO: workbook: [", basename(this.file), "]", "\n")
+
+    # may fail if workbook does not exist, or cannot open for whatever reason.
+    # ... so skip!
+    xl <- try(
+        list(
+            wb = this.file
+            , sheets = readxl::excel_sheets(this.file)
+        )
+    )
+
+    if (!("try-error" %in% class(xl))) {
+        retval <- xl$sheets %>%
+            setdiff(skipsheets) %>%
+            lapply(f_readxl_ws, this.file, ...) %>%
+            bind_rows()
+    } else {
+        cat("WARNING: error reading", this.file, "...", "skipping", "\n")
+        retval <- NULL
+    }
+
+    return(retval)
+}
+
+#' local worker to read through worksheets in workbook
+#'
+#' variation for ind
+#'
+#' @param this.sheet worksheet to parse the workbook
+#' @param this.file pathname of xl workbook
+#'
+#' @return (data.frame likely) result of parsing the worksheet
+#'
+#' @import readxl
+#'
+#' @family Extract routines
+#'
+l_readxl_ws_ind <- function(
+    this.sheet
+    , this.file
+) {
+    cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
+
+    ws <- read_excel(
+        path = this.file
+        , sheet = this.sheet
+        , skip = 13
+    )
+
+    # choose fields to keep
+
+    all_fields <- names(ws)
+    id_fields <- ws[FALSE, ] %>%
+        select(ends_with(" Code"), ends_with(" Name")) %>%
+        names()
+
+    is_prac <- intersect(id_fields, "Practice Code")
+    is_num <- setdiff(all_fields, id_fields)
+    is_ndep <- grep(" (Numerator|Denominator|Exceptions|Points)$", is_num, value = TRUE)
+
+    is_char <- ws[FALSE, ] %>% select_if(is.character) %>% names()
+    is_ndep_char <- intersect(is_ndep, is_char)
+    if (length(is_ndep_char) > 0) {
+        # want to convert char to num, any str goes to NA
+        suppressWarnings(
+            ws <- ws %>% mutate_at(vars(is_ndep_char), as.numeric)
+        )
+    }
+
+    cat(", measures [", paste(is_ndep, collapse = " | "), "]", "\n")
+
+    dat <- ws %>%
+        select_at(vars(is_prac, is_ndep)) %>%
+        setDT() %>%
+        melt(
+            id.vars = is_prac
+            , variable = "qof_measure", variable.factor = FALSE
+        ) %>%
+        rename(practice_code = "Practice Code")
+}
+
+
+#' local worker to read through worksheets in workbook
+#'
+#' variation for prev
+#'
+#' @param this.sheet worksheet to parse the workbook
+#' @param this.file pathname of xl workbook
+#'
+#' @return (data.frame likely) result of parsing the worksheet
+#'
+#' @import readxl
+#'
+#' @family Extract routines
+#'
+l_readxl_ws_prev <- function(this.sheet, this.file) {
+    cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
+    ws <- read_excel(
+        path = this.file
+        , sheet = this.sheet
+        , skip = 13
+        , col_types = "text"
+    ) %>% mutate(sheet = this.sheet)
+
+    all_fields <- names(ws)
+    id_fields <- ws[FALSE, ] %>%
+        select(ends_with(" Code"), ends_with(" Name"), sheet) %>%
+        names()
+
+    is_prac <- intersect(id_fields, c("Practice Code", "sheet"))
+    is_num <- setdiff(all_fields, id_fields)
+
+    # suppress expected warnings issued when encountering NA in numeric fields.
+    suppressWarnings(
+        ws <- ws %>% mutate_at(vars(is_num), as.numeric)
+    )
+
+    cat(", measures [", paste(is_num, collapse = " | "), "]", "\n")
+
+    dat <- ws %>%
+        select_at(vars(is_prac, is_num)) %>%
+        setDT() %>%
+        melt(
+            id.vars = is_prac
+            #, measure.vars = is_num
+            , variable = "tbl_heading", variable.factor = FALSE
+        ) %>%
+        rename(practice_code = "Practice Code")
+}
+
+
 #' load raw QOF data
 #'
 #' put in an R list for later analysis
@@ -420,52 +608,9 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
             , full.names = TRUE
         )
 
-        qof.ind <- these_files %>% lapply(
-            function(this.file) {
-                xl <- list(wb = this.file, sheets = excel_sheets(this.file))
-                cat("INFO: workbook: [", basename(this.file), "]", "\n")
-                xl$sheets %>% lapply(
-                    function(this.sheet, this.file) {
-                        cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
-                        ws <- read_excel(
-                            path = this.file
-                            , sheet = this.sheet
-                            , skip = 13
-                        )
-
-                        all_fields <- names(ws)
-                        id_fields <- ws[FALSE, ] %>% select(ends_with(" Code"), ends_with(" Name")) %>% names()
-
-                        is_prac <- intersect(id_fields, "Practice Code")
-                        is_num <- setdiff(all_fields, id_fields)
-                        is_ndep <- grep(" (Numerator|Denominator|Exceptions|Points)$", is_num, value = TRUE)
-
-                        is_char <- ws[FALSE, ] %>% select_if(is.character) %>% names()
-                        is_ndep_char <- intersect(is_ndep, is_char)
-                        if (length(is_ndep_char) > 0) {
-                            # want to convert char to num, any str goes to NA
-                            suppressWarnings(
-                                ws <- ws %>% mutate_at(vars(is_ndep_char), as.numeric)
-                            )
-                        }
-
-                        cat(", measures [", paste(is_ndep, collapse = " | "), "]", "\n")
-
-                        dat <- ws %>%
-                            select_at(vars(is_prac, is_ndep)) %>%
-                            #mutate_at(vars(is_ndep), as.numeric) %>%
-                            setDT() %>%
-                            melt(
-                                id.vars = is_prac
-                                #, measure.vars = is_ndep
-                                , variable = "qof_measure", variable.factor = FALSE
-                            ) %>%
-                            rename(practice_code = "Practice Code")
-                    }
-                    , this.file
-                ) %>% bind_rows()
-            }
-        ) %>% bind_rows() %>%
+        qof.ind <- these_files %>%
+            lapply(l_readxl_wb, f_readxl_ws = l_readxl_ws_ind) %>%
+            bind_rows() %>%
             setDT() %>%
             status("INFO: creating indicator_code, measure fields") %>%
             .[, c("indicator_code", "measure") := tstrsplit(qof_measure, " ")] %>%
@@ -482,49 +627,9 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
             , full.names = TRUE
         )
 
-        qof.prev <- these_files %>% lapply(
-            function(this.file) {
-                xl <- list(wb = this.file, sheets = excel_sheets(this.file))
-                cat("INFO: workbook: [", basename(this.file), "]", "\n")
-                xl$sheets %>% lapply(
-                    function(this.sheet, this.file) {
-                        cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
-                        ws <- read_excel(
-                            path = this.file
-                            , sheet = this.sheet
-                            , skip = 13
-                            , col_types = "text"
-                        ) %>% mutate(sheet = this.sheet)
-
-                        all_fields <- names(ws)
-                        id_fields <- ws[FALSE, ] %>%
-                            select(ends_with(" Code"), ends_with(" Name"), sheet) %>%
-                            names()
-
-                        is_prac <- intersect(id_fields, c("Practice Code", "sheet"))
-                        is_num <- setdiff(all_fields, id_fields)
-
-                        # suppress expected warnings issued when encountering NA in numeric fields.
-                        suppressWarnings(
-                            ws <- ws %>% mutate_at(vars(is_num), as.numeric)
-                        )
-
-                        cat(", measures [", paste(is_num, collapse = " | "), "]", "\n")
-
-                        dat <- ws %>%
-                            select_at(vars(is_prac, is_num)) %>%
-                            setDT() %>%
-                            melt(
-                                id.vars = is_prac
-                                #, measure.vars = is_num
-                                , variable = "tbl_heading", variable.factor = FALSE
-                            ) %>%
-                            rename(practice_code = "Practice Code")
-                    }
-                    , this.file
-                ) %>% bind_rows()
-            }
-        ) %>% bind_rows() %>%
+        qof.prev <- these_files %>%
+            lapply(l_readxl_wb, f_readxl_ws = l_readxl_ws_prev) %>%
+            bind_rows() %>%
             setDT()
 
         # '- metadata update and prev data reshaping ####
