@@ -222,6 +222,7 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
 #'
 #' @family Internal routines
 #' @family Load routines
+#' @family Extract routines
 #'
 f__extract__load_raw <- function(
     qof_root = c("qof-1617", "qof-1516", "qof-1415", "qof-1314")[4]

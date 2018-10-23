@@ -53,6 +53,11 @@ Other Load routines: \code{\link{f__91__load__reference_measures_compare}},
   \code{\link{f__91__load_measures}},
   \code{\link{f__91__load_reference}},
   \code{\link{families}}
+
+Other Extract routines: \code{\link{l_readxl_wb}},
+  \code{\link{l_readxl_ws_ind}},
+  \code{\link{l_readxl_ws_prev}}
 }
+\concept{Extract routines}
 \concept{Internal routines}
 \concept{Load routines}
