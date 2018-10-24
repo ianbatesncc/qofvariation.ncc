@@ -4,12 +4,16 @@
 \alias{l_readxl_wb}
 \title{local worker to loop through list of xls}
 \usage{
-l_readxl_wb(this.file, f_readxl_ws = NULL)
+l_readxl_wb(this.file, f_readxl_ws = NULL, skipsheets = NULL, ...)
 }
 \arguments{
 \item{this.file}{pathname of xl workbook}
 
 \item{f_readxl_ws}{function to parse the workbook}
+
+\item{skipsheets}{list of sheet anems to skip}
+
+\item{...}{additional arguments passed to f_readxl_ws}
 }
 \value{
 (data.frame likely) results of parsing workbook with

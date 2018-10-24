@@ -4,7 +4,7 @@
 \alias{fglimpse}
 \title{My glimpse}
 \usage{
-fglimpse(x, width = 128, ...)
+fglimpse(x, width = NULL, ...)
 }
 \description{
 factor version of glimpse
