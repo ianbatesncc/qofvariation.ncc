@@ -15,6 +15,8 @@ require("shiny")
 require("DT")
 require("ggplot2")
 require("ggpubr")
+require("dplyr")
+require("data.table")
 
 knitr::opts_chunk$set(cache = FALSE)
 knitr::opts_chunk$set(echo = FALSE)
@@ -30,8 +32,9 @@ Global page {.hidden}
 taskdir <- normalizePath(".")
 taskdir <- normalizePath("..")
 taskdir <- normalizePath("../..")
+taskdir <- devtools::wd()
 source(file = paste(taskdir, "./R/main.R", sep = "/"))
-#source(file = paste(taskdir, "Analysis/cdg_91_qof.R", sep = "/"))
+#source(file = paste(taskdir, "./R/cdg_91_qof.R", sep = "/"))
 
 #dat <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
 dat <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
@@ -73,7 +76,12 @@ l_add_display_order <- function(x, c1 = "org.type") {
 #'
 #' @param domain_codes one of c("CL", "PH", "PHAS")
 #'
-l__filter_domain_codes_tokeep <- function(x, domain_codes = c("CL", "PH", "PHAS")[1]) {
+l__filter_domain_codes_tokeep <- function(
+    x
+    , domain_codes = c("CL", "PH", "PHAS")
+) {
+    domain_codes <- match.arg(domain.codes)
+    
     if ("domain_code" %in% colnames(x)) {
         x %>% filter(domain_code %in% domain_codes) %>% invisible()
     } else {
@@ -510,7 +518,7 @@ hm__tmp_practices_list <- reactive({
 })
 
 hm__heatmap_dat__ggplot <- reactive({
-    
+
     l__this_ind_group <- hm__this_ind_group()
     l__this_measure <- hm__this_measure()
     l__this_comparator <- hm__this_comparator()
@@ -573,8 +581,7 @@ hm__heatmap_dat__ggplot <- reactive({
             unique() %>%
             mutate(value_sort = 0)
     }
-    #arrange(display_order, value_sort, org_label) %>%
-    #.$org_label %>% unique()
+
     # to add sort methods
     if (l__hm__sort_desc == TRUE) {
         orgs_ordered <- this_sort %>%
@@ -586,7 +593,15 @@ hm__heatmap_dat__ggplot <- reactive({
             .$org_label %>% unique()
     }
     
-    orgs_ordered %>% {
+    retval <- list(
+        this_dat
+        , this_sort
+    ) %>% lapply(
+        function(x, y) {
+            mutate(x, org_label_ordered = ordered(org_label, levels = rev(y)))
+        }
+        , orgs_ordered
+    ) %>% {
         list(
             heatmap = .[[1]]
             , sort_summary = .[[2]]
@@ -958,7 +973,6 @@ renderPlot({
     #ylabel <- "Counts scaled relative to register (percent)"
     if (sb__scale_counts_largest_gp() == TRUE)
         p <- p + labs(y = "Counts scaled relative to largest GP register overall (percent)") 
-    
     
     p %>% print()
     
