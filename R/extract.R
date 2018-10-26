@@ -233,16 +233,22 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
 #' @family Extract routines
 #'
 f__extract__load_raw <- function(
-    qof_root = c("qof-1617", "qof-1516", "qof-1415", "qof-1314")[4]
+    qof_root = c(
+        "qof-1718", "qof-1617"
+        , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
+        , "qof-1011", "qof-0910", "qof-0809", "qof-0708", "qof-0607"
+        , "qof-0506", "qof-0405"
+    )
     , bSaveData = FALSE
 ) {
     cat("INFO: f__extract__load_raw: loading data", "...", "\n")
 
     qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
-    if (qof_root %in% c("qof-1617", "qof-1516")) {
+    if (qof_root %in% c("qof-1718", "qof-1617", "qof-1516")) {
 
-        # 1617, 1516 ####
+        # 1718, 1617, 1516 ####
+        # qof_root <- "qof-1718" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
         # qof_root <- "qof-1617" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
         # qof_root <- "qof-1516" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
@@ -1214,7 +1220,7 @@ ages 50+,50OV
 #'
 extract_all <- function(
     qof_root = c(
-        "qof-1617"
+        "qof-1718", "qof-1617"
         , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
         , "qof-1011", "qof-0910", "qof-0809", "qof-0708", "qof-0607"
         , "qof-0506", "qof-0405"

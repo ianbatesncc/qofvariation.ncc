@@ -175,8 +175,10 @@ download_qof <- function(
 scrape_urls <- function(
     period = c(
         "all", "all_post1213", "all_pre1213"
-        , "1617", "1516", "1415", "1314", "1213"
-        , "1112", "1011", "0910", "0809", "0708", "0607", "0506", "0405"
+        , "1718", "1617"
+        , "1516", "1415", "1314", "1213", "1112"
+        , "1011", "0910", "0809", "0708", "0607"
+        , "0506", "0405"
     )
     , url = NULL
     , exts = c("xls", "pdf", "zip")
@@ -196,7 +198,7 @@ qof_period,url
 
 all_post1213,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data
 all_pre1213,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-data
-
+1718,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data/2017-18
 1617,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data/quality-and-outcomes-framework-qof-2016-17
 1516,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data/quality-and-outcomes-framework-qof-2015-16
 1415,https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-prevalence-and-exceptions-data/quality-and-outcomes-framework-qof-2014-15
