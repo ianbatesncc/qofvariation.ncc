@@ -7,10 +7,12 @@
 #' - from project root is ./R
 #' - from ./inst/dashboard it is, not surprisingly, ./R ...
 #'
+#' @importFrom devtools package_file
+#'
 #' @family Helper routines
 #'
 proj_root <- function() {
-    require("devtools")
+    #require("devtools")
     normalizePath(devtools::package_file(), winslash = "/", mustWork = TRUE)
 }
 
@@ -18,10 +20,12 @@ proj_root <- function() {
 #'
 #' @param ... path elements.  Passed to paste.
 #'
+#' @importFrom devtools package_file
+#'
 #' @family Helper routines
 #'
 proj_path <- function(...) {
-    require("devtools")
+    #require("devtools")
     normalizePath(devtools::package_file(...), winslash = "/", mustWork = FALSE)
 }
 
@@ -80,9 +84,11 @@ setnames.clean <- function(x) {
 
 #' infix like but ignore case
 #'
-#' @seealso %like%
+#' @param vector Either a \code{character} vector or a \code{factor}.  A
+#'   \code{factor} is faster.
+#' @param pattern Passed on to \code{grepl}
 #'
-`%ilike%` <- function(vector, pattern) {
+ilike <- function(vector, pattern) {
     if (is.factor(vector)) {
         as.integer(vector) %in% grep(pattern, levels(vector), ignore.case = TRUE)
     }
@@ -91,7 +97,16 @@ setnames.clean <- function(x) {
     }
 }
 
+#' @inherit ilike
+#' @inheritParams ilike
+#' @describeIn ilike
+#'
+`%ilike%` <- ilike
+
 #' My summary
+#'
+#' @param x data to summary-ise
+#' @param ... extra options to pass to summary
 #'
 #' factor version of summary
 fsummary <- function(x, ...) {
@@ -102,8 +117,14 @@ fsummary <- function(x, ...) {
 
 #' My glimpse
 #'
+#' @param x (data.frame) data to gimpse
+#' @param width console width, NULL means use default options()$width
+#' @param ... (ignored) extra options
+#'
 #' factor version of glimpse
 fglimpse <- function(x, width = NULL, ...) {
+    v <- NULL
+
     if (!"data.frame" %in% class(x))
         stop("need a data frame object")
 
@@ -128,7 +149,10 @@ fglimpse <- function(x, width = NULL, ...) {
                     s <- summary(vx)
                     msg <- paste0(
                         msg
-                        , data.frame(n = names(s), v = formatC(as.numeric(s), digits = 3, width = 0)) %>%
+                        , data.frame(
+                            n = names(s)
+                            , v = formatC(as.numeric(s), digits = 3, width = 0)
+                        ) %>%
                             mutate(l = paste0(n, ": ", v)) %>%
                             .$l %>%
                             paste(collapse = ", ")

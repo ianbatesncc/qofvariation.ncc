@@ -17,6 +17,8 @@ options(warn = 1)
 #'   \code{f_readxl_ws}
 #'
 #' @import readxl
+#' @importFrom tools file_ext
+#' @importFrom tools file_path_sans_ext
 #'
 #' @family Extract routines
 #'
@@ -34,7 +36,10 @@ l_readxl_wb <- function(
     l_fileexists_canreadsheets <- function(this.file) {
         bFileExists <- file.exists(this.file)
         if (bFileExists)
-            bCanReadSheets <- !("try-error" %in% class(try(readxl::excel_sheets(this.file), silent = TRUE)))
+            bCanReadSheets <- !(
+                "try-error" %in%
+                    class(try(readxl::excel_sheets(this.file), silent = TRUE))
+            )
         else
             bCanReadSheets <- FALSE
 
@@ -106,7 +111,7 @@ l_readxl_ws_ind <- function(
 ) {
     cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
 
-    ws <- read_excel(
+    ws <- readxl::read_excel(
         path = this.file
         , sheet = this.sheet
         , skip = 13
@@ -125,6 +130,7 @@ l_readxl_ws_ind <- function(
 
     is_char <- ws[FALSE, ] %>% select_if(is.character) %>% names()
     is_ndep_char <- intersect(is_ndep, is_char)
+
     if (length(is_ndep_char) > 0) {
         # want to convert char to num, any str goes to NA
         suppressWarnings(
@@ -160,12 +166,15 @@ l_readxl_ws_ind <- function(
 #'
 l_readxl_ws_prev <- function(this.sheet, this.file) {
     cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
-    ws <- read_excel(
+
+    ws <- readxl::read_excel(
         path = this.file
         , sheet = this.sheet
         , skip = 13
         , col_types = "text"
     ) %>% mutate(sheet = this.sheet)
+
+    # choose fields to keep
 
     all_fields <- names(ws)
     id_fields <- ws[FALSE, ] %>%
@@ -187,7 +196,6 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
         setDT() %>%
         melt(
             id.vars = is_prac
-            #, measure.vars = is_num
             , variable = "tbl_heading", variable.factor = FALSE
         ) %>%
         rename(practice_code = "Practice Code")
@@ -216,8 +224,8 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
 #'     }
 #' }
 #'
-# @importFrom purrr walk2
-# @importFrom devtools use_data
+#' @importFrom purrr walk2
+#' @importFrom devtools use_data
 #' @import readxl
 #'
 #' @family Internal routines
@@ -228,7 +236,7 @@ f__extract__load_raw <- function(
     qof_root = c("qof-1617", "qof-1516", "qof-1415", "qof-1314")[4]
     , bSaveData = FALSE
 ) {
-    cat("INFO: f__extract__load_raw: loading data ...", "\n")
+    cat("INFO: f__extract__load_raw: loading data", "...", "\n")
 
     qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
@@ -510,8 +518,8 @@ f__extract__load_raw <- function(
             , these_orgs["prac"]
             , paste0(qof_stem, "-data-tab-prac-clin-summ.xlsx")
         )
-        xl <- list(wb = this.file, sheets = excel_sheets(this.file))
-        ws <- read_excel(path = xl$wb, sheet = xl$sheets[1], skip = 13) %>% setnames.clean()
+        xl <- list(wb = this.file, sheets = readxl::excel_sheets(this.file))
+        ws <- readxl::read_excel(path = xl$wb, sheet = xl$sheets[1], skip = 13) %>% setnames.clean()
 
         qof.orgref <- ws %>%
             select_if(is.character) %>%
@@ -546,8 +554,8 @@ f__extract__load_raw <- function(
         # CVDPP : there is no indicator to hold the register - create PP00
 
         this.file <- proj_path(qof_data_path, paste0(qof_root, "-meta-ind.xlsx"))
-        xl <- list(wb = this.file, sheets = excel_sheets(this.file))
-        qof.indmap <- read_excel(path = xl$wb, sheet = xl$sheets[1]) %>%
+        xl <- list(wb = this.file, sheets = readxl::excel_sheets(this.file))
+        qof.indmap <- readxl::read_excel(path = xl$wb, sheet = xl$sheets[1]) %>%
             setnames.clean() %>%
             select(starts_with("indicator_"), -ends_with("2"))
 
@@ -614,7 +622,7 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
             bind_rows() %>%
             setDT() %>%
             status("INFO: creating indicator_code, measure fields") %>%
-            .[, c("indicator_code", "measure") := tstrsplit(qof_measure, " ")] %>%
+            .[, c("indicator_code", "measure") := data.table::tstrsplit(qof_measure, " ")] %>%
             mutate_at(vars(measure), tolower) %>%
             select(-qof_measure)
 
@@ -661,8 +669,8 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
                 , s1 = sub(";(number)$", ";(\\1)", s1)
                 , s1 = sub("^(Register);for ([a-zA-Z0-9]* Indicator[s]*)$", "\\2;\\1;(count)", s1)
             ) %>% setDT() %>%
-            .[, c("disease", "measure", "statistic") := tstrsplit(s1, ";")] %>%
-            .[, disease := tstrsplit(disease, ":", keep = 1)] %>%
+            .[, c("disease", "measure", "statistic") := data.table::tstrsplit(s1, ";")] %>%
+            .[, disease := data.table::tstrsplit(disease, ":", keep = 1)] %>%
             .[, statistic := gsub("[\\(\\)]", "", statistic)] %>%
             .[tolower(disease) == "list size", measure := "all ages"] %>%
             mutate(list_type = ifelse(statistic %like% "age", statistic, "all ages")) %>%
@@ -773,7 +781,7 @@ ages 50+,50OV
                     , all.x = TRUE
                 ) %>%
                 select(-indicator_group_code)
-        ) %>% rbindlist(use.names = TRUE)
+        ) %>% data.table::rbindlist(use.names = TRUE)
 
         # Cross check data and metadata ####
 
@@ -828,8 +836,9 @@ ages 50+,50OV
             , these_orgs["prac"]
             , paste0(qof_stem, "-data-tab-pracs-clin-sum.xls")
         )
-        xl <- list(wb = this.file, sheets = excel_sheets(this.file))
-        ws <- read_excel(path = xl$wb, sheet = xl$sheets[1], skip = 13) %>% setnames.clean()
+        xl <- list(wb = this.file, sheets = readxl::excel_sheets(this.file))
+        ws <- readxl::read_excel(path = xl$wb, sheet = xl$sheets[1], skip = 13) %>%
+            setnames.clean()
 
         qof.orgref <- ws %>%
             select_if(is.character) %>%
@@ -870,8 +879,8 @@ ages 50+,50OV
         # CVDPP : there is no indicator to hold the register - create PP00
 
         this.file <- proj_path(qof_data_path, paste0(qof_root, "-meta-ind.xlsx"))
-        xl <- list(wb = this.file, sheets = excel_sheets(this.file))
-        qof.indmap <- read_excel(path = xl$wb, sheet = xl$sheets[1]) %>%
+        xl <- list(wb = this.file, sheets = readxl::excel_sheets(this.file))
+        qof.indmap <- readxl::read_excel(path = xl$wb, sheet = xl$sheets[1]) %>%
             setnames.clean() %>%
             select(starts_with("indicator_"), -ends_with("2"))
 
@@ -945,7 +954,7 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
             bind_rows() %>%
             setDT() %>%
             status("INFO: creating indicator_code, measure fields") %>%
-            .[, c("indicator_code", "measure") := tstrsplit(qof_measure, " ")] %>%
+            .[, c("indicator_code", "measure") := data.table::tstrsplit(qof_measure, " ")] %>%
             mutate_at(vars(measure), tolower) %>%
             select(-qof_measure)
 
@@ -992,8 +1001,8 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
                 , s1 = sub(";(number)$", ";(\\1)", s1)
                 , s1 = sub("^(Register);for ([a-zA-Z0-9]* Indicator[s]*)$", "\\2;\\1;(count)", s1)
             ) %>% setDT() %>%
-            .[, c("disease", "measure", "statistic") := tstrsplit(s1, ";")] %>%
-            .[, disease := tstrsplit(disease, ":", keep = 1)] %>%
+            .[, c("disease", "measure", "statistic") := data.table::tstrsplit(s1, ";")] %>%
+            .[, disease := data.table::tstrsplit(disease, ":", keep = 1)] %>%
             .[, statistic := gsub("[\\(\\)]", "", statistic)] %>%
             .[tolower(disease) == "list size", measure := "all ages"] %>%
             mutate(list_type = ifelse(statistic %like% "age", statistic, "all ages")) %>%
@@ -1107,7 +1116,7 @@ ages 50+,50OV
                     , all.x = TRUE
                 ) %>%
                 select(-indicator_group_code)
-        ) %>% rbindlist(use.names = TRUE)
+        ) %>% data.table::rbindlist(use.names = TRUE)
 
         # Cross check data and metadata ####
 
@@ -1150,6 +1159,11 @@ ages 50+,50OV
         qof.ind <- NA
     }
 
+    if (TRUE) {
+        qof.ind <- q2 <- qof.ind %>%
+            dcast(... ~ measure, fun.aggregate = sum)
+    }
+
     retval <- list(
         meta_org <- qof.orgref
         , meta_ind <- qof.indmap
@@ -1162,7 +1176,6 @@ ages 50+,50OV
     # save ####
 
     if (bSaveData == TRUE) {
-
 
         these_names <- paste(gsub("-", "_", qof_root), generic_names, sep = "_")
 

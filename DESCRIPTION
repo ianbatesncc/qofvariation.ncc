@@ -1,16 +1,20 @@
 Package: qofvariation.ncc
 Title: Analysis of variation in QOF data
-Version: 0.0.0.9000
+Version: 0.0.1.9000
 Authors@R: person("Ian", "Bates", email = "ian.bates@nottscc.gov.uk", role = c("aut", "cre"))
 Description: Analysis of variation in QOF data.
-Depends: R (>= 3.4.0)
+Depends:
+    R (>= 3.4.0)
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.0
-Suggests: testthat
-Imports: dplyr
-    , reshape2
+Suggests:
+    testthat
+Imports:
+    devtools
+    , dplyr
     , data.table
-    , devtools
+    , readxl
+    , reshape2
     , purrr

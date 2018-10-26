@@ -6,7 +6,9 @@
 #'
 #' Download of the files is the first step.  Extracting them is a second step.
 #'
-#' @importFrom tools file_ext
+# @importFrom tools file_ext
+# @import data.table
+# @import dplyr
 #'
 download_qof <- function(
     period = NULL

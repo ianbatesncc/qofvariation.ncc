@@ -6,6 +6,15 @@
 \usage{
 fglimpse(x, width = NULL, ...)
 }
+\arguments{
+\item{x}{(data.frame) data to gimpse}
+
+\item{width}{console width, NULL means use default options()$width}
+
+\item{...}{(ignored) extra options
+
+factor version of glimpse}
+}
 \description{
-factor version of glimpse
+My glimpse
 }

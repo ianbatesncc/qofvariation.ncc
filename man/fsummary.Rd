@@ -6,6 +6,13 @@
 \usage{
 fsummary(x, ...)
 }
+\arguments{
+\item{x}{data to summary-ise}
+
+\item{...}{extra options to pass to summary
+
+factor version of summary}
+}
 \description{
-factor version of summary
+My summary
 }
