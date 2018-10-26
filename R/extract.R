@@ -1204,3 +1204,28 @@ ages 50+,50OV
         )
     ))
 }
+
+#' Extract all qof data
+#'
+#' @inheritParams f__extract__load_raw
+#'
+
+extract_all <- function(
+    qof_root = c(
+        "qof-1617"
+        , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
+        , "qof-1011", "qof-0910", "qof-0809", "qof-0708", "qof-0607"
+        , "qof-0506", "qof-0405"
+    )
+    , bSaveData = FALSE
+) {
+    qof_root <- match.arg(qof_root, several.ok = TRUE)
+
+    retval <- qof_root %>%
+        lapply(
+            f__extract__load_raw
+            , bSaveData = bSaveData
+        )
+
+    invisible(retval)
+}
