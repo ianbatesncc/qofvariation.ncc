@@ -14,6 +14,8 @@
 #' @rawNamespace import(dplyr, except = c(first, between, last))
 #' @rawNamespace import(data.table, except = c(dcast, melt))
 #' @importFrom reshape2 dcast melt
+# @rawNamespace import(devtools, except = c(use_data))
+# @importFrom usethis use_data
 #'
 #'
 #' @name qofvariation.ncc

@@ -12,7 +12,7 @@ RoxygenNote: 6.1.0
 Suggests:
     testthat
 Imports:
-    devtools
+    devtools (>= 2.0)
     , dplyr
     , data.table
     , readxl

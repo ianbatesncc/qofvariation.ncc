@@ -6,6 +6,13 @@
 #'
 #' Download of the files is the first step.  Extracting them is a second step.
 #'
+#' @params period (char vector)
+#' @params exts (char vector)
+#' @params recursive (bool)
+#' @params bWriteCSV (bool)
+#' @params junkpaths (bool)
+#' @params dryrun (bool)
+#'
 # @importFrom tools file_ext
 # @import data.table
 # @import dplyr
@@ -19,8 +26,8 @@ download_qof <- function(
     , dryrun = FALSE
 ) {
 
-    require("data.table")
     require("dplyr")
+    require("data.table")
 
     these_urls <- scrape_urls(period = period, exts = exts, recursive = recursive)
 
@@ -163,6 +170,8 @@ download_qof <- function(
 #' Specifying a url overrides the internal dtabase.  Still need to specify the
 #' period though.
 #'
+#' @params period (char vector)
+#'
 scrape_urls <- function(
     period = c(
         "all", "all_post1213", "all_pre1213"
@@ -173,6 +182,8 @@ scrape_urls <- function(
     , exts = c("xls", "pdf", "zip")
     , recursive = FALSE
 ) {
+    require("dplyr")
+    require("data.table")
     require("rvest")
 
     period <- match.arg(period, several.ok = TRUE)
@@ -295,4 +306,20 @@ all_pre1213,https://digital.nhs.uk/data-and-information/publications/statistical
                 bind_rows() %>%
                 unique()
         }
+}
+
+#' @describeIn download_qof Wrapper to download all qof data
+#'
+#' @params period (char vector) defaults to "all".  Can be of the form "1617".
+#'
+#' @inheritParams download_qof
+#'
+download_all <- function(
+    period = "all"
+    ) {
+
+    retval <- period %>%
+        lapply(download_qof)
+
+    invisible(retval)
 }

@@ -225,7 +225,7 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
 #' }
 #'
 #' @importFrom purrr walk2
-#' @importFrom devtools use_data
+#' @importFrom usethis use_data
 #' @import readxl
 #'
 #' @family Internal routines
@@ -1165,10 +1165,10 @@ ages 50+,50OV
     }
 
     retval <- list(
-        meta_org <- qof.orgref
-        , meta_ind <- qof.indmap
-        , data_prev <- qof.prev
-        , data_ind <- qof.ind
+        meta_org = qof.orgref
+        , meta_ind = qof.indmap
+        , data_prev = qof.prev
+        , data_ind = qof.ind
     )
 
     generic_names <- c("meta_org", "meta_ind", "data_prev", "data_ind")
@@ -1181,11 +1181,14 @@ ages 50+,50OV
 
         names(retval) <- these_names
 
+        # to be explicit about the function to call
+        usethis__use_data <- usethis::use_data
+
         retval %>% purrr::walk2(
             ., names(.)
             , function(obj, name) {
                 assign(name, obj)
-                do.call("use_data", list(as.name(name), overwrite = TRUE))
+                do.call("usethis__use_data", list(as.name(name), overwrite = TRUE))
                 rm(name)
             }
         )
@@ -1205,11 +1208,10 @@ ages 50+,50OV
     ))
 }
 
-#' Extract all qof data
+#' @describeIn f__extract__load_raw Extract all qof data
 #'
 #' @inheritParams f__extract__load_raw
 #'
-
 extract_all <- function(
     qof_root = c(
         "qof-1617"

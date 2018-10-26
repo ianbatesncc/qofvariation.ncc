@@ -2,10 +2,15 @@
 % Please edit documentation in R/extract.R
 \name{f__extract__load_raw}
 \alias{f__extract__load_raw}
+\alias{extract_all}
 \title{load raw QOF data}
 \usage{
-f__extract__load_raw(qof_root = c("qof-1617", "qof-1516", "qof-1415",
-  "qof-1314")[4], bSaveData = FALSE)
+f__extract__load_raw(qof_root = c("qof-1718", "qof-1617", "qof-1516",
+  "qof-1415", "qof-1314")[4], bSaveData = FALSE)
+
+extract_all(qof_root = c("qof-1718", "qof-1617", "qof-1516", "qof-1415",
+  "qof-1314", "qof-1213", "qof-1112", "qof-1011", "qof-0910", "qof-0809",
+  "qof-0708", "qof-0607", "qof-0506", "qof-0405"), bSaveData = FALSE)
 }
 \arguments{
 \item{qof_root}{Directory root for loading and saving any processed data.  Of the form
@@ -28,6 +33,11 @@ a list of lists with named items
 \description{
 put in an R list for later analysis
 }
+\section{Functions}{
+\itemize{
+\item \code{extract_all}: Extract all qof data
+}}
+
 \note{
 HF double counted - register_description has HF and HF with LVD
   - keep just HF
