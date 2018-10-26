@@ -215,73 +215,78 @@ all_pre1213,https://digital.nhs.uk/data-and-information/publications/statistical
         cat("INFO: using internal url database", "\n")
     }
 
+    #' process one url
+    l_process_url <- function(this_period, this_url, these_exts) {
+        this_dest <- paste0("./data-raw/", "qof-", this_period, "-csv/", basename(this_url), ".html")
+        this_dest_dir <- dirname(this_dest)
+        if (!dir.exists(this_dest_dir))
+            dir.create(this_dest_dir, recursive = TRUE)
+
+        if (!file.exists(this_dest)) {
+            cat("INFO: downloading", basename(this_url), "...", "\n")
+            download.file(url = this_url, destfile = this_dest, quiet = TRUE)
+        }
+
+        cat("INFO: reading", this_dest, "...", "\n")
+
+        this_html <- read_html(this_dest)
+        these_urls <- this_html %>%
+            html_nodes("a") %>%
+            html_attr("href")
+
+        these_urls_ext <- these_urls %>%
+            grep(paste(exts, collapse = "|"), ., value = TRUE)
+
+        links_subdirs_df <- NULL
+
+        if (recursive == TRUE) {
+            n_thisurl <- nchar(this_url)
+            lookslikedir <- paste0(
+                "https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-"
+                , "[^/]*", "/"
+                , "[a-z-]*quality-and-outcomes-framework-"
+            )
+            these_urls_subdirs <- these_urls %>%
+                # skip and self references and shorter paths
+                # keep others that look like dirs ...
+                setdiff(., this_url) %>%
+                grep(
+                    paste0(c(dirname(this_url), lookslikedir), collapse = "|")
+                    , .
+                    , value = TRUE
+                ) %>%
+                .[nchar(.) > n_thisurl]
+
+            if (length(these_urls_subdirs) > 0) {
+                links_subdirs_df <- scrape_urls(
+                    period = this_period
+                    , url = these_urls_subdirs %>% sort()
+                    , exts = exts
+                    , recursive = recursive
+                )
+            } else {
+                links_subdirs_df <- NULL
+            }
+        }
+
+        these_urls_df <- NULL
+        if (length(these_urls_ext) > 0) {
+            these_urls_df <- data.frame(
+                qof_period = this_period
+                , url = these_urls_ext
+                , stringsAsFactors = FALSE
+            )
+        }
+
+        bind_rows(these_urls_df, links_subdirs_df) %>% unique()
+    }
+
+    # loop through urls
+
     retval <- urls %>%
         filter((qof_period %in% period) | any(period %like% "^all")) %>% {
             mapply(
-                function(this_period, this_url, these_exts) {
-                    this_dest <- paste0("./data-raw/", "qof-", this_period, "-csv/", basename(this_url), ".html")
-                    this_dest_dir <- dirname(this_dest)
-                    if (!dir.exists(this_dest_dir))
-                        dir.create(this_dest_dir, recursive = TRUE)
-
-                    if (!file.exists(this_dest)) {
-                        cat("INFO: downloading", basename(this_url), "...", "\n")
-                        download.file(url = this_url, destfile = this_dest, quiet = TRUE)
-                    }
-
-                    cat("INFO: reading", this_dest, "...", "\n")
-
-                    this_html <- read_html(this_dest)
-                    these_urls <- this_html %>%
-                        html_nodes("a") %>%
-                        html_attr("href")
-
-                    these_urls_ext <- these_urls %>%
-                        grep(paste(exts, collapse = "|"), ., value = TRUE)
-
-                    links_subdirs_df <- NULL
-
-                    if (recursive == TRUE) {
-                        n_thisurl <- nchar(this_url)
-                        lookslikedir <- paste0(
-                            "https://digital.nhs.uk/data-and-information/publications/statistical/quality-and-outcomes-framework-achievement-"
-                            , "[^/]*", "/"
-                            , "[a-z-]*quality-and-outcomes-framework-"
-                        )
-                        these_urls_subdirs <- these_urls %>%
-                            # skip and self references and shorter paths
-                            # keep others that look like dirs ...
-                            setdiff(., this_url) %>%
-                            grep(
-                                paste0(c(dirname(this_url), lookslikedir), collapse = "|")
-                                , .
-                                , value = TRUE
-                            ) %>%
-                            .[nchar(.) > n_thisurl]
-
-                        if (length(these_urls_subdirs) > 0) {
-                            links_subdirs_df <- scrape_urls(
-                                period = this_period
-                                , url = these_urls_subdirs %>% sort()
-                                , exts = exts
-                                , recursive = recursive
-                            )
-                        } else {
-                            links_subdirs_df <- NULL
-                        }
-                    }
-
-                    these_urls_df <- NULL
-                    if (length(these_urls_ext) > 0) {
-                        these_urls_df <- data.frame(
-                            qof_period = this_period
-                            , url = these_urls_ext
-                            , stringsAsFactors = FALSE
-                        )
-                    }
-
-                    bind_rows(these_urls_df, links_subdirs_df) %>% unique()
-                }
+                l_process_url
                 , this_period = .$qof_period
                 , this_url = .$url
                 , MoreArgs = list(these_exts = exts)
