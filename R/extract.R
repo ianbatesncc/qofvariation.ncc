@@ -265,6 +265,8 @@ f__extract__load_raw <- function(
 ) {
     cat("INFO: f__extract__load_raw: loading data", "...", "\n")
 
+    qof_root <- match.arg(qof_root)
+
     qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
     if (qof_root %in% c("qof-1718", "qof-1617", "qof-1516")) {
@@ -1198,7 +1200,7 @@ ages 50+,50OV
 
     # flip measure backup
     qof.ind <- q2 <- qof.ind %>%
-        dcast(... ~ measure, fun.aggregate = sum)
+        dcast(... ~ measure, fun.aggregate = sum, fill = NA)
 
     retval <- list(
         meta_org = qof.orgref
@@ -1223,12 +1225,14 @@ ages 50+,50OV
 
     # return
 
+    names(retval) <- generic_names
+
     invisible(retval)
 }
 
 #' @describeIn f__extract__load_raw Extract all qof data
 #'
-#' Extracts data from multiple qof periods
+#' Extracts data from multiple qof periods.  Binds qof periods into data.frames.
 #'
 #' @inheritParams f__extract__load_raw
 #'
@@ -1270,7 +1274,8 @@ extract_all <- function(
 
 #' Merge all qof data into one dataset
 #'
-#' Merges data from multiple qof periods.  Uses the post-extract results.
+#' Merges data from multiple qof periods.  Uses the post-extract results.  Binds
+#' qof periods into relevant data.frames.
 #'
 #' @inheritParams extract_all
 #'
