@@ -6,11 +6,9 @@
 \alias{qofvariation.ncc-package}
 \title{qofvariation.ncc.}
 \description{
-cdg_91_qof.R
+Process QOF for visualisation (interactive?)
 }
 \details{
-Process QOF for visualisation (interactive?)
-
 Require certain disease areas
 
 - practice level prevalence and stat. sig. relative to England

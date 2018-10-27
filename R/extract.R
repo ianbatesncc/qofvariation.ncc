@@ -6,6 +6,31 @@
 
 options(warn = 1)
 
+#' Programmatic use of use_data
+#'
+#' Call use_data to save object with specified name.
+#'
+#' @param obj (object) object to save
+#' @param name (char) name to use
+#'
+#' @importFrom usethis use_data
+#'
+usethis__use_data <- function(obj, name) {
+    if (getOption("verbose") == TRUE) {
+        cat("INFO: (name, obj) = (", name, ", ", "\n")
+        fglimpse(obj)
+        cat(")", "\n")
+    }
+
+    # to be explicit about the function to call
+    l_use_data <- usethis::use_data
+
+    assign(name, obj)
+    do.call("l_use_data", list(as.name(name), overwrite = TRUE))
+    rm(name)
+}
+
+
 #' local worker to loop through list of xls
 #'
 #' @param this.file pathname of xl workbook
@@ -225,7 +250,6 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
 #' }
 #'
 #' @importFrom purrr walk2
-#' @importFrom usethis use_data
 #' @import readxl
 #'
 #' @family Internal routines
@@ -272,14 +296,20 @@ f__extract__load_raw <- function(
         # 1415 ####
         # qof_root <- "qof-1415" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
-        # qof.orgref
+        # qof.orgref ####
 
         this.file <- proj_path(qof_data_path, "PRAC_CONTROL.csv")
         qof.orgref <- fread(file = this.file) %>% setnames.clean() %>%
             select(grep("_code$|_name$", names(.), value = TRUE)) %>%
-            rename(stp_code = "area_team_code", stp_name = "area_team_name")
+            rename(
+                stp_code = "area_team_code"
+                , stp_name = "area_team_name"
+                , subregion_code = "sub_region_code"
+                , subregion_geography_code = "sub_region_geography_code"
+                , subregion_name = "sub_region_name"
+            )
 
-        # qof.indmap
+        # qof.indmap ####
 
         this.file <- proj_path(qof_data_path, "INDICATOR_REFERENCE_FINAL.csv")
         qof.ind <- fread(file = this.file) %>% setnames.clean()
@@ -311,7 +341,7 @@ f__extract__load_raw <- function(
 
         rm(qof.ind, qof.grp, qof.dom)
 
-        # qof.prev
+        # qof.prev ####
 
         this.file <- proj_path(qof_data_path, "PREVALENCE_BY_PRAC_v2.csv")
         qof.prev <- fread(file = this.file) %>% setnames.clean() %>%
@@ -326,7 +356,7 @@ f__extract__load_raw <- function(
             mutate_at(vars(register), as.numeric)
 
 
-        # qof.ind
+        # qof.ind ####
 
         # Need to merge in register and exceptions
 
@@ -373,7 +403,7 @@ f__extract__load_raw <- function(
         # 1314 ####
         # qof_root <- "qof-1314" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
-        # qof.orgref
+        # qof.orgref ####
 
         this.file <- proj_path(qof_data_path, "PRAC_CONTROL.csv")
         qof.orgref <- fread(file = this.file) %>% setnames.clean()
@@ -396,7 +426,7 @@ f__extract__load_raw <- function(
 
         rm(add_names, df_new_names)
 
-        # qof.indmap
+        # qof.indmap ####
 
         this.file <- proj_path(qof_data_path, "INDICATOR_REFERENCE.csv")
         qof.ind <- fread(file = this.file) %>% setnames.clean()
@@ -431,7 +461,7 @@ f__extract__load_raw <- function(
 
         rm(qof.ind, qof.grp, qof.dom)
 
-        # qof.prev
+        # qof.prev ####
 
         #' @note HF double counted - register_description has HF and HF with LVD
         #'   - keep just HF
@@ -450,7 +480,7 @@ f__extract__load_raw <- function(
             mutate(patient_list_type = NA_character_) %>%
             mutate_at(vars(register), as.numeric)
 
-        # qof.ind
+        # qof.ind ####
 
         # Need to merge in register and exceptions
 
@@ -629,8 +659,10 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
             setDT() %>%
             status("INFO: creating indicator_code, measure fields") %>%
             .[, c("indicator_code", "measure") := data.table::tstrsplit(qof_measure, " ")] %>%
-            mutate_at(vars(measure), tolower) %>%
-            select(-qof_measure)
+            mutate_at(vars(measure), toupper) %>%
+            select(-qof_measure) %>%
+            setDT() %>%
+            .[measure == "POINTS", measure := "ACHIEVED_POINTS"]
 
         # qof.prev ####
 
@@ -779,7 +811,7 @@ ages 50+,50OV
             qof.ind
             , qof.prev.reg %>%
                 select(practice_code, value, indicator_group_code) %>%
-                mutate(measure = "register") %>%
+                mutate(measure = toupper("register")) %>%
                 setDT() %>%
                 merge(
                     qof.indmap.isregister
@@ -961,9 +993,10 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
             setDT() %>%
             status("INFO: creating indicator_code, measure fields") %>%
             .[, c("indicator_code", "measure") := data.table::tstrsplit(qof_measure, " ")] %>%
-            mutate_at(vars(measure), tolower) %>%
-            select(-qof_measure)
-
+            mutate_at(vars(measure), toupper) %>%
+            select(-qof_measure) %>%
+            setDT() %>%
+            .[measure == "POINTS", measure := "ACHIEVED_POINTS"]
         # qof.prev ####
 
         these_files <- list.files(
@@ -1114,7 +1147,7 @@ ages 50+,50OV
             qof.ind
             , qof.prev.reg %>%
                 select(practice_code, value, indicator_group_code) %>%
-                mutate(measure = "register") %>%
+                mutate(measure = toupper("register")) %>%
                 setDT() %>%
                 merge(
                     qof.indmap.isregister
@@ -1184,20 +1217,9 @@ ages 50+,50OV
     if (bSaveData == TRUE) {
 
         these_names <- paste(gsub("-", "_", qof_root), generic_names, sep = "_")
-
         names(retval) <- these_names
 
-        # to be explicit about the function to call
-        usethis__use_data <- usethis::use_data
-
-        retval %>% purrr::walk2(
-            ., names(.)
-            , function(obj, name) {
-                assign(name, obj)
-                do.call("usethis__use_data", list(as.name(name), overwrite = TRUE))
-                rm(name)
-            }
-        )
+        retval %>% purrr::walk2(., names(.), usethis__use_data)
     }
 
     # return
@@ -1230,10 +1252,88 @@ extract_all <- function(
     qof_root <- match.arg(qof_root, several.ok = TRUE)
 
     retval <- qof_root %>%
-        lapply(
-            f__extract__load_raw
-            , bSaveData = bSaveData
-        )
+        lapply(f__extract__load_raw, bSaveData = bSaveData)
+
+    invisible(retval)
+}
+
+#' Merge all qof data into one dataset
+#'
+#' Essentially add qof_poeriod field to all tables
+#'
+#' @inheritParams extract_all
+#'
+#' @importFrom data.table setDT rbindlist
+#' @importFrom purrr walk2
+#'
+#' @examples
+#' load("./data/qof_meta_org.Rda")
+#' load("./data/qof_meta_ind.Rda")
+#' load("./data/qof_data_ind.Rda")
+#' load("./data/qof_data_prev.Rda")
+#'
+merge_all <- function(
+    qof_root = c(
+        "qof-1718", "qof-1617"
+        , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
+        , "qof-1011", "qof-0910", "qof-0809", "qof-0708", "qof-0607"
+        , "qof-0506", "qof-0405"
+    )
+    , bSaveData = FALSE
+) {
+
+    generic_names <- c("meta_org", "meta_ind", "data_prev", "data_ind")
+
+    # Return a data.table for given period and given variable
+
+    l_f2 <- function(this_qof, this_var) {
+        this_varname <- paste(gsub("-", "_", this_qof), this_var, sep = "_")
+
+        cat("INFO: considering", this_varname, "...")
+
+        this_rda <- paste0("./data/", this_varname, ".Rda")
+
+        if (file.exists(this_rda)) {
+            cat("found", "\n")
+
+            load(this_rda, verbose = TRUE)
+
+            retval <- eval(as.name(this_varname)) %>%
+                mutate(qof_period = this_qof) %>%
+                setDT()
+        } else {
+            cat("NOT found", "\n")
+
+            retval <- NULL
+        }
+
+        invisible(retval)
+    }
+
+    # Return period tagged data for given variable (looped over periods)
+
+    l_f1 <- function(this_var, these_qof) {
+        cat("INFO: considering", this_var, "...", "\n")
+
+        lapply(these_qof, l_f2, this_var = this_var) %>%
+            rbindlist(use.names = TRUE, fill = TRUE)
+    }
+
+    # Return a list of variables for do the loop
+
+    retval <- generic_names %>%
+        lapply(l_f1, these_qof = qof_root)
+
+    these_names <- paste("qof", generic_names, sep = "_")
+    names(retval) <- these_names
+
+    # save
+
+    if (bSaveData == TRUE) {
+        cat("INFO: saving", "...", "\n")
+
+        retval %>% purrr::walk2(., names(.), usethis__use_data)
+    }
 
     invisible(retval)
 }

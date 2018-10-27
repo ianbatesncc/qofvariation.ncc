@@ -2,13 +2,16 @@
 % Please edit documentation in R/utils.R
 \name{proj_root}
 \alias{proj_root}
-\title{Concept of 'root directory' depends on context.}
+\title{Determine root path from within project development}
 \usage{
 proj_root()
 }
 \description{
+Concept of 'root directory' depends on context.
+}
+\details{
 - from project root is ./R
-- from ./inst/dashboard it is, not surprisingly, ./R ...
+    - from ./inst/dashboard it is, not surprisingly, ./R ...
 }
 \seealso{
 Other Helper routines: \code{\link{families}},

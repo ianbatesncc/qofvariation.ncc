@@ -3,31 +3,28 @@
 \docType{data}
 \name{qof_data_prev}
 \alias{qof_data_prev}
+\alias{qof_1718_data_prev}
 \alias{qof_1617_data_prev}
 \alias{qof_1516_data_prev}
-\alias{qof_1415_data_prev}
-\alias{qof_1314_data_prev}
-\alias{qof_1213_data_prev}
 \title{QOF data for prevalence}
-\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 155232 rows and 5 columns.}
+\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 1148773 rows and 6 columns.}
 \usage{
+qof_data_prev
+
+qof_1718_data_prev
+
 qof_1617_data_prev
 
 qof_1516_data_prev
-
-qof_1415_data_prev
-
-qof_1314_data_prev
-
-qof_1213_data_prev
 }
 \description{
-\preformatted{
-$ practice_code       : chr
-$ indicator_group_code: chr
-$ register            : int
-$ patient_list_type   : chr
-$ patient_list_size   : int
+\tabular{ll}{
+ \code{practice_code} \tab {<chr n=8210>} \cr
+ \code{indicator_group_code} \tab {<chr n=33>} \cr
+ \code{register} \tab {<num>} \cr
+ \code{patient_list_type} \tab {<chr n=7>} \cr
+ \code{patient_list_size} \tab {<num>} \cr
+ \code{qof_period} \tab {<chr n=7>} \cr
 }
 }
 \seealso{

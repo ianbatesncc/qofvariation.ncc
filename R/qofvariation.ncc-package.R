@@ -1,8 +1,5 @@
 #' qofvariation.ncc.
 #'
-#'
-#' cdg_91_qof.R
-#'
 #' Process QOF for visualisation (interactive?)
 #'
 #'
