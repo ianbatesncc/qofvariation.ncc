@@ -12,5 +12,5 @@ usethis__use_data(obj, name)
 \item{name}{(char) name to use}
 }
 \description{
-Call use_data tosave object with specified name.
+Call use_data to save object with specified name.
 }

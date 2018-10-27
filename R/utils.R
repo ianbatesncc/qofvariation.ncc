@@ -212,18 +212,20 @@ fglimpse <- function(x, width = NULL, showvalues = TRUE, ...) {
 #' @inheritParams fglimpse
 #' @param type (character) specify describe or tabular lists.
 #'
-#' \preformatted{
-#' \describe{
-#'   \item{\code{field1}}{description 1}
-#'   \item{\code{field2}}{description 2}
-#'   ...
-#' }
+#' @return
 #'
-#' \tabular{ll}{
-#'   {{\code{field1}} \tab {description 1} \cr
-#'   {{\code{field2}} \tab {description 1} \cr
-#'   ...
-#' }
+#' \preformatted{
+#' #' \describe\{
+#' #'   \item\{\code\{field1\}\}\{description 1\}
+#' #'   \item\{\code\{field2\}\}\{description 2\}
+#' #'  ...
+#' #' \}
+#'
+#' #' \tabular\{ll\}\{
+#' #'   \{\{\code\{field1\}\} \tab \{description 1\} \cr
+#' #'   \{\{\code\{field2\}\} \tab \{description 1\} \cr
+#' #'   ...
+#' #' \}
 #' }
 #'
 describe <- function(x, width = NULL, showvalues = FALSE, type = c("describe", "tabular")) {
