@@ -9,129 +9,102 @@
 
 #' Preprocess
 #'
-#' optionally save tweaked reference data
+#' - melt data_ind, data_prev onto measure/value pairs
+#' - tag on meta_org ccg and indicator_group, domain_code
+#' - identify register indicators in meta_ind
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
+#' Optionally save tweaked reference data
+#'
+#' @param qof list of data items (see \code{\link{f__extract__load_raw}})
 #' @param bWriteCSV Flag to indicate to write results to file.
 #'
-#' @return a list of lists with named items
-#' \describe{
-#'     \item{reference}{
-#'         \itemize{\item{orgref}\item{indmap}}
-#'     }
-#'     \item{data}{
-#'         \itemize{\item{prev}\item{ind}\item{prev.melt}}
-#'     }
+#' @return a list with named items
+#' \tabular{ll}{
+#'   \code{meta_org}  \tab Organisation metadata \cr
+#'   \code{meta_ind}  \tab Indicator metadata \cr
+#'   \code{data_prev} \tab Prevalence data (molten on measure/value) \cr
+#'   \code{data_ind}  \tab Indicator data  (molten on measure/value) \cr
 #' }
 #'
 #' @family Internal routines
 #' @family Process routines
 #'
-f__91__preprocess <- function(
+f__transform__preprocess <- function(
     qof
     , bWriteCSV = FALSE
 ) {
-    cat("INFO: f__91__preprocess: processing lookups ...", "\n")
+    cat("INFO: f__transform__preprocess: processing lookups ...", "\n")
 
-    # orgref - organisation lookups ####
-
-    #qof$orgref %>% filter(FALSE) %>% str()
-    # Classes ‘data.table’ and 'data.frame':	7619 obs. of  13 variables:
-    # $ practice_code           : chr  "B82007" "B82020" "B82028" "B82053" ...
-    # $ practice_name           : chr  "TOWNHEAD SURGERY" "CROSSHILLS GROUP PRACTICE" "FISHER MEDICAL CENTRE" "DYNELEY HOUSE SURGERY" ...
-    # $ ccg_code                : chr  "02N" "02N" "02N" "02N" ...
-    # $ ccg_geography_code      : chr  "E38000001" "E38000001" "E38000001" "E38000001" ...
-    # $ ccg_name                : chr  "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" ...
-    # $ subregion_code          : chr  "Q72" "Q72" "Q72" "Q72" ...
-    # $ subregion_geography_code: chr  "E39000029" "E39000029" "E39000029" "E39000029" ...
-    # $ subregion_name          : chr  "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" ...
-    # $ region_code             : chr  "Y54" "Y54" "Y54" "Y54" ...
-    # $ region_geography_code   : chr  "E40000001" "E40000001" "E40000001" "E40000001" ...
-    # $ region_name             : chr  "NORTH OF ENGLAND" "NORTH OF ENGLAND" "NORTH OF ENGLAND" "NORTH OF ENGLAND" ...
-    # $ country                 : chr  "ENGLAND" "ENGLAND" "ENGLAND" "ENGLAND" ...
-    # $ revised_maximum_points  : int  559 559 559 559 559 559 559 559 559 559 ...
+    # meta_org ####
 
     # drop uneeded columns
-    q.orgref <- qof$reference$orgref %>%
+    # - that is, keep practice and ccg lookup
+    q.meta_org <- qof$meta_org %>%
         select(starts_with("practice"), starts_with("ccg")) %>%
         data.table::setDT()
 
-    # indmap - qof indicator lookups ####
+    # meta_ind ####
 
-    #qof$indmap %>% filter(FALSE) %>% str()
-    # Classes ‘data.table’ and 'data.frame':	78 obs. of  8 variables:
-    # $ indicator_code             : chr  "AF001" "AF006" "AF007" "AST001" ...
-    # $ indicator_description      : chr  "The contractor establishes and maintains a register of patients with atrial fibrillation" "The percentage of patients with atrial fibrillation in whom stroke risk has been assessed using the CHA2DS2-VASc score risk str"| __truncated__ "In those patients with atrial fibrillation with a record of a CHA2DS2-VASc score of 2 or more, the percentage of patients who a"| __truncated__ "The contractor establishes and maintains a register of patients with asthma, excluding patients with asthma who have been presc"| __truncated__ ...
-    # $ indicator_point_value      : int  5 12 12 4 15 20 6 15 5 6 ...
-    # $ indicator_group_code       : chr  "AF" "AF" "AF" "AST" ...
-    # $ indicator_group_description: chr  "Atrial fibrillation" "Atrial fibrillation" "Atrial fibrillation" "Asthma" ...
-    # $ domain_code                : chr  "CL" "CL" "CL" "CL" ...
-    # $ domain_description         : chr  "Clinical" "Clinical" "Clinical" "Clinical" ...
-    # $ patient_list_type          : chr  "TOTAL" "TOTAL" "TOTAL" "TOTAL" ...
+    # data_ind ####
 
-    # process indicators ####
-
-    cat("INFO: f__91__preprocess: processing indicators ...", "\n")
+    cat("INFO: f__transform__preprocess: processing indicators ...", "\n")
 
     # ind - qof indicator counts
     # Tag CCG
+
+    # melt onto measure/value fields
+
+    measure_vars <- qof$data_ind[FALSE, ] %>% select_if(is.numeric) %>% names()
+
+    q.data_ind <- qof$data_ind %>%
+        melt(
+            measure.vars = measure_vars
+            , variable.name = "measure", variable.factor = FALSE
+        )
+
     # Find register indicators
 
-    #qof$ind %>% filter(FALSE) %>% str()
-    # Classes ‘data.table’ and 'data.frame':	1956549 obs. of  4 variables:
-    # $ practice_code : chr  "A81001" "A81001" "A81001" "A81001" ...
-    # $ indicator_code: chr  "AF001" "AF001" "AF006" "AF006" ...
-    # $ measure       : chr  "ACHIEVED_POINTS" "REGISTER" "ACHIEVED_POINTS" "DENOMINATOR" ...
-    # $ value         : num  5 96 12 57 2 53 12 76 4 71 ...
+    these_inds <- q.data_ind %>%
+        filter(measure == "REGISTER", !is.na(value)) %>%
+        .$indicator_code %>%
+        unique()
 
-    ## Remove register-type indicators
-    # add an 'is.register' flag to the indicator map
-    q.indmap <- qof$reference$indmap %>%
-        mutate(is.register = (indicator_code %in% (
-            qof$data$ind %>%
-                filter(measure == "REGISTER") %>%
-                .$indicator_code %>%
-                unique()
-        ))) %>%
-        data.table::setDT()
+    # Add an 'is.register' flag to the indicator map
 
-    # filter out non-register indicators via join with indmap
-    q.ind <- qof$data$ind %>%
-        filter(!(indicator_code %in% (
-            q.indmap %>% filter(is.register == TRUE) %>% .$indicator_code))
-        ) %>%
+    q.meta_ind <- qof$meta_ind %>%
+        mutate(is.register = (indicator_code %in% these_inds)) %>%
+        setDT()
+
+    # Remove register-type indicators
+
+    q.data_ind <- q.data_ind %>%
+        filter(!(indicator_code %in% these_inds)) %>%
         # lowercase measure
         # remove points
         # tag ccg, indicator group
         mutate(measure = tolower(measure)) %>%
-        filter(!(measure == tolower("ACHIEVED_POINTS"))) %>%
-        data.table::setDT() %>%
+        filter(!(measure == "achieved_points")) %>%
+        setDT() %>%
         # tag ccg
-        merge(q.orgref %>% select(practice_code, ccg_code)
-              , by = "practice_code") %>%
-        # filter non-register AND tag indicator_group_code, domain_code
         merge(
-            q.indmap %>%
+            q.meta_org %>% select(practice_code, ccg_code)
+            , by = "practice_code"
+            , all.x = TRUE
+        ) %>%
+        # tag non-register indicators with indicator_group_code, domain_code
+        merge(
+            q.meta_ind %>%
                 filter(is.register == FALSE) %>%
-                select(domain_code, indicator_code, indicator_group_code)
+                select(indicator_code, indicator_group_code, domain_code)
             , by = "indicator_code"
+            , all.x = TRUE, all.y = TRUE
         )
 
+    # data_prev  ####
 
-    # process prevalence  ####
-
-    cat("INFO: f__91__preprocess: processing prevalence ...", "\n")
+    cat("INFO: f__transform__preprocess: processing prevalence ...", "\n")
 
     # prev - qof registers and list sizes
-    # Tag CCG
-
-    #qof$prev %>% filter(FALSE) %>% str()
-    # Classes ‘data.table’ and 'data.frame':	159999 obs. of  5 variables:
-    # $ practice_code       : chr  "A81001" "A81001" "A81001" "A81001" ...
-    # $ indicator_group_code: chr  "AF" "AST" "CAN" "CHD" ...
-    # $ register            : int  96 325 107 174 201 117 18 51 296 259 ...
-    # $ patient_list_type   : chr  "TOTAL" "TOTAL" "TOTAL" "TOTAL" ...
-    # $ patient_list_size   : int  4247 4247 4247 4247 3408 4247 2291 4247 3408 3451 ...
 
     # tag ccg
     # practice age list sizes, convenience
@@ -139,41 +112,37 @@ f__91__preprocess <- function(
     # ... can lose 'patient_list_type' too
     # spin down (register, patient_list_size) on measure
 
-    q.prev <- qof$data$prev %>%
-        merge(q.orgref %>% select(practice_code, ccg_code)
-              , by = "practice_code") %>%
-        #mutate(org.type = "ccg, practice") %>%
+    q.data_prev <- qof$data_prev %>%
+        # tag ccg
+        merge(
+            q.meta_org %>% select(practice_code, ccg_code)
+            , by = "practice_code"
+            , all.x = TRUE
+        ) %>%
         select(-patient_list_type) %>%
-        # filter non-register AND tag indicator_code, domain_code
-        merge(q.indmap %>%
-                  filter(is.register == TRUE) %>%
-                  select(domain_code, indicator_group_code, indicator_code)
-              , by = "indicator_group_code"
+        # tag with register indicator code and domain_code
+        merge(
+            q.meta_ind %>%
+                filter(is.register == TRUE) %>%
+                select(indicator_group_code, indicator_code, domain_code)
+            , by = "indicator_group_code"
+            , all.x = FALSE, all.y = TRUE
         )
 
-    # q.prev.praclists <- q.prev %>%
-    #     select(practice_code, patient_list_type, patient_list_size) %>%
-    #     unique()
-    # q.prev.praclists.tbl <- q.prev.praclists %>%
-    #     dcast(... ~ patient_list_type, sum, value.var = "patient_list_size")
-
-    q.prev.melt <- q.prev %>%
-        melt(measure.vars = c("register", "patient_list_size")
-             , variable.name = "measure", variable.factor = FALSE
-             , value.name = "value")
+    q.data_prev_melt <- q.data_prev %>%
+        melt(
+            measure.vars = c("register", "patient_list_size")
+            , variable.name = "measure", variable.factor = FALSE
+        )
 
     # return
 
     return(list(
-        reference = list(
-            orgref = q.orgref
-            , indmap = q.indmap
-        )
-        , data = list(
-            ind = q.ind
-            , prev = q.prev
-            , prev.melt = q.prev.melt
-        )
+        meta_org = q.meta_org
+        , meta_ind = q.meta_ind
+        , data_prev = q.data_prev_melt
+        #, data_prev_cast = q.data_prev
+        , data_ind = q.data_ind
     ))
 }
 
