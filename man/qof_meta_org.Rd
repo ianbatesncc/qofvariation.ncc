@@ -3,41 +3,38 @@
 \docType{data}
 \name{qof_meta_org}
 \alias{qof_meta_org}
+\alias{qof_1718_meta_org}
 \alias{qof_1617_meta_org}
 \alias{qof_1516_meta_org}
-\alias{qof_1415_meta_org}
-\alias{qof_1314_meta_org}
-\alias{qof_1213_meta_org}
 \title{QOF reference data for organisations}
-\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 7392 rows and 15 columns.}
+\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 53954 rows and 16 columns.}
 \usage{
+qof_meta_org
+
+qof_1718_meta_org
+
 qof_1617_meta_org
 
 qof_1516_meta_org
-
-qof_1415_meta_org
-
-qof_1314_meta_org
-
-qof_1213_meta_org
 }
 \description{
-\preformatted{
-$ practice_code           : chr
-$ practice_name           : chr
-$ ccg_code                : chr
-$ ccg_geography_code      : chr
-$ ccg_name                : chr
-$ stp_code                : chr
-$ stp_name                : chr
-$ subregion_code          : chr
-$ subregion_geography_code: chr
-$ subregion_name          : chr
-$ region_code             : chr
-$ region_geography_code   : chr
-$ region_name             : chr
-$ country                 : chr
-$ revised_maximum_points  : int
+\tabular{ll}{
+ \code{practice_code} \tab {<chr n=8210>} \cr
+ \code{practice_name} \tab {<chr n=17148>} \cr
+ \code{ccg_code} \tab {<chr n=369>} \cr
+ \code{ccg_geography_code} \tab {<chr n=223>} \cr
+ \code{ccg_name} \tab {<chr n=377>} \cr
+ \code{stp_code} \tab {<chr n=83>} \cr
+ \code{stp_name} \tab {<chr n=92>} \cr
+ \code{subregion_code} \tab {<chr n=23>} \cr
+ \code{subregion_geography_code} \tab {<chr n=22>} \cr
+ \code{subregion_name} \tab {<chr n=35>} \cr
+ \code{region_code} \tab {<chr n=7>} \cr
+ \code{region_geography_code} \tab {<chr n=7>} \cr
+ \code{region_name} \tab {<chr n=12>} \cr
+ \code{country} \tab {<chr n=2>} \cr
+ \code{revised_maximum_points} \tab {<num>} \cr
+ \code{qof_period} \tab {<chr n=7>} \cr
 }
 }
 \seealso{

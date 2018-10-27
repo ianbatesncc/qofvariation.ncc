@@ -4,13 +4,17 @@
 \alias{proj_path}
 \title{Shortcut for constructing paths}
 \usage{
-proj_path(...)
+proj_path(..., ext = "")
 }
 \arguments{
 \item{...}{path elements.  Passed to paste.}
 }
 \description{
 Shortcut for constructing paths
+}
+\note{
+Written before usethis::proj_path was known ... very similar
+  functionality so use usethis instead.
 }
 \seealso{
 Other Helper routines: \code{\link{families}},

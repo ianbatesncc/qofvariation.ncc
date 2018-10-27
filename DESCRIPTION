@@ -8,6 +8,7 @@ Depends:
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true
+LazyDataCompression: bzip2
 RoxygenNote: 6.1.0
 Suggests:
     testthat
@@ -15,6 +16,7 @@ Imports:
     devtools (>= 2.0)
     , dplyr
     , data.table
+    , purrr
     , readxl
     , reshape2
-    , purrr
+    , usethis

@@ -3,34 +3,31 @@
 \docType{data}
 \name{qof_meta_ind}
 \alias{qof_meta_ind}
+\alias{qof_1718_meta_ind}
 \alias{qof_1617_meta_ind}
 \alias{qof_1516_meta_ind}
-\alias{qof_1415_meta_ind}
-\alias{qof_1314_meta_ind}
-\alias{qof_1213_meta_ind}
-\title{QOF reference data for organisations}
-\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 77 rows and 8 columns.}
+\title{QOF reference data for indicators}
+\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 625 rows and 9 columns.}
 \usage{
+qof_meta_ind
+
+qof_1718_meta_ind
+
 qof_1617_meta_ind
 
 qof_1516_meta_ind
-
-qof_1415_meta_ind
-
-qof_1314_meta_ind
-
-qof_1213_meta_ind
 }
 \description{
-\preformatted{
-$ indicator_code             : chr
-$ indicator_description      : chr
-$ indicator_point_value      : int
-$ indicator_group_code       : chr
-$ indicator_group_description: chr
-$ domain_code                : chr
-$ domain_description         : chr
-$ patient_list_type          : chr
+\tabular{ll}{
+ \code{indicator_code} \tab {<chr n=255>} \cr
+ \code{indicator_description} \tab {<chr n=270>} \cr
+ \code{indicator_point_value} \tab {<int>} \cr
+ \code{indicator_group_code} \tab {<chr n=38>} \cr
+ \code{indicator_group_description} \tab {<chr n=43>} \cr
+ \code{domain_code} \tab {<chr n=6>} \cr
+ \code{domain_description} \tab {<chr n=7>} \cr
+ \code{patient_list_type} \tab {<chr n=11>} \cr
+ \code{qof_period} \tab {<chr n=7>} \cr
 }
 }
 \details{

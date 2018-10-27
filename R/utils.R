@@ -2,32 +2,47 @@
 # utils.R
 #
 
+#' Determine root path from within project development
+#'
 #' Concept of 'root directory' depends on context.
 #'
-#' - from project root is ./R
-#' - from ./inst/dashboard it is, not surprisingly, ./R ...
+#'    - from project root is ./R
+#'     - from ./inst/dashboard it is, not surprisingly, ./R ...
 #'
 #' @importFrom devtools package_file
 #'
 #' @family Helper routines
 #'
 proj_root <- function() {
-    #require("devtools")
-    normalizePath(devtools::package_file(), winslash = "/", mustWork = TRUE)
+    normalizePath(
+        devtools::package_file()
+        , winslash = "/"
+        , mustWork = TRUE
+    )
 }
 
 #' Shortcut for constructing paths
 #'
 #' @param ... path elements.  Passed to paste.
 #'
+#' @note Written before usethis::proj_path was known ... very similar
+#'   functionality so use usethis instead.
+#'
 #' @importFrom devtools package_file
 #'
 #' @family Helper routines
 #'
-proj_path <- function(...) {
-    #require("devtools")
-    normalizePath(devtools::package_file(...), winslash = "/", mustWork = FALSE)
+proj_path <- function(..., ext = NULL) {
+    if (!is.null(ext))
+        stop("this instance of proj_path does not accept ext as a separate parameter.")
+
+    normalizePath(
+        devtools::package_file(...)
+        , winslash = "/"
+        , mustWork = FALSE
+    )
 }
+proj_path <- usethis::proj_path
 
 #' Contruct paths
 #'
@@ -54,7 +69,7 @@ paste_paths <- function(...) {
 #'
 #' @family Helper routines
 #'
-status <- function(x, ...){
+status <- function(x, ...) {
     cat(..., "\n");invisible(x)
 }
 
@@ -90,9 +105,9 @@ setnames.clean <- function(x) {
 #'
 ilike <- function(vector, pattern) {
     if (is.factor(vector)) {
-        as.integer(vector) %in% grep(pattern, levels(vector), ignore.case = TRUE)
-    }
-    else {
+        as.integer(vector) %in%
+            grep(pattern, levels(vector), ignore.case = TRUE)
+    } else {
         grepl(pattern, vector, ignore.case = TRUE)
     }
 }
@@ -117,12 +132,14 @@ fsummary <- function(x, ...) {
 
 #' My glimpse
 #'
+#' factor version of glimpse
+#'
 #' @param x (data.frame) data to gimpse
-#' @param width console width, NULL means use default options()$width
+#' @param width (int) console width, NULL means use default options()$width
+#' @param showvalues (bool) Show field values (default TRUE)
 #' @param ... (ignored) extra options
 #'
-#' factor version of glimpse
-fglimpse <- function(x, width = NULL, ...) {
+fglimpse <- function(x, width = NULL, showvalues = TRUE, ...) {
     v <- NULL
 
     if (!"data.frame" %in% class(x))
@@ -145,27 +162,31 @@ fglimpse <- function(x, width = NULL, ...) {
                 vx <- as.data.frame(x)[, field]
 
                 if (!is.character(vx)) {
-                    msg <- paste0(msg, "<", vx %>% class() %>% substr(., 1, 3), "> ")
-                    s <- summary(vx)
-                    msg <- paste0(
-                        msg
-                        , data.frame(
-                            n = names(s)
-                            , v = formatC(as.numeric(s), digits = 3, width = 0)
-                        ) %>%
-                            mutate(l = paste0(n, ": ", v)) %>%
-                            .$l %>%
-                            paste(collapse = ", ")
-                    )
+                    msg <- paste0(msg, "<", vx %>% class() %>% substr(., 1, 3), ">")
+                    if (showvalues == TRUE) {
+                        s <- summary(vx)
+                        msg <- paste0(
+                            msg
+                            , " "
+                            , data.frame(
+                                n = names(s)
+                                , v = formatC(as.numeric(s), digits = 3, width = 0)
+                            ) %>%
+                                mutate(l = paste0(n, ": ", v)) %>%
+                                .$l %>%
+                                paste(collapse = ", ")
+                        )
+                    }
                 } else {
                     f <- vx %>% unique()
                     nf <- length(f)
-                    msg <- paste0(
-                        msg, "<chr n=", nf, "> "
-                        , ifelse(nf > 0, "\"", "")
-                        , paste(f, collapse = "\", \"")
-                        , ifelse(nf > 0, "\"", "")
-                    )
+                    msg <- paste0(msg, "<chr n=", nf, ">")
+                    if (showvalues == TRUE) {
+                        if (nf > 0)
+                            msg <- paste0(
+                                msg, " \"", paste(f, collapse = "\", \""), "\""
+                            )
+                    }
                 }
 
                 nmsg <- nchar(msg)
@@ -182,4 +203,104 @@ fglimpse <- function(x, width = NULL, ...) {
         )
 
     invisible(x)
+}
+
+#' My describe
+#'
+#' Helper for generating roxygen documentation for a data.frame
+#'
+#' @inheritParams fglimpse
+#' @param type (character) specify describe or tabular lists.
+#'
+#' \preformatted{
+#' \describe{
+#'   \item{\code{field1}}{description 1}
+#'   \item{\code{field2}}{description 2}
+#'   ...
+#' }
+#'
+#' \tabular{ll}{
+#'   {{\code{field1}} \tab {description 1} \cr
+#'   {{\code{field2}} \tab {description 1} \cr
+#'   ...
+#' }
+#' }
+#'
+describe <- function(x, width = NULL, showvalues = FALSE, type = c("describe", "tabular")) {
+    v <- NULL
+    type <- match.arg(type)
+
+    if (!"data.frame" %in% class(x))
+        stop("need a data frame object")
+
+    if (is.null(width))
+        width = options()$width
+
+    these_names <- names(x)
+    n_names_max <- max(nchar(these_names))
+
+    if (type == "describe") {
+        cat("#' \\describe{", "\n")
+    } else {
+        cat("#' \\tabular{ll}{", "\n")
+    }
+
+
+    these_names %>%
+        lapply(
+            function(field, x, width) {
+                if (type == "describe") {
+                    msg <- paste0("#'  \\item{\\code{", field, "}}{")
+                } else {
+                    msg <- paste0("#'  \\code{", field, "} \\tab {")
+                }
+                vx <- as.data.frame(x)[, field]
+
+                if (!is.character(vx)) {
+                    msg <- paste0(msg, "<", vx %>% class() %>% substr(., 1, 3), ">")
+                    if (showvalues == TRUE) {
+                        s <- summary(vx)
+                        msg <- paste0(
+                            msg
+                            , " "
+                            , data.frame(
+                                n = names(s)
+                                , v = formatC(as.numeric(s), digits = 3, width = 0)
+                            ) %>%
+                                mutate(l = paste0(n, ": ", v)) %>%
+                                .$l %>%
+                                paste(collapse = ", ")
+                        )
+                    }
+                } else {
+                    f <- vx %>% unique()
+                    nf <- length(f)
+                    msg <- paste0(msg, "<chr n=", nf, ">")
+                    if (showvalues == TRUE)
+                        if (nf > 0)
+                        msg <- paste0(
+                            msg, " \"", paste(f, collapse = "\", \""), "\""
+                        )
+                }
+
+                nmsg <- nchar(msg)
+
+                if (!is.null(width))
+                    if (nmsg > width)
+                        msg <- paste0(substr(msg, 1, width - 3), "...")
+
+                if (type == "describe") {
+                    cat(paste0(msg, "}"), "\n")
+                } else {
+                    cat(paste0(msg, "} \\cr"), "\n")
+                }
+
+            }
+            , x = x
+            , width = width
+        )
+
+    cat("#' }", "\n")
+
+    NULL
 }

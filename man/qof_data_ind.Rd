@@ -3,30 +3,30 @@
 \docType{data}
 \name{qof_data_ind}
 \alias{qof_data_ind}
+\alias{qof_1718_data_ind}
 \alias{qof_1617_data_ind}
 \alias{qof_1516_data_ind}
-\alias{qof_1415_data_ind}
-\alias{qof_1314_data_ind}
-\alias{qof_1213_data_ind}
 \title{QOF data for indicators}
-\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 1882829 rows and 4 columns.}
+\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 4817811 rows and 8 columns.}
 \usage{
+qof_data_ind
+
+qof_1718_data_ind
+
 qof_1617_data_ind
 
 qof_1516_data_ind
-
-qof_1415_data_ind
-
-qof_1314_data_ind
-
-qof_1213_data_ind
 }
 \description{
-\preformatted{
-$ practice_code : chr
-$ indicator_code: chr
-$ measure       : chr
-$ value         : num
+\tabular{ll}{
+ \code{practice_code} \tab {<chr n=8209>} \cr
+ \code{indicator_code} \tab {<chr n=255>} \cr
+ \code{ACHIEVED_POINTS} \tab {<num>} \cr
+ \code{DENOMINATOR} \tab {<num>} \cr
+ \code{EXCEPTIONS} \tab {<num>} \cr
+ \code{NUMERATOR} \tab {<num>} \cr
+ \code{REGISTER} \tab {<num>} \cr
+ \code{qof_period} \tab {<chr n=7>} \cr
 }
 }
 \details{
