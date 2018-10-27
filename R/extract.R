@@ -231,22 +231,20 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
 #'
 #' put in an R list for later analysis
 #'
-#' @param qof_root
+#' @param qof_root (character)
 #'
 #'   Directory root for loading and saving any processed data.  Of the form
 #'   \code{qof-YYZZ}
 #'
-#' @param bSaveData (boolean) Flag to determine whether to save datasets as
+#' @param bSaveData (bool) Flag to determine whether to save datasets as
 #'   \code{devtools::use_data}
 #'
-#' @return a list of lists with named items
-#' \describe{
-#'     \item{reference}{
-#'         \itemize{\item{orgref}\item{indmap}}
-#'     }
-#'     \item{data}{
-#'         \itemize{\item{prev}\item{ind}}
-#'     }
+#' @return a list with named items
+#' \tabular{ll}{
+#'   \code{meta_org}  \tab Organisation metadata \cr
+#'   \code{meta_ind}  \tab Indicator metadata \cr
+#'   \code{data_prev} \tab Prevalence data \cr
+#'   \code{data_ind}  \tab Indicator data \cr
 #' }
 #'
 #' @importFrom purrr walk2
@@ -1198,17 +1196,18 @@ ages 50+,50OV
         qof.ind <- NA
     }
 
-    if (TRUE) {
-        qof.ind <- q2 <- qof.ind %>%
-            dcast(... ~ measure, fun.aggregate = sum)
-    }
+    # flip measure backup
+    qof.ind <- q2 <- qof.ind %>%
+        dcast(... ~ measure, fun.aggregate = sum)
 
     retval <- list(
         meta_org = qof.orgref
         , meta_ind = qof.indmap
         , data_prev = qof.prev
         , data_ind = qof.ind
-    )
+    ) %>%
+        # tag on qof_period
+        lapply(function(x) {x %>% mutate(qof_period = qof_root)})
 
     generic_names <- c("meta_org", "meta_ind", "data_prev", "data_ind")
 
@@ -1224,21 +1223,22 @@ ages 50+,50OV
 
     # return
 
-    return(list(
-        reference = list(
-            orgref = qof.orgref
-            , indmap = qof.indmap
-        )
-        , data = list(
-            prev = qof.prev
-            , ind = qof.ind
-        )
-    ))
+    invisible(retval)
 }
 
 #' @describeIn f__extract__load_raw Extract all qof data
 #'
+#' Extracts data from multiple qof periods
+#'
 #' @inheritParams f__extract__load_raw
+#'
+#' @return a list with named items
+#' \tabular{ll}{
+#'   \code{meta_org}  \tab Organisation metadata \cr
+#'   \code{meta_ind}  \tab Indicator metadata \cr
+#'   \code{data_prev} \tab Prevalence data \cr
+#'   \code{data_ind}  \tab Indicator data \cr
+#' }
 #'
 extract_all <- function(
     qof_root = c(
@@ -1252,25 +1252,38 @@ extract_all <- function(
     qof_root <- match.arg(qof_root, several.ok = TRUE)
 
     retval <- qof_root %>%
+        status("INFO: extracting ...") %>%
         lapply(f__extract__load_raw, bSaveData = bSaveData)
+
+    # transform "qof-1617_xxxxx" to "qof_xxxxx"
+    names(retval) <- qof_root %>%
+        gsub("-", "_", .) %>%
+        gsub("_[0-9]*_", "_", .)
+
+    retval <- retval %>%
+        status("INFO: binding ...") %>%
+        purrr::transpose() %>%
+        lapply(bind_rows)
 
     invisible(retval)
 }
 
 #' Merge all qof data into one dataset
 #'
-#' Essentially add qof_poeriod field to all tables
+#' Merges data from multiple qof periods.  Uses the post-extract results.
 #'
 #' @inheritParams extract_all
 #'
 #' @importFrom data.table setDT rbindlist
 #' @importFrom purrr walk2
 #'
-#' @examples
-#' load("./data/qof_meta_org.Rda")
-#' load("./data/qof_meta_ind.Rda")
-#' load("./data/qof_data_ind.Rda")
-#' load("./data/qof_data_prev.Rda")
+#' @return a list with named items
+#' \tabular{ll}{
+#'   \code{meta_org}  \tab Organisation metadata \cr
+#'   \code{meta_ind}  \tab Indicator metadata \cr
+#'   \code{data_prev} \tab Prevalence data \cr
+#'   \code{data_ind}  \tab Indicator data \cr
+#' }
 #'
 merge_all <- function(
     qof_root = c(
@@ -1298,9 +1311,7 @@ merge_all <- function(
 
             load(this_rda, verbose = TRUE)
 
-            retval <- eval(as.name(this_varname)) %>%
-                mutate(qof_period = this_qof) %>%
-                setDT()
+            retval <- eval(as.name(this_varname)) %>% setDT()
         } else {
             cat("NOT found", "\n")
 
@@ -1324,16 +1335,22 @@ merge_all <- function(
     retval <- generic_names %>%
         lapply(l_f1, these_qof = qof_root)
 
-    these_names <- paste("qof", generic_names, sep = "_")
-    names(retval) <- these_names
+    #names(retval) <- paste("qof", generic_names, sep = "_")
+    names(retval) <- generic_names
 
     # save
+    #
+    # one file for each data item, meta_ind, meta_org, data_ind, data_prev
 
     if (bSaveData == TRUE) {
         cat("INFO: saving", "...", "\n")
 
         retval %>% purrr::walk2(., names(.), usethis__use_data)
     }
+
+    # return
+    #
+    # list of data items
 
     invisible(retval)
 }
