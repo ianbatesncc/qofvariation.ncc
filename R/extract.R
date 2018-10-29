@@ -1304,7 +1304,7 @@ merge_all <- function(
 
     # Return a data.table for given period and given variable
 
-    l_f2 <- function(this_qof, this_var) {
+    l_period_variable <- function(this_qof, this_var) {
         this_varname <- paste(gsub("-", "_", this_qof), this_var, sep = "_")
 
         cat("INFO: considering", this_varname, "...")
@@ -1328,19 +1328,18 @@ merge_all <- function(
 
     # Return period tagged data for given variable (looped over periods)
 
-    l_f1 <- function(this_var, these_qof) {
+    l_period <- function(this_var, these_qof) {
         cat("INFO: considering", this_var, "...", "\n")
 
-        lapply(these_qof, l_f2, this_var = this_var) %>%
+        lapply(these_qof, l_period_variable, this_var = this_var) %>%
             rbindlist(use.names = TRUE, fill = TRUE)
     }
 
     # Return a list of variables for do the loop
 
     retval <- generic_names %>%
-        lapply(l_f1, these_qof = qof_root)
+        lapply(l_period, these_qof = qof_root)
 
-    #names(retval) <- paste("qof", generic_names, sep = "_")
     names(retval) <- generic_names
 
     # save
@@ -1358,4 +1357,19 @@ merge_all <- function(
     # list of data items
 
     invisible(retval)
+}
+
+#' Return extracted dataset
+#'
+#' Either extract from raw values or load pre-extracted values.
+#'
+#' @param bExtractFromRaw (bool) Flag to do process raw or load pre-extracted.
+#'
+f__extract <- function(
+    bExtractFromRaw = FALSE
+) {
+    if (bExtractFromRaw)
+        extract_all()
+    else
+        merge_all()
 }
