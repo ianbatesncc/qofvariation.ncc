@@ -34,58 +34,8 @@ main <- function(
 ) {
     qof_period <- match.arg(qof_period)
 
-    lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
 
-    lu.orgs.ccgs.groups <- data.table::fread(input = "
-ccg_group_type,ccg_group_type_name,ccg_code,ccg_group_code,ccg_group_name
-uop,Unit of Planning,02Q,nno,North Notts. UOP
-uop,Unit of Planning,04E,mno,Mid. Notts. UOP
-uop,Unit of Planning,04H,mno,Mid. Notts. UOP
-uop,Unit of Planning,04L,sno,South Notts. UOP
-uop,Unit of Planning,04M,sno,South Notts. UOP
-uop,Unit of Planning,04N,sno,South Notts. UOP
-uop,Unit of Planning,04K,sno,South Notts. UOP
-stp,Sus. and Trans. P-ship,04E,not,Nottinghamshire STP
-stp,Sus. and Trans. P-ship,04H,not,Nottinghamshire STP
-stp,Sus. and Trans. P-ship,04L,not,Nottinghamshire STP
-stp,Sus. and Trans. P-ship,04M,not,Nottinghamshire STP
-stp,Sus. and Trans. P-ship,04N,not,Nottinghamshire STP
-stp,Sus. and Trans. P-ship,04K,not,Nottinghamshire STP
-utla,Upper Tier LA,02Q,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04E,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04H,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04L,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04M,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04N,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04K,nci,Nottingham City UA
-lep,Local Enterprise P-ship,02Q,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04E,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04H,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04L,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04M,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04N,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04K,n2,Nottingham and Nottinghamshire LEP N2
-"
-    ) %>%
-        merge(
-            data.table::fread(input = "
-ccg_group_type,type_display_order
-lep,1
-utla,2
-stp,3
-uop,4
-")
-            , by = "ccg_group_type"
-            , all.x = TRUE
-        )
 
-    if (bWriteCSV) {
-        this_csv <- proj_path("./data-raw", "lu__ccg_groups.csv")
-
-        cat("INFO: saving", this_file, "...", "\n")
-
-        data.table::fwrite(lu.orgs.ccgs.groups, file = this_csv)
-    }
 
     # short inspection of lookup
     lu.orgs.ccgs.groups %>%

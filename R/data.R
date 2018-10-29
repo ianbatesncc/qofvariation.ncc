@@ -198,3 +198,20 @@ NULL
 
 # @name qof_data_ind
 # "qof_1213_data_ind"
+
+#' List of CCGs considered local
+#'
+"lu_ccgs"
+
+#' Local CCG groups
+#'
+#' \tabular{ll}{
+#'  \code{ccg_group_type} \tab {<chr n=4>} \cr
+#'  \code{ccg_group_type_name} \tab {<chr n=4>} \cr
+#'  \code{ccg_code} \tab {<chr n=7>} \cr
+#'  \code{ccg_group_code} \tab {<chr n=7>} \cr
+#'  \code{ccg_group_name} \tab {<chr n=7>} \cr
+#'  \code{type_display_order} \tab {<int>} \cr
+#' }
+#'
+"lu_ccg_groups"

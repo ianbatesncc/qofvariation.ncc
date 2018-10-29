@@ -7,6 +7,77 @@
 # * join meta
 #
 
+#' Default local lookups
+#'
+#' @param bSaveData flag to write use_data sets
+#'
+#' @return list of lu_ccgs, lu_ccg_groups
+#'
+f__transform__create_local_lu <- function(
+    bSaveData = FALSE
+) {
+    lu_ccgs <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
+
+    lu_ccg_groups <- data.table::fread(input = "
+ccg_group_type,ccg_group_type_name,ccg_code,ccg_group_code,ccg_group_name
+uop,Unit of Planning,02Q,nno,North Notts. UOP
+uop,Unit of Planning,04E,mno,Mid. Notts. UOP
+uop,Unit of Planning,04H,mno,Mid. Notts. UOP
+uop,Unit of Planning,04L,sno,South Notts. UOP
+uop,Unit of Planning,04M,sno,South Notts. UOP
+uop,Unit of Planning,04N,sno,South Notts. UOP
+uop,Unit of Planning,04K,sno,South Notts. UOP
+stp,Sus. and Trans. P-ship,04E,not,Nottinghamshire STP
+stp,Sus. and Trans. P-ship,04H,not,Nottinghamshire STP
+stp,Sus. and Trans. P-ship,04L,not,Nottinghamshire STP
+stp,Sus. and Trans. P-ship,04M,not,Nottinghamshire STP
+stp,Sus. and Trans. P-ship,04N,not,Nottinghamshire STP
+stp,Sus. and Trans. P-ship,04K,not,Nottinghamshire STP
+utla,Upper Tier LA,02Q,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04E,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04H,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04L,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04M,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04N,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04K,nci,Nottingham City UA
+lep,Local Enterprise P-ship,02Q,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04E,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04H,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04L,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04M,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04N,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04K,n2,Nottingham and Nottinghamshire LEP N2
+"
+    ) %>% merge(
+        data.table::fread(input = "
+ccg_group_type,type_display_order
+lep,1
+utla,2
+stp,3
+uop,4
+")
+        , by = "ccg_group_type"
+        , all.x = TRUE
+    )
+
+    #lu_ccgs <- lu_ccg_groups$ccg_code %>% unique()
+
+    if (bSaveData) {
+        usethis::use_data(lu_ccgs, overwrite = TRUE)
+        usethis::use_data(lu_ccg_groups, overwrite = TRUE)
+
+        this_csv <- proj_path("./data-raw", "lu_ccg_groups.csv")
+        cat("INFO: saving", this_csv, "...", "\n")
+        data.table::fwrite(lu_ccg_groups, file = this_csv)
+    }
+
+    return(list(
+        lu_ccgs = lu_ccgs
+        , lu_ccg_groups = lu_ccg_groups
+    ))
+
+}
+
 #' Preprocess
 #'
 #' - melt data_ind, data_prev onto measure/value pairs
