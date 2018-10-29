@@ -13,10 +13,7 @@
 #' - tag on meta_org ccg and indicator_group, domain_code
 #' - identify register indicators in meta_ind
 #'
-#' Optionally save tweaked reference data
-#'
 #' @param qof list of data items (see \code{\link{f__extract__load_raw}})
-#' @param bWriteCSV Flag to indicate to write results to file.
 #'
 #' @return a list with named items
 #' \tabular{ll}{
@@ -31,7 +28,6 @@
 #'
 f__transform__preprocess <- function(
     qof
-    , bWriteCSV = FALSE
 ) {
     cat("INFO: f__transform__preprocess: processing lookups ...", "\n")
 
@@ -135,7 +131,7 @@ f__transform__preprocess <- function(
             , variable.name = "measure", variable.factor = FALSE
         )
 
-    # return
+    # return ####
 
     return(list(
         meta_org = q.meta_org
