@@ -105,9 +105,9 @@ f__transform__preprocess <- function(
     # meta_org ####
 
     # drop uneeded columns
-    # - that is, keep practice and ccg lookup
+    # - that is, keep practice and ccg lookup ... and qof_period
     q.meta_org <- qof$meta_org %>%
-        select(starts_with("practice"), starts_with("ccg")) %>%
+        select(starts_with("practice"), starts_with("ccg"), qof_period) %>%
         data.table::setDT()
 
     # meta_ind ####
@@ -213,57 +213,106 @@ f__transform__preprocess <- function(
     ))
 }
 
+#' Add org.type field to data
+#'
+#' Modifies dat_ind and data_prev tables by adding a field \code-{org.type} with
+#' value \code{ccg::practice}
+#'
+#' @inheritParams f__transform__preprocess
+#'
+#' @return list of tables
+#'
+f__transform__data__add_orgtype <- function(qof) {
+    cat("INFO: f__transform__data__add_orgtype: amending ...", "\n")
+
+    these_tables <- c("data_ind", "data_prev")
+
+    qof[these_tables] <- qof[these_tables] %>%
+        lapply(mutate, org.type = "ccg::practice")
+
+    invisible(qof)
+}
+
 #' Amend data by adding subtotals
 #'
-#' Can add england totals, ccg totals, filter for local ccgs, and group by given lookup.
+#' Can add england totals, ccg totals, filter for local ccgs, and group by given
+#' lookup.
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
+#' @inheritParams f__transform__preprocess
+#'
 #' @param bCalcEngTotal Add an 'eng' that is total over all practices.
 #' @param bCalcCCGTotals Add CCG totals (group practices by ccg_code)
-#' @param lu.orgs.ccgs.local Filter on these ccgs (ccg_code)
-#' @param lu.orgs.ccgs.groups Groups of ccgs (ccg_code, practice_code -> type, instance)
+#' @param lu_ccgs Filter on these ccgs (ccg_code)
+#' @param lu_ccg_groups Groups of ccgs (ccg_code, practice_code -> type,
+#'   instance)
 #'
-#' @return list of lists (see \code{\link{f__extract__load_raw}})
+#' @return a list with named items
+#' \tabular{ll}{
+#'   \code{meta_org}  \tab Organisation metadata \cr
+#'   \code{meta_ind}  \tab Indicator metadata \cr
+#'   \code{data_prev} \tab Prevalence data \cr
+#'   \code{data_ind}  \tab Indicator data  \cr
+#' }
 #'
 #' @family Internal routines
 #' @family Process routines
 #'
-f__91__amend_data__add_subtotals <- function(
+f__transform__data__add_subtotals <- function(
     qof
     , bCalcEngTotal = FALSE
     , bCalcCCGTotals = FALSE
-    , lu.orgs.ccgs.local = NA
-    , lu.orgs.ccgs.groups = NA
+    , lu_ccgs = NA
+    , lu_ccg_groups = NA
 ) {
-    cat("INFO: f__91__amend_data__add_subtotals: amending ...", "\n")
+    cat("INFO: f__transform__data__add_subtotals: amending ...", "\n")
+
+    if (is.na(lu_ccgs))
+        lu_ccgs <- f__transform__create_local_lu()$lu_ccgs
+
+    if (is.na(lu_ccg_groups))
+        lu_ccg_groups <- f__transform__create_local_lu()$lu_ccg_groups
 
     # eng totals
+    # only modify the data_ind and data_prev tables
     l_add_eng <- function(x, bProcess = FALSE) {
         if (bProcess) {
-            x$data <- x$data[c("ind", "prev.melt")] %>%
-                lapply(function(x) {
-                    list(
-                        x
-                        , x %>%
-                            filter(org.type == "ccg::practice") %>%
-                            group_by_at(vars(-value, -ccg_code, -practice_code)) %>%
-                            summarise_at(vars(value), sum, na.rm = TRUE) %>%
-                            ungroup() %>%
-                            mutate(ccg_code = "eng", practice_code = "eng", org.type = "england")
-                    ) %>% bind_rows()
+
+            l_calc_subtotal <- function(y) {
+                y %>%
+                    filter(org.type == "ccg::practice") %>%
+                    group_by_at(vars(-value, -ccg_code, -practice_code)) %>%
+                    summarise_at(vars(value), sum, na.rm = TRUE) %>%
+                    ungroup() %>%
+                    mutate(
+                        org.type = "england"
+                        , ccg_code = "eng"
+                        , practice_code = "eng"
+                    )
+            }
+
+            these_tables <- c("data_ind", "data_prev")
+
+            x[these_tables] <- x[these_tables] %>%
+                lapply(function(y) {
+                    list(y, l_calc_subtotal(y)) %>%
+                        bind_rows()
                 })
         }
+
         invisible(x)
     }
 
     # filter local ccgs
-    l_filter_ccgs <- function(x, lu.orgs.ccgs.local) {
-        if (length(lu.orgs.ccgs.local) > 1 | !any(is.na(lu.orgs.ccgs.local))) {
-            x$data <- x$data %>%
-                lapply(function(x) {
+    l_filter_ccgs <- function(x, lu_ccgs) {
+        if (length(lu_ccgs) > 1 | !any(is.na(lu_ccgs))) {
+
+            these_tables <- c("data_ind", "data_prev")
+
+            x[these_tables] <- x[these_tables] %>%
+                lapply(function(y) {
                     list(
-                        x %>% filter(org.type != "ccg::practice")
-                        , x %>% filter(org.type == "ccg::practice", ccg_code %in% lu.orgs.ccgs.local)
+                        y %>% filter(org.type != "ccg::practice")
+                        , y %>% filter(org.type == "ccg::practice", ccg_code %in% lu_ccgs)
                     ) %>% bind_rows()
                 })
         }
@@ -277,21 +326,26 @@ f__91__amend_data__add_subtotals <- function(
     #'
     l_add_ccgs <- function(x, bProcess = FALSE) {
         if (bProcess) {
-            x$data <- x$data[c("ind", "prev.melt")] %>%
-                lapply(function(x) {
-                    list(
-                        x,
-                        x %>%
-                            filter(org.type == "ccg::practice") %>%
-                            group_by_at(vars(-value, -practice_code)) %>%
-                            summarise_at(vars(value), sum, na.rm = TRUE) %>%
-                            ungroup() %>%
-                            mutate(
-                                practice_code = ccg_code
-                                , ccg_code = "ccg"
-                                , org.type = "ccg::instance"
-                            )
-                    ) %>% bind_rows()
+
+            l_calc_subtotal <- function(y) {
+                y %>%
+                    filter(org.type == "ccg::practice") %>%
+                    group_by_at(vars(-value, -practice_code)) %>%
+                    summarise_at(vars(value), sum, na.rm = TRUE) %>%
+                    ungroup() %>%
+                    mutate(
+                        org.type = "ccg::instance"
+                        , practice_code = ccg_code
+                        , ccg_code = "ccg"
+                    )
+            }
+
+            these_tables <- c("data_ind", "data_prev")
+
+            x[these_tables] <- x[these_tables] %>%
+                lapply(function(y) {
+                    list(y, l_calc_subtotal(y)) %>%
+                        bind_rows()
                 })
         }
         invisible(x)
@@ -299,77 +353,101 @@ f__91__amend_data__add_subtotals <- function(
 
     # create ccg groups
     # really need to learn about quosures
-    l_add_groups <- function(x, lu.orgs.ccgs.groups) {
-        if (length(lu.orgs.ccgs.groups) > 1 | !any(is.na(lu.orgs.ccgs.groups))) {
+    l_add_groups <- function(x, lu_ccg_groups) {
+        if (length(lu_ccg_groups) > 1 | !any(is.na(lu_ccg_groups))) {
+
+            l_calc_subtotal <- function(y) {
+                y %>%
+                    # choose ccg quantities
+                    filter(org.type == "ccg::instance") %>%
+                    # tag ccg groups
+                    merge(
+                        lu_ccg_groups %>%
+                            rename(practice_code = "ccg_code") %>%
+                            select(practice_code, ccg_group_code, ccg_group_type)
+                        , all.y = TRUE
+                        , by = "practice_code"
+                    ) %>%
+                    mutate(
+                        org.type = paste(ccg_group_type, "instance", sep = "::")
+                        , ccg_code = ccg_group_type
+                        , practice_code = ccg_group_code
+                    ) %>% select(-starts_with("ccg_group")) %>%
+                    # summarise over the new ccg groups
+                    group_by_at(vars(-value)) %>%
+                    summarise_at(vars(value), sum, na.rm = TRUE) %>%
+                    ungroup()
+            }
 
             l_group <- function(x) {
-                list(
-                    x
-                    , x %>%
-                        # choose ccg quantities
-                        filter(org.type == "ccg::instance") %>%
-                        # tag ccg groups
-                        merge(
-                            lu.orgs.ccgs.groups %>%
-                                rename(practice_code = "ccg_code") %>%
-                                select(practice_code, ccg_group_code, ccg_group_type)
-                            , all.y = TRUE
-                            , by = "practice_code"
-                        ) %>%
-                        mutate(
-                            org.type = paste(ccg_group_type, "instance", sep = "::")
-                            , ccg_code = ccg_group_type
-                            , practice_code = ccg_group_code
-                        ) %>% select(-starts_with("ccg_group")) %>%
-                        # summarise over the new ccg groups
-                        group_by_at(vars(-value)) %>%
-                        summarise_at(vars(value), sum, na.rm = TRUE) %>%
-                        ungroup()
-                ) %>% bind_rows()
+                list(x, l_calc_subtotal(x)) %>% bind_rows()
             }
-            x$data <- x$data[c("ind", "prev.melt")] %>% lapply(l_group)
+
+            these_tables <- c("data_ind", "data_prev")
+
+            x[these_tables] <- x[these_tables] %>% lapply(l_group)
         }
+
         invisible(x)
     }
 
     qof %>%
-        status("INFO: - calculating england total ...") %>%
+        status(
+            "INFO: - calculating england total ..."
+        ) %>%
         l_add_eng(bCalcEngTotal) %>%
-
-        status("INFO: - filtering local ccgs ...") %>%
-        l_filter_ccgs(c(lu.orgs.ccgs.local)) %>%
-
-        status("INFO: - calculating ccg totals ...") %>%
+        status(
+            "INFO: - filtering local ccgs ..."
+        ) %>%
+        l_filter_ccgs(c(lu_ccgs)) %>%
+        status(
+            "INFO: - calculating ccg totals ..."
+        ) %>%
         l_add_ccgs(bCalcCCGTotals) %>%
-
-        status("INFO: - calculating ccg groups ...") %>%
-        l_add_groups(lu.orgs.ccgs.groups) %>%
-
-        status("INFO: - done.") %>%
-
+        status(
+            "INFO: - calculating ccg groups ..."
+        ) %>%
+        l_add_groups(lu_ccg_groups) %>%
+        status(
+            "INFO: - done."
+        ) %>%
         invisible()
 }
 
 #' Merge ccg groups into orgref
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
-#' @param lu.orgs.ccgs.groups ccg group lookup (see \code{\link{main}})
+#' @inheritParams f__transform__preprocess
 #'
-#' @return list of lists (see \code{\link{f__extract__load_raw}})
+#' @param lu_ccg_groups ccg group lookup (see \code{\link{main}})
+#'
+#' @return a list with named items
+#' \tabular{ll}{
+#'   \code{meta_org}  \tab Organisation metadata \cr
+#'   \code{meta_ind}  \tab Indicator metadata \cr
+#'   \code{data_prev} \tab Prevalence data (molten on measure/value) \cr
+#'   \code{data_ind}  \tab Indicator data  (molten on measure/value) \cr
+#' }
+#'
+#' @seealso f__transform__create_local_lu
 #'
 #' @family Internal routines
 #' @family Process routines
 #'
-f__91__amend_orgref__ccg_groups <- function(
+f__transform__meta__ccg_groups <- function(
     qof
-    , lu.orgs.ccgs.groups = NA
+    , lu_ccg_groups = NA
 ){
+    cat("INFO: f__transform__meta__ccg_groups: transforming meta_org ...", "\n")
+
     # ccg_group_type,ccg_group_name,ccg_code,ccg_group_code,ccg_group_name
     # uop,Unit of Planning,02Q,nno,North Notts. UOP
 
-    qof$reference$orgref <- list(
-        qof$reference$orgref
-        , lu.orgs.ccgs.groups %>%
+    if (is.na(lu_ccg_groups))
+        lu_ccg_groups <- f__transform__create_local_lu()$lu_ccg_groups
+
+    qof$meta_org <- list(
+        qof$meta_org
+        , lu_ccg_groups %>%
             select(-ccg_code, -type_display_order) %>%
             rename(
                 practice_code = "ccg_group_code", practice_name = "ccg_group_name"
@@ -377,7 +455,7 @@ f__91__amend_orgref__ccg_groups <- function(
             ) %>%
             mutate(
                 ccg_geography_code = ccg_code
-                , data_source = qof$reference$orgref$data_source %>% unique()
+                , qof_period = qof$meta_org$qof_period %>% unique()
             ) %>%
             unique()
     ) %>% bind_rows()
@@ -421,4 +499,24 @@ f__91__save_reference <- function(
         this.file <- paste0("./data-raw/", qof_root, "_indmap", file_suffix, ".csv")
         fwrite(qof$reference$indmap, file = this.file)
     }
+}
+
+#' Apply all transforms
+#'
+#' @inheritParams f__transform__preprocess
+#'
+#' @param lu_ccg_groups local ccg group lookups.  NA means use Notts. default.
+#'
+#' @seealso f__transform__create_local_lu
+#'
+f__transform <- function(
+    qof
+    , lu_ccg_groups = NA
+    ) {
+    qof %>%
+        f__transform__preprocess() %>%
+        f__transform__data__add_orgtype() %>%
+        f__transform__data__add_subtotals() %>%
+        f__transform__meta__ccg_groups(lu_ccg_groups) %>%
+        invisible()
 }

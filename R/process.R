@@ -51,7 +51,7 @@ f__91__process__reference_measures_compare <- function(
     # raw data and reference
 
     qof <- f__91__load_data(qof_root) %>%
-        f__91__amend_data__add_subtotals(
+        f__transform__add_subtotals(
             bCalcEngTotal = TRUE
             , bCalcCCGTotals = TRUE
             , lu.orgs.ccgs.local = lu.orgs.ccgs.local

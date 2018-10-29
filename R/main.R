@@ -34,11 +34,14 @@ main <- function(
 ) {
     qof_period <- match.arg(qof_period)
 
+    lu_local <- f__transform__create_local_lu()
 
+    lu_ccgs <- lu_local$lu_ccgs
 
+    lu_ccg_groups <- lu_local$lu_ccg_groups
 
     # short inspection of lookup
-    lu.orgs.ccgs.groups %>%
+    lu_ccg_groups %>%
         reshape2::dcast(... ~ ccg_code, fun.aggregate = length, value.var = "ccg_group_code") %>%
         print()
 
@@ -48,8 +51,8 @@ main <- function(
         if (bProcessRaw == TRUE) {
             retval <- f__91__process__reference_measures_compare(
                 qof_period, bWriteCSV = bWriteCSV
-                , lu.orgs.ccgs.local = lu.orgs.ccgs.local
-                , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
+                , lu_ccgs = lu_ccgs
+                , lu_ccg_groups = lu_ccg_groups
             )
         } else {
             retval <- f__91__load__reference_measures_compare(
@@ -57,11 +60,11 @@ main <- function(
                 , bLoadData
             )
             if (bLoadData == TRUE) {
-                retval <- retval %>% f__91__amend_data__add_subtotals(
+                retval <- retval %>% f__transform__add_subtotals(
                     bCalcEngTotal = TRUE
                     , bCalcCCGTotals = TRUE
-                    , lu.orgs.ccgs.local = lu.orgs.ccgs.local
-                    , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
+                    , lu_ccgs = lu_ccgs
+                    , lu_ccg_groups = lu_ccg_groups
                 )
             }
         }
