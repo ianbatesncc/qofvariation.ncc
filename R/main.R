@@ -17,8 +17,6 @@
 #' loads measures and reference data.  To additionally load raw data specify
 #' \code{bLoadData = TRUE}
 #'
-#'
-#'
 #' @examples
 #' \dontrun{
 #' v1 <- main(qof_period = "1516", bProcessRaw = TRUE, bWriteCSV = TRUE)
@@ -27,17 +25,19 @@
 #' @export
 #'
 main <- function(
-    qof_period = c("1617", "1516")
+    qof_root = c(
+        "qof-1718", "qof-1617"
+        , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
+        , "qof-1011", "qof-0910", "qof-0809", "qof-0708", "qof-0607"
+        , "qof-0506", "qof-0405"
+    )
     , bProcessRaw = FALSE
-    , bWriteCSV = FALSE
-    , bLoadData = FALSE
 ) {
-    qof_period <- match.arg(qof_period)
+    qof_root <- match.arg(qof_root, several.ok = TRUE)
 
     lu_local <- f__transform__create_local_lu()
 
     lu_ccgs <- lu_local$lu_ccgs
-
     lu_ccg_groups <- lu_local$lu_ccg_groups
 
     # short inspection of lookup
@@ -47,32 +47,26 @@ main <- function(
 
     retval <- NULL
 
-    if (!is.na(bProcessRaw)) {
-        if (bProcessRaw == TRUE) {
-            retval <- f__91__process__reference_measures_compare(
-                qof_period, bWriteCSV = bWriteCSV
-                , lu_ccgs = lu_ccgs
-                , lu_ccg_groups = lu_ccg_groups
-            )
-        } else {
-            retval <- f__91__load__reference_measures_compare(
-                qof_period
-                , bLoadData
-            )
-            if (bLoadData == TRUE) {
-                retval <- retval %>% f__transform__add_subtotals(
-                    bCalcEngTotal = TRUE
-                    , bCalcCCGTotals = TRUE
-                    , lu_ccgs = lu_ccgs
-                    , lu_ccg_groups = lu_ccg_groups
-                )
-            }
-        }
-    }
+    qof_extract <- f__extract(qof_root, bProcessRaw)
+
+    qof_transform <- qof_extract %>% f__transform(
+        lu_ccgs
+        , lu_ccg_groups
+    )
+
+    qof_measures <- qof_transform %>%
+        f__process__measures(bWriteCSV = bWriteCSV)
+
+    qof_compare <- qof_measures %>%
+        f__process__compare(bWriteCSV = bWriteCSV)
 
     # return
 
-    invisible(retval)
+    invisible(list(
+        qof = qof
+        , measures = qof_measures
+        , compare = qof_compare
+    ))
 }
 
 #' Test the main routine
@@ -90,13 +84,13 @@ test_main <- function(bProcessRaw = TRUE) {
     v4 <- NA
 
     if (is.na(bProcessRaw) | bProcessRaw) {
-        v1 <- main(qof_period = "1516", bProcessRaw = TRUE, bWriteCSV = TRUE)
-        v3 <- main(qof_period = "1617", bProcessRaw = TRUE, bWriteCSV = TRUE)
+        v1 <- main(qof_root = "qof-1516", bProcessRaw = TRUE)
+        v3 <- main(qof_root = "qof-1617", bProcessRaw = TRUE)
     }
 
     if (is.na(bProcessRaw) | !bProcessRaw) {
-        v2 <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
-        v4 <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
+        v2 <- main(qof_root = "qof-1516", bProcessRaw = FALSE)
+        v4 <- main(qof_root = "qof-1617", bProcessRaw = FALSE)
     }
 
     invisible(list(v1 = v1, v2 = v2, v3 = v3, v4 = v4))

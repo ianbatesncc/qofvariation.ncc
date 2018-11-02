@@ -159,12 +159,13 @@ f__transform__preprocess <- function(
             , all.x = TRUE
         ) %>%
         # tag non-register indicators with indicator_group_code, domain_code
+        # use as a filter hence inner not left join
         merge(
             q.meta_ind %>%
                 filter(is.register == FALSE) %>%
                 select(indicator_code, indicator_group_code, domain_code)
             , by = "indicator_code"
-            , all.x = TRUE, all.y = TRUE
+            , all.x = FALSE, all.y = TRUE
         )
 
     # data_prev  ####
@@ -188,6 +189,7 @@ f__transform__preprocess <- function(
         ) %>%
         select(-patient_list_type) %>%
         # tag with register indicator code and domain_code
+        # use as a filter hence inner not left join
         merge(
             q.meta_ind %>%
                 filter(is.register == TRUE) %>%
@@ -208,7 +210,6 @@ f__transform__preprocess <- function(
         meta_org = q.meta_org
         , meta_ind = q.meta_ind
         , data_prev = q.data_prev_melt
-        #, data_prev_cast = q.data_prev
         , data_ind = q.data_ind
     ))
 }
@@ -266,10 +267,10 @@ f__transform__data__add_subtotals <- function(
 ) {
     cat("INFO: f__transform__data__add_subtotals: amending ...", "\n")
 
-    if (is.na(lu_ccgs))
+    if (any(is.na(lu_ccgs)))
         lu_ccgs <- f__transform__create_local_lu()$lu_ccgs
 
-    if (is.na(lu_ccg_groups))
+    if (any(is.na(lu_ccg_groups)))
         lu_ccg_groups <- f__transform__create_local_lu()$lu_ccg_groups
 
     # eng totals
@@ -442,7 +443,7 @@ f__transform__meta__ccg_groups <- function(
     # ccg_group_type,ccg_group_name,ccg_code,ccg_group_code,ccg_group_name
     # uop,Unit of Planning,02Q,nno,North Notts. UOP
 
-    if (is.na(lu_ccg_groups))
+    if (any(is.na(lu_ccg_groups)))
         lu_ccg_groups <- f__transform__create_local_lu()$lu_ccg_groups
 
     qof$meta_org <- list(
@@ -511,12 +512,13 @@ f__91__save_reference <- function(
 #'
 f__transform <- function(
     qof
+    , lu_ccgs = NA
     , lu_ccg_groups = NA
     ) {
     qof %>%
         f__transform__preprocess() %>%
         f__transform__data__add_orgtype() %>%
-        f__transform__data__add_subtotals() %>%
-        f__transform__meta__ccg_groups(lu_ccg_groups) %>%
+        f__transform__data__add_subtotals(lu_ccgs = lu_ccgs, lu_ccg_groups = lu_ccg_groups) %>%
+        f__transform__meta__ccg_groups(lu_ccg_groups = lu_ccg_groups) %>%
         invisible()
 }

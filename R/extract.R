@@ -1244,7 +1244,7 @@ ages 50+,50OV
 #'   \code{data_ind}  \tab Indicator data \cr
 #' }
 #'
-extract_all <- function(
+f__extract_any <- function(
     qof_root = c(
         "qof-1718", "qof-1617"
         , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
@@ -1290,7 +1290,7 @@ extract_all <- function(
 #'   \code{data_ind}  \tab Indicator data \cr
 #' }
 #'
-merge_all <- function(
+f__combine_any <- function(
     qof_root = c(
         "qof-1718", "qof-1617"
         , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
@@ -1366,10 +1366,19 @@ merge_all <- function(
 #' @param bExtractFromRaw (bool) Flag to do process raw or load pre-extracted.
 #'
 f__extract <- function(
-    bExtractFromRaw = FALSE
+    qof_root = c(
+        "qof-1718", "qof-1617"
+        , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
+        , "qof-1011", "qof-0910", "qof-0809", "qof-0708", "qof-0607"
+        , "qof-0506", "qof-0405"
+    )
+    , bExtractFromRaw = FALSE
 ) {
+
+    qof_root <- match.arg(qof_root, several.ok = TRUE)
+
     if (bExtractFromRaw)
-        extract_all()
+        f__extract_any(qof_root)
     else
-        merge_all()
+        f__combine_any(qof_root)
 }

@@ -1,6 +1,8 @@
-# HELPERS ####
-
-# EXTERNAL ####
+#
+# process.R
+#
+# Take data from extract and produce measures and comapre them.
+#
 
 #' Process all
 #'
@@ -16,70 +18,45 @@
 #' f__91__measures
 #' f__91__compare
 #'
-#' @param qof_period Of the form "YYZZ"
-#' @param lu.orgs.ccgs.local vector of strings for health codes e.g. c("04K", "04E")
-#' @param lu.orgs.ccgs.groups lookup table (see #code{\link{main}})
+#' @param qof (list of data.frames) result of \code{f__transform}
 #' @param bWriteCSV Flag to indicate to write results to file.
 #'
 #' @return a list with named items
 #' \describe{
-#'     \item{data}{Raw numbers}
-#'     \item{reference}{Reference tables}
-#'     \item{measures}{Measures}
-#'     \item{compare}{Comparisons}
+#'     \item{qof (list)}{A list of data_ind, data_prev, meta_ind, meta_prev tables}
+#'     \item{measures (data.frame)}{Measures}
+#'     \item{compare (dtat.frame)}{Comparisons}
 #' }
 #'
 #' @family External routines
 #' @family Process routines
 #'
+#' @seealso f__transform
+#'
 #' @export
 #'
-f__91__process__reference_measures_compare <- function(
-    qof_period = c("1516", "1617")
-    , lu.orgs.ccgs.local = c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
-    , lu.orgs.ccgs.groups = NA
+f__process__reference_measures_compare <- function(
+    qof
     , bWriteCSV = FALSE
 ) {
-    cat("INFO: f__91__process__reference_measures_compare: processing ...", "\n")
-
-    qof_period <- match.arg(qof_period)
+    cat("INFO: f__process__reference_measures_compare: processing ...", "\n")
 
     cat("INFO: bWriteCSV =", bWriteCSV, "\n")
 
-    qof_root <- paste("qof", qof_period, sep = "-")
-
-    # raw data and reference
-
-    qof <- f__91__load_data(qof_root) %>%
-        f__transform__add_subtotals(
-            bCalcEngTotal = TRUE
-            , bCalcCCGTotals = TRUE
-            , lu.orgs.ccgs.local = lu.orgs.ccgs.local
-            , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
-        ) %>%
-        f__91__amend_orgref__ccg_groups(lu.orgs.ccgs.groups)
-
-    qof %>% f__91__save_reference(
-        qof_root, bWriteCSV = bWriteCSV
-    )
-
     # measures and grouping
 
-    qof_measures <- f__91__measures(
-        qof, bWriteCSV = bWriteCSV, qof_root
-    )
+    qof_measures <- qof %>%
+        f__process__measures(bWriteCSV = bWriteCSV)
 
     # compare
 
-    qof_compare <- f__91__compare(
-        qof_measures, bWriteCSV = bWriteCSV, qof_root
-    )
+    qof_compare <- qof_measures %>%
+        f__process__compare(bWriteCSV = bWriteCSV)
 
     # return
 
     return(list(
-        data = qof$data
-        , reference = qof$reference
+        qof = qof
         , measures = qof_measures
         , compare = qof_compare
     ))
@@ -147,14 +124,7 @@ f__91__load__reference_measures_compare <- function(
     ))
 }
 
-# INTERNAL ####
-
-# : PROCESS ####
-
-# : : COUNTS - Load QOF data ####
-
-
-# : : MEASURES ####
+# MEASURES ####
 
 #' Calculate QOF measures
 #'
@@ -182,24 +152,26 @@ f__91__load__reference_measures_compare <- function(
 #' @family Process routines
 #' @family Measure routines
 #'
-f__91__measures <- function(
+f__process__measures <- function(
     qof
     , bWriteCSV = FALSE
-    , qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
+    , bSaveData = TRUE
 ) {
-    cat("INFO: f__91__measures: processing ...", "\n")
+    cat("INFO: f__process__measures: processing ...", "\n")
 
-    m.ind <- f__91__measures_ind(
+    m.ind <- f__process__calc_measures_ind(
         qof
         , bWriteCSV = bWriteCSV
-        , qof_root, file_suffix
+        , file_suffix
+        , bSaveData = bSaveData
     ) %>% data.table::setDT()
 
-    m.prev <- f__91__measures_prev(
+    m.prev <- f__process__calc_measures_prev(
         qof
         , bWriteCSV = bWriteCSV
-        , qof_root, file_suffix
+        , file_suffix
+        , bSaveData = bSaveData
     )
 
     # some practices with a zero register will have zeros for indicators
@@ -215,19 +187,29 @@ f__91__measures <- function(
     # Save
 
     if (bWriteCSV) {
-        cat("INFO: f__91__measures: saving m.comb ...", "\n")
+        cat("INFO: f__process__measures: saving m.comb ...", "\n")
 
-        this.file <- paste0("./data-raw/", qof_root, "_all", file_suffix, ".csv")
-        fwrite(m.comb, file = this.file)
+        for (qof_root in m.comb$qof_period %>% unique()) {
+            this_csv <- paste0("./data-raw/", qof_root, "_all", file_suffix, ".csv")
+
+            cat("INFO: f__process__measures: saving", this_csv, "...", "\n")
+
+            fwrite(m.comb %>% filter(qof_period == qof_root), file = this_csv)
+        }
 
     } else {
-        cat("INFO: f__91__measures: NOT saving m.comb ...", "\n")
+        cat("INFO: f__process__measures: NOT saving m.comb ...", "\n")
+    }
+
+    if (bSaveData) {
+        cat("INFO: f__process__measures: storing qof_measures_combined ...", "\n")
+        usethis__use_data(m.comb, "qof_measures_combined")
     }
 
     invisible(m.comb)
 }
 
-# : : : Indicators ####
+# * Indicators ####
 
 #' Create QOF performance measures
 #'
@@ -246,13 +228,13 @@ f__91__measures <- function(
 #' @family Process routines
 #' @family Measure routines
 #'
-f__91__measures_ind <- function(
+f__process__calc_measures_ind <- function(
     qof
     , bWriteCSV = FALSE
-    , qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
+    , bSaveData = TRUE
 ) {
-    cat("INFO: f__91__measures_ind: processing indicator measures ...", "\n")
+    cat("INFO: f__process__calc_measures_ind: processing indicator measures ...", "\n")
 
     #
     # To do: practice level prevalence, achievement / treatment
@@ -270,7 +252,7 @@ f__91__measures_ind <- function(
     #
     # (practice_code, group, indicator, measure, num, den, value)
 
-    q.ind.combined <- qof$data$ind
+    q.ind.combined <- qof$data_ind
 
     # Calculate measures
 
@@ -300,20 +282,32 @@ performance, suboptimal,    denominator, 0,     1,     1
         dcast(... ~ m.stat, fun.aggregate = sum, value.var = "value") %>%
         mutate(value = 100.0 * numerator / denominator) %>%
         # melt down numerator, denominator and value on m.stat
-        melt(measure.vars = c("numerator", "denominator", "value")
-             , variable.name = "m.stat", variable.factor = FALSE
-             , value.name = "value")
+        melt(
+            measure.vars = c("numerator", "denominator", "value")
+            , variable.name = "m.stat", variable.factor = FALSE
+            , value.name = "value"
+        )
 
     # Save
 
     if (bWriteCSV) {
-        cat("INFO: f__91__measures_ind: saving q.ind.measures ...", "\n")
+        cat("INFO: f__process__calc_measures_ind: saving q.ind.measures ...", "\n")
 
-        this.file <- paste0("./data-raw/", qof_root, "_ind", file_suffix, ".csv")
-        fwrite(q.ind.measures, file = this.file)
+        for (qof_root in q.ind.measures$qof_period %>% unique()) {
+            this_csv <- paste0("./data-raw/", qof_root, "_ind", file_suffix, ".csv")
+
+            cat("INFO: f__process__measures: saving", this_csv, "...", "\n")
+
+            fwrite(q.ind.measures %>% filter(qof_period == qof_root), file = this_csv)
+        }
 
     } else {
-        cat("INFO: f__91__measures_ind: NOT saving q.ind.measures ...", "\n")
+        cat("INFO: f__process__calc_measures_ind: NOT saving q.ind.measures ...", "\n")
+    }
+
+    if (bSaveData) {
+        cat("INFO: f__process__calc_measures_ind: storing qof_measures_ind ...", "\n")
+        usethis__use_data(q.ind.measures, "qof_measures_ind")
     }
 
     #q.ind.measures %>% filter(FALSE) %>% str()
@@ -333,7 +327,7 @@ performance, suboptimal,    denominator, 0,     1,     1
     return(q.ind.measures)
 }
 
-# : : : Prevalence ####
+# * Prevalence ####
 
 #' Create QOF prevalance measures
 #'
@@ -352,13 +346,13 @@ performance, suboptimal,    denominator, 0,     1,     1
 #' @family Process routines
 #' @family Measure routines
 #'
-f__91__measures_prev <- function(
+f__process__calc_measures_prev <- function(
     qof
     , bWriteCSV = FALSE
-    , qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
+    , bSaveData = TRUE
 ) {
-    cat("INFO: f__91__measures_prev: processing prevalence measures ...", "\n")
+    cat("INFO: f__process__calc_measures_prev: processing prevalence measures ...", "\n")
 
     # England, CCG, CDG, Practice level
 
@@ -371,7 +365,7 @@ f__91__measures_prev <- function(
     #  $ measure             : chr  "register" "register" "register" "register" ...
     #  $ value               : int  238 783 290 399 485 257 71 122 710 495 ...
 
-    qof.prev.combined <- qof$data$prev.melt
+    qof.prev.combined <- qof$data_prev
 
     # Calculate measures
 
@@ -394,20 +388,32 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         mutate_at(c("numerator", "denominator"), as.double) %>%
         mutate(value = 100 * numerator / denominator) %>%
         # melt down numerator, denominator and value on m.stat
-        melt(measure.vars = c("numerator", "denominator", "value")
+        melt(
+            measure.vars = c("numerator", "denominator", "value")
              , variable.name = "m.stat", variable.factor = FALSE
-             , value.name = "value")
+             , value.name = "value"
+        )
 
     # Save
 
     if (bWriteCSV) {
-        cat("INFO: f__91__measures_prev: saving q.prev.measures ...", "\n")
+        cat("INFO: f__process__calc_measures_prev: saving q.prev.measures ...", "\n")
 
-        this.file <- paste0("./data-raw/", qof_root, "_prev", file_suffix, ".csv")
-        fwrite(q.prev.measures, file = this.file)
+        for (qof_root in q.prev.measures$qof_period %>% unique()) {
+            this_csv <- paste0("./data-raw/", qof_root, "_prev", file_suffix, ".csv")
+
+            cat("INFO: f__process__measures: saving", this_csv, "...", "\n")
+
+            fwrite(q.prev.measures %>% filter(qof_period == qof_root), file = this_csv)
+        }
 
     } else {
-        cat("INFO: f__91__measures_prev: NOT saving q.prev.measures ...", "\n")
+        cat("INFO: f__process__calc_measures_prev: NOT saving q.prev.measures ...", "\n")
+    }
+
+    if (bSaveData) {
+        cat("INFO: f__process__calc_measures_ind: storing qof_measures_prev ...", "\n")
+        usethis__use_data(q.prev.measures, "qof_measures_prev")
     }
 
     # return
@@ -415,7 +421,7 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
     return(q.prev.measures)
 }
 
-# : : COMPARE - Add England comparator and significance test ####
+# COMPARE - Add England comparator and significance test ####
 
 #' Compare routines
 #'
@@ -437,13 +443,13 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 #' @family Internal routines
 #' @family Compare routines
 #'
-f__91__compare <- function(
+f__process__compare <- function(
     qof_measures
-    , bWriteCSV = TRUE
-    , qof_root
+    , bWriteCSV = FALSE
+    , bSaveData = TRUE
     , file_suffix = "__eng_ccg_prac__compare__bench_spc23__eng_ccg"
 ) {
-    cat("INFO: f__91__compare: processing statistical significance comparison ...", "\n")
+    cat("INFO: f__process__compare: processing statistical significance comparison ...", "\n")
 
     taskdir <- proj_root()
 
@@ -460,18 +466,18 @@ f__91__compare <- function(
     # Melted on statistic.  Extract England, spin both up on m.stat, tag England,
     # do stat. compare, remove uneeded columns, spin back down
 
-    cat("INFO: f__91__compare: creating reference lookups ...", "\n")
+    cat("INFO: f__process__compare: creating reference lookups ...", "\n")
 
     #qof_measures$prev$org.type %>% unique() %>% print()
     # [1] "ccg::practice" "ccg::instance" "england"
 
-    # All that is not England ####
+    # * All that is not England ####
 
     q.var.cast <- qof_measures %>%
         filter(org.type != "england", m.stat %in% c("value", "numerator", "denominator")) %>%
         reshape2::dcast(... ~ m.stat, value.var = "value")
 
-    # National reference ####
+    # * National reference ####
 
     tmp.nat <- merge(
         q.var.cast
@@ -483,7 +489,7 @@ f__91__compare <- function(
         , all.x = TRUE, suffixes = c(".var", ".ref")
     )
 
-    # N2 (Nottinghamshire and Nottingham) reference ####
+    # * N2 (Nottinghamshire and Nottingham) reference ####
 
     tmp.n2 <- merge(
         q.var.cast
@@ -495,7 +501,7 @@ f__91__compare <- function(
         , all.x = TRUE, suffixes = c(".var", ".ref")
     )
 
-    # ccg reference ####
+    # * CCG reference ####
 
     tmp.ccg <- merge(
         q.var.cast
@@ -508,14 +514,14 @@ f__91__compare <- function(
         , all.x = FALSE, all.y = FALSE, suffixes = c(".var", ".ref")
     )
 
-    # combine ####
+    # * Combine ####
 
     qof.combined <- list(tmp.nat, tmp.n2, tmp.ccg) %>%
         bind_rows()
 
-    # compare ####
+    # Compare ####
 
-    cat("INFO: f__91__compare: calculating confidence intervals ... (combined)", "\n")
+    cat("INFO: f__process__compare: calculating confidence intervals ... (combined)", "\n")
 
     benchmark.level <- 0.95
 
@@ -576,26 +582,44 @@ f__91__compare <- function(
             , -ends_with("ator")
         )
 
-    # save ####
+    # Save ####
 
     if (bWriteCSV) {
-        cat("INFO: saving qof.comp ...", "\n")
+        cat("INFO: f__process__compare: saving qof.comp ...", "\n")
 
-        this.file <- paste0("./data-raw/", qof_root, "_all", file_suffix, ".csv")
-        fwrite(qof.comp, file = this.file)
+        for (qof_root in qof.comp$qof_period %>% unique()) {
 
-        cat("INFO: saving qof.prev.comp ...", "\n")
+            this_csv <- paste0("./data-raw/", qof_root, "_all", file_suffix, ".csv")
+            cat("INFO: f__process__compare: saving", this_csv, "...", "\n")
+            fwrite(
+                qof.comp %>% filter(qof_period == qof_root)
+                , file = this_csv
+            )
 
-        this.file <- paste0("./data-raw/", qof_root, "_prev", file_suffix, ".csv")
-        fwrite(qof.comp %>% filter(m.type == "prevalence"), file = this.file)
+            this_csv <- paste0("./data-raw/", qof_root, "_prev", file_suffix, ".csv")
+            cat("INFO: f__process__compare: saving", this_csv, "...", "\n")
+            fwrite(
+                qof.comp %>%
+                    filter(qof_period == qof_root, m.type == "prevalence")
+                , file = this_csv
+            )
 
-        cat("INFO: saving qof.ind.comp ...", "\n")
-
-        this.file <- paste0("./data-raw/", qof_root, "_ind", file_suffix, ".csv")
-        fwrite(qof.comp %>% filter(m.type == "performance"), file = this.file)
+            this_csv <- paste0("./data-raw/", qof_root, "_ind", file_suffix, ".csv")
+            cat("INFO: f__process__compare: saving", this_csv, "...", "\n")
+            fwrite(
+                qof.comp %>%
+                    filter(qof_period == qof_root, m.type == "performance")
+                , file = this_csv
+            )
+        }
 
     } else {
-        cat("INFO: NOT saving qof.comp ...", "\n")
+        cat("INFO: f__process__compare: NOT saving qof.comp ...", "\n")
+    }
+
+    if (bSaveData) {
+        cat("INFO: f__process__compare: storing qof_compare ...", "\n")
+        usethis__use_data(qof.comp, "qof_compare")
     }
 
     # return
@@ -603,7 +627,7 @@ f__91__compare <- function(
     return(qof.comp)
 }
 
-# : LOAD ####
+# LOAD ####
 
 #' load raw data
 #'
