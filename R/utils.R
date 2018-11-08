@@ -170,7 +170,8 @@ fglimpse <- function(x, width = NULL, showvalues = TRUE, ...) {
                             , " "
                             , data.frame(
                                 n = names(s)
-                                , v = formatC(as.numeric(s), digits = 3, width = 0)
+                                # avoid NA conversion messages - expected
+                                , v = formatC(suppressWarnings(as.numeric(s)), digits = 3, width = 0)
                             ) %>%
                                 mutate(l = paste0(n, ": ", v)) %>%
                                 .$l %>%
