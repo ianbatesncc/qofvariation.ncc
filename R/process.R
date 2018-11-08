@@ -446,8 +446,8 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 f__process__compare <- function(
     qof_measures
     , bWriteCSV = FALSE
-    , bSaveData = TRUE
     , file_suffix = "__eng_ccg_prac__compare__bench_spc23__eng_ccg"
+    , bSaveData = TRUE
 ) {
     cat("INFO: f__process__compare: processing statistical significance comparison ...", "\n")
 

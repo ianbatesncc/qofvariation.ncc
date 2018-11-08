@@ -1277,7 +1277,7 @@ f__extract_any <- function(
 #' Merges data from multiple qof periods.  Uses the post-extract results.  Binds
 #' qof periods into relevant data.frames.
 #'
-#' @inheritParams extract_all
+#' @inheritParams f__extract__load_raw
 #'
 #' @importFrom data.table setDT rbindlist
 #' @importFrom purrr walk2
@@ -1362,6 +1362,8 @@ f__combine_any <- function(
 #' Return extracted dataset
 #'
 #' Either extract from raw values or load pre-extracted values.
+#'
+#' @inheritParams f__extract__load_raw
 #'
 #' @param bExtractFromRaw (bool) Flag to do process raw or load pre-extracted.
 #'

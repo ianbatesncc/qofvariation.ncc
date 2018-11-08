@@ -216,7 +216,7 @@ f__transform__preprocess <- function(
 
 #' Add org.type field to data
 #'
-#' Modifies dat_ind and data_prev tables by adding a field \code-{org.type} with
+#' Modifies dat_ind and data_prev tables by adding a field \code{org.type} with
 #' value \code{ccg::practice}
 #'
 #' @inheritParams f__transform__preprocess

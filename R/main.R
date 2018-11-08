@@ -4,10 +4,13 @@
 #' Option to specify if to save results to disc as .csv Option to specify just
 #' to load the data
 #'
-#' @param qof_period Of the form "YYZZ"
-#' @param bProcessRaw if FALSE just load.  If TRUE process and then load.
-#' @param bWriteCSV Flag to indicate to write results to file.
-#' @param bLoadData Specify to load raw numbers too.
+#' @param qof_period (character) Of the form "YYZZ"
+#' @param bProcessRaw (bool) if FALSE just load.  If TRUE process and then load.
+#'   Default FALSE.
+#' @param bWriteCSV (bool) Flag to indicate to write results to file.  Default
+#'   FALSE.
+#' @param bSaveData (bool) Specify to save measures and compare phases.  Default FALSE.
+#' @param bLoadData (bool) Specify to load raw numbers too.  Default FALSE.
 #'
 #' @note
 #'
@@ -19,8 +22,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' v1 <- main(qof_period = "1516", bProcessRaw = TRUE, bWriteCSV = TRUE)
-#' v2 <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
+#' v1 <- main(qof_root = "1516", bProcessRaw = TRUE,  bWriteCSV = TRUE)
+#' v2 <- main(qof_root = "1516", bProcessRaw = FALSE, bWriteCSV = FALSE)
 #' }
 #' @export
 #'
@@ -32,6 +35,9 @@ main <- function(
         , "qof-0506", "qof-0405"
     )
     , bProcessRaw = FALSE
+    , bWriteCSV = FALSE
+    , bSaveData = FALSE
+    , bLoadData = FALSE
 ) {
     qof_root <- match.arg(qof_root, several.ok = TRUE)
 
@@ -55,10 +61,10 @@ main <- function(
     )
 
     qof_measures <- qof_transform %>%
-        f__process__measures(bWriteCSV = bWriteCSV)
+        f__process__measures(bWriteCSV = bWriteCSV, bSaveData = bSaveData)
 
     qof_compare <- qof_measures %>%
-        f__process__compare(bWriteCSV = bWriteCSV)
+        f__process__compare(bWriteCSV = bWriteCSV, bSaveData = bSaveData)
 
     # return
 

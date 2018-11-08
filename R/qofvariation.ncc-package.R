@@ -90,7 +90,7 @@ NULL
 NULL
 
 
-# Workaround to dodge check warnings about field names
+# Workaround to dodge check warnings about field names ####
 utils::globalVariables(
     c(
         ":="
