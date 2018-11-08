@@ -483,9 +483,13 @@ f__process__compare <- function(
         q.var.cast
         , qof_measures %>%
             filter(org.type == "england", m.stat == "value") %>%
-            select(-data_source, -ccg_code, -practice_code) %>%
+            select(-ccg_code, -practice_code) %>%
             reshape2::dcast(... ~ m.stat, value.var = "value")
-        , by = c("domain_code", "indicator_group_code", "indicator_code", "m.type", "m.name")
+        , by = c(
+            "qof_period"
+            , "domain_code", "indicator_group_code"
+            , "indicator_code", "m.type", "m.name"
+        )
         , all.x = TRUE, suffixes = c(".var", ".ref")
     )
 
@@ -495,9 +499,13 @@ f__process__compare <- function(
         q.var.cast
         , qof_measures %>%
             filter(org.type == "lep::instance", m.stat == "value") %>%
-            select(-data_source, -ccg_code, -practice_code) %>%
+            select(-ccg_code, -practice_code) %>%
             reshape2::dcast(... ~ m.stat, value.var = "value")
-        , by = c("domain_code", "indicator_group_code", "indicator_code", "m.type", "m.name")
+        , by = c(
+            "qof_period"
+            , "domain_code", "indicator_group_code", "indicator_code"
+            , "m.type", "m.name"
+        )
         , all.x = TRUE, suffixes = c(".var", ".ref")
     )
 
@@ -507,10 +515,15 @@ f__process__compare <- function(
         q.var.cast
         , qof_measures %>%
             filter(org.type == "ccg::instance", m.stat == "value") %>%
-            select(-data_source, -ccg_code) %>%
+            select(-ccg_code) %>%
             rename(ccg_code = "practice_code") %>%
             reshape2::dcast(... ~ m.stat, value.var = "value")
-        , by = c("domain_code", "indicator_group_code", "indicator_code", "ccg_code", "m.type", "m.name")
+        , by = c(
+            "qof_period"
+            , "domain_code", "indicator_group_code", "indicator_code"
+            , "ccg_code"
+            , "m.type", "m.name"
+        )
         , all.x = FALSE, all.y = FALSE, suffixes = c(".var", ".ref")
     )
 
