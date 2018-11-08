@@ -48,17 +48,19 @@ main <- function(
 
     # short inspection of lookup
     lu_ccg_groups %>%
-        reshape2::dcast(... ~ ccg_code, fun.aggregate = length, value.var = "ccg_group_code") %>%
+        reshape2::dcast(
+            ... ~ ccg_code
+            , fun.aggregate = length
+            , value.var = "ccg_group_code"
+        ) %>%
         print()
 
     retval <- NULL
 
     qof_extract <- f__extract(qof_root, bProcessRaw)
 
-    qof_transform <- qof_extract %>% f__transform(
-        lu_ccgs
-        , lu_ccg_groups
-    )
+    qof_transform <- qof_extract %>%
+        f__transform(lu_ccgs, lu_ccg_groups)
 
     qof_measures <- qof_transform %>%
         f__process__measures(bWriteCSV = bWriteCSV, bSaveData = bSaveData)
