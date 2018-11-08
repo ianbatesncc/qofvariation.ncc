@@ -2,7 +2,7 @@
 % Please edit documentation in R/extract.R
 \name{f__extract__load_raw}
 \alias{f__extract__load_raw}
-\alias{extract_all}
+\alias{f__extract_any}
 \title{load raw QOF data}
 \usage{
 f__extract__load_raw(qof_root = c("qof-1718", "qof-1617", "qof-1516",
@@ -10,26 +10,35 @@ f__extract__load_raw(qof_root = c("qof-1718", "qof-1617", "qof-1516",
   "qof-0809", "qof-0708", "qof-0607", "qof-0506", "qof-0405"),
   bSaveData = FALSE)
 
-extract_all(qof_root = c("qof-1718", "qof-1617", "qof-1516", "qof-1415",
-  "qof-1314", "qof-1213", "qof-1112", "qof-1011", "qof-0910", "qof-0809",
-  "qof-0708", "qof-0607", "qof-0506", "qof-0405"), bSaveData = FALSE)
+f__extract_any(qof_root = c("qof-1718", "qof-1617", "qof-1516",
+  "qof-1415", "qof-1314", "qof-1213", "qof-1112", "qof-1011", "qof-0910",
+  "qof-0809", "qof-0708", "qof-0607", "qof-0506", "qof-0405"),
+  bSaveData = FALSE)
 }
 \arguments{
-\item{qof_root}{Directory root for loading and saving any processed data.  Of the form
-\code{qof-YYZZ}}
+\item{qof_root}{(character)
 
-\item{bSaveData}{(boolean) Flag to determine whether to save datasets as
+  Directory root for loading and saving any processed data.  Of the form
+  \code{qof-YYZZ}}
+
+\item{bSaveData}{(bool) Flag to determine whether to save datasets as
 \code{devtools::use_data}}
 }
 \value{
-a list of lists with named items
-\describe{
-    \item{reference}{
-        \itemize{\item{orgref}\item{indmap}}
-    }
-    \item{data}{
-        \itemize{\item{prev}\item{ind}}
-    }
+a list with named items
+\tabular{ll}{
+  \code{meta_org}  \tab Organisation metadata \cr
+  \code{meta_ind}  \tab Indicator metadata \cr
+  \code{data_prev} \tab Prevalence data \cr
+  \code{data_ind}  \tab Indicator data \cr
+}
+
+a list with named items
+\tabular{ll}{
+  \code{meta_org}  \tab Organisation metadata \cr
+  \code{meta_ind}  \tab Indicator metadata \cr
+  \code{data_prev} \tab Prevalence data \cr
+  \code{data_ind}  \tab Indicator data \cr
 }
 }
 \description{
@@ -37,7 +46,9 @@ put in an R list for later analysis
 }
 \section{Functions}{
 \itemize{
-\item \code{extract_all}: Extract all qof data
+\item \code{f__extract_any}: Extract all qof data
+
+Extracts data from multiple qof periods.  Binds qof periods into data.frames.
 }}
 
 \note{
@@ -45,18 +56,18 @@ HF double counted - register_description has HF and HF with LVD
   - keep just HF
 }
 \seealso{
-Other Internal routines: \code{\link{f__91__amend_data__add_subtotals}},
-  \code{\link{f__91__amend_orgref__ccg_groups}},
-  \code{\link{f__91__compare}},
-  \code{\link{f__91__load_compare}},
+Other Internal routines: \code{\link{f__91__load_compare}},
   \code{\link{f__91__load_data}},
   \code{\link{f__91__load_measures}},
   \code{\link{f__91__load_reference}},
-  \code{\link{f__91__measures_ind}},
-  \code{\link{f__91__measures_prev}},
-  \code{\link{f__91__measures}},
-  \code{\link{f__91__preprocess}},
   \code{\link{f__91__save_reference}},
+  \code{\link{f__process__calc_measures_ind}},
+  \code{\link{f__process__calc_measures_prev}},
+  \code{\link{f__process__compare}},
+  \code{\link{f__process__measures}},
+  \code{\link{f__transform__data__add_subtotals}},
+  \code{\link{f__transform__meta__ccg_groups}},
+  \code{\link{f__transform__preprocess}},
   \code{\link{families}}
 
 Other Load routines: \code{\link{f__91__load__reference_measures_compare}},

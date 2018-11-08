@@ -34,7 +34,7 @@ f__91__load_compare
 f__91__load_data
 }
 \seealso{
-Other External routines: \code{\link{f__91__process__reference_measures_compare}},
+Other External routines: \code{\link{f__process__reference_measures_compare}},
   \code{\link{families}}
 
 Other Load routines: \code{\link{f__91__load_compare}},

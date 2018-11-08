@@ -4,17 +4,23 @@
 \alias{main}
 \title{Process raw datasets}
 \usage{
-main(qof_period = c("1617", "1516"), bProcessRaw = FALSE,
-  bWriteCSV = FALSE, bLoadData = FALSE)
+main(qof_root = c("qof-1718", "qof-1617", "qof-1516", "qof-1415",
+  "qof-1314", "qof-1213", "qof-1112", "qof-1011", "qof-0910", "qof-0809",
+  "qof-0708", "qof-0607", "qof-0506", "qof-0405"), bProcessRaw = FALSE,
+  bWriteCSV = FALSE, bSaveData = FALSE, bLoadData = FALSE)
 }
 \arguments{
-\item{qof_period}{Of the form "YYZZ"}
+\item{bProcessRaw}{(bool) if FALSE just load.  If TRUE process and then load.
+Default FALSE.}
 
-\item{bProcessRaw}{if FALSE just load.  If TRUE process and then load.}
+\item{bWriteCSV}{(bool) Flag to indicate to write results to file.  Default
+FALSE.}
 
-\item{bWriteCSV}{Flag to indicate to write results to file.}
+\item{bSaveData}{(bool) Specify to save measures and compare phases.  Default FALSE.}
 
-\item{bLoadData}{Specify to load raw numbers too.}
+\item{bLoadData}{(bool) Specify to load raw numbers too.  Default FALSE.}
+
+\item{qof_period}{(character) Of the form "YYZZ"}
 }
 \description{
 Options to specify year. Option to specify if to run the raw process routines
@@ -30,7 +36,7 @@ loads measures and reference data.  To additionally load raw data specify
 }
 \examples{
 \dontrun{
-v1 <- main(qof_period = "1516", bProcessRaw = TRUE, bWriteCSV = TRUE)
-v2 <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
+v1 <- main(qof_root = "1516", bProcessRaw = TRUE,  bWriteCSV = TRUE)
+v2 <- main(qof_root = "1516", bProcessRaw = FALSE, bWriteCSV = FALSE)
 }
 }
