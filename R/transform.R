@@ -67,7 +67,10 @@ uop,4
         usethis::use_data(lu_ccg_groups, overwrite = TRUE)
 
         this_csv <- proj_path("./data-raw", "lu_ccg_groups.csv")
-        cat("INFO: saving", this_csv, "...", "\n")
+
+        if (verbosity.showatlevel("chatty"))
+            cat("INFO: saving", this_csv, "...", "\n")
+
         data.table::fwrite(lu_ccg_groups, file = this_csv)
     }
 
@@ -100,7 +103,8 @@ uop,4
 f__transform__preprocess <- function(
     qof
 ) {
-    cat("INFO: f__transform__preprocess: processing lookups ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__preprocess: processing lookups ...", "\n")
 
     # meta_org ####
 
@@ -114,7 +118,8 @@ f__transform__preprocess <- function(
 
     # data_ind ####
 
-    cat("INFO: f__transform__preprocess: processing indicators ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__preprocess: processing indicators ...", "\n")
 
     # ind - qof indicator counts
     # Tag CCG
@@ -170,7 +175,8 @@ f__transform__preprocess <- function(
 
     # data_prev  ####
 
-    cat("INFO: f__transform__preprocess: processing prevalence ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__preprocess: processing prevalence ...", "\n")
 
     # prev - qof registers and list sizes
 
@@ -224,7 +230,8 @@ f__transform__preprocess <- function(
 #' @return list of tables
 #'
 f__transform__data__add_orgtype <- function(qof) {
-    cat("INFO: f__transform__data__add_orgtype: amending ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__data__add_orgtype: amending ...", "\n")
 
     these_tables <- c("data_ind", "data_prev")
 
@@ -265,7 +272,8 @@ f__transform__data__add_subtotals <- function(
     , lu_ccgs = NA
     , lu_ccg_groups = NA
 ) {
-    cat("INFO: f__transform__data__add_subtotals: amending ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__data__add_subtotals: amending ...", "\n")
 
     if (any(is.na(lu_ccgs)))
         lu_ccgs <- f__transform__create_local_lu()$lu_ccgs
@@ -371,10 +379,11 @@ f__transform__data__add_subtotals <- function(
 
                 # catch case when there are none ...
                 if (nrow(y_ccgs) == 0) {
-                    cat(
-                        "WARNING: l_add_groups: no CCG instances found"
-                        , "(CCG groups created will be NA)", "...", "\n"
-                    )
+                    if (verbosity.showatlevel("chatty"))
+                        cat(
+                            "WARNING: l_add_groups: no CCG instances found"
+                            , "(CCG groups created will be NA)", "...", "\n"
+                        )
 
                     # create dummy frame with ccgs fronm lu and qof_period from
                     # data
@@ -475,7 +484,8 @@ f__transform__meta__ccg_groups <- function(
     qof
     , lu_ccg_groups = NA
 ){
-    cat("INFO: f__transform__meta__ccg_groups: transforming meta_org ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__meta__ccg_groups: transforming meta_org ...", "\n")
 
     # ccg_group_type,ccg_group_name,ccg_code,ccg_group_code,ccg_group_name
     # uop,Unit of Planning,02Q,nno,North Notts. UOP
@@ -526,10 +536,12 @@ f__91__save_reference <- function(
     , file_suffix = "__processed"
     , bWriteCSV = TRUE
 ) {
-    cat("INFO: f__91__save_reference: saving ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__91__save_reference: saving ...", "\n")
 
     if (bWriteCSV == TRUE) {
-        cat("INFO: f__91__save_reference: saving reference data ...", "\n")
+        if (verbosity.showatlevel("chatty"))
+            cat("INFO: f__91__save_reference: saving reference data ...", "\n")
 
         this.file <- paste0("./data-raw/", qof_root, "_orgref", file_suffix, ".csv")
         fwrite(qof$reference$orgref, file = this.file)

@@ -70,7 +70,9 @@ paste_paths <- function(...) {
 #' @family Helper routines
 #'
 status <- function(x, ...) {
-    cat(..., "\n");invisible(x)
+    if (verbosity.showatlevel("chatty"))
+        cat(..., "\n")
+    invisible(x)
 }
 
 #' Sum ignoring NAs
