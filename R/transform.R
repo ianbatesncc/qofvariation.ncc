@@ -396,7 +396,7 @@ f__transform__data__add_subtotals <- function(
         status(
             "INFO: - calculating england total ..."
         ) %>%
-        l_add_eng(bCalcEngTotal) %>%
+        l_add_eng(bProcess = bCalcEngTotal) %>%
         status(
             "INFO: - filtering local ccgs ..."
         ) %>%
@@ -404,7 +404,7 @@ f__transform__data__add_subtotals <- function(
         status(
             "INFO: - calculating ccg totals ..."
         ) %>%
-        l_add_ccgs(bCalcCCGTotals) %>%
+        l_add_ccgs(bProcess = bCalcCCGTotals) %>%
         status(
             "INFO: - calculating ccg groups ..."
         ) %>%

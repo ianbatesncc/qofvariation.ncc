@@ -5,11 +5,12 @@
 #' to load the data
 #'
 #' @param qof_period (character) Of the form "YYZZ"
-#' @param bProcessRaw (bool) if FALSE just load.  If TRUE process and then load.
-#'   Default FALSE.
+#' @param bExtractFromRaw (bool) if FALSE just load.  If TRUE process and then
+#'   load. Default FALSE.
 #' @param bWriteCSV (bool) Flag to indicate to write results to file.  Default
 #'   FALSE.
-#' @param bSaveData (bool) Specify to save measures and compare phases.  Default FALSE.
+#' @param bSaveData (bool) Specify to save measures and compare phases.  Default
+#'   FALSE.
 #' @param bLoadData (bool) Specify to load raw numbers too.  Default FALSE.
 #'
 #' @note
@@ -34,7 +35,7 @@ main <- function(
         , "qof-1011", "qof-0910", "qof-0809", "qof-0708", "qof-0607"
         , "qof-0506", "qof-0405"
     )
-    , bProcessRaw = FALSE
+    , bExtractFromRaw = FALSE
     , bWriteCSV = FALSE
     , bSaveData = FALSE
     , bLoadData = FALSE
@@ -57,7 +58,7 @@ main <- function(
 
     retval <- NULL
 
-    qof_extract <- f__extract(qof_root, bProcessRaw)
+    qof_extract <- f__extract(qof_root, bExtractFromRaw)
 
     qof_transform <- qof_extract %>%
         f__transform(lu_ccgs, lu_ccg_groups)
