@@ -155,7 +155,7 @@ f__transform__preprocess <- function(
         # remove points
         # tag ccg, indicator group
         mutate(measure = tolower(measure)) %>%
-        filter(!(measure == "achieved_points")) %>%
+        filter(!(measure %in% c("achieved_points", "register"))) %>%
         setDT() %>%
         # tag ccg
         merge(
