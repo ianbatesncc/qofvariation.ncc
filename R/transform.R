@@ -135,22 +135,36 @@ f__transform__preprocess <- function(
         )
 
     # Find register indicators
+    # attention for mulitple qof periods
 
     these_inds <- q.data_ind %>%
         filter(measure == "REGISTER", !is.na(value)) %>%
-        .$indicator_code %>%
-        unique()
+        select(qof_period, indicator_code) %>%
+        unique() %>%
+        mutate(is.register = TRUE)
 
     # Add an 'is.register' flag to the indicator map
 
     q.meta_ind <- qof$meta_ind %>%
-        mutate(is.register = (indicator_code %in% these_inds)) %>%
+        merge(
+            these_inds
+            , by = c("qof_period", "indicator_code")
+            , all.x = TRUE, all.y = TRUE
+        ) %>%
+        mutate(is.register = ifelse(is.na(is.register), FALSE, is.register)) %>%
         setDT()
 
     # Remove register-type indicators
 
     q.data_ind <- q.data_ind %>%
-        filter(!(indicator_code %in% these_inds)) %>%
+        #filter(!(indicator_code %in% these_inds)) %>%
+        merge(
+            these_inds
+            , by = c("qof_period", "indicator_code")
+            , all.x = TRUE, all.y = FALSE
+        ) %>%
+        filter(is.na(is.register)) %>%
+        select(-is.register) %>%
         # lowercase measure
         # remove points
         # tag ccg, indicator group
@@ -159,18 +173,20 @@ f__transform__preprocess <- function(
         setDT() %>%
         # tag ccg
         merge(
-            q.meta_org %>% select(practice_code, ccg_code)
-            , by = "practice_code"
+            q.meta_org %>%
+                select(qof_period, practice_code, ccg_code)
+            , by = c("qof_period", "practice_code")
             , all.x = TRUE
         ) %>%
         # tag non-register indicators with indicator_group_code, domain_code
-        # use as a filter hence inner not left join
+        # no need to use as filter as filtered above
+        # don't need all if no match (no right join)
         merge(
             q.meta_ind %>%
                 filter(is.register == FALSE) %>%
-                select(indicator_code, indicator_group_code, domain_code)
-            , by = "indicator_code"
-            , all.x = FALSE, all.y = TRUE
+                select(qof_period, indicator_code, indicator_group_code, domain_code)
+            , by = c("qof_period", "indicator_code")
+            , all.x = TRUE, all.y = FALSE
         )
 
     # data_prev  ####
@@ -189,8 +205,9 @@ f__transform__preprocess <- function(
     q.data_prev <- qof$data_prev %>%
         # tag ccg
         merge(
-            q.meta_org %>% select(practice_code, ccg_code)
-            , by = "practice_code"
+            q.meta_org %>%
+                select(qof_period, practice_code, ccg_code)
+            , by = c("qof_period", "practice_code")
             , all.x = TRUE
         ) %>%
         select(-patient_list_type) %>%
@@ -199,8 +216,8 @@ f__transform__preprocess <- function(
         merge(
             q.meta_ind %>%
                 filter(is.register == TRUE) %>%
-                select(indicator_group_code, indicator_code, domain_code)
-            , by = "indicator_group_code"
+                select(qof_period, indicator_group_code, indicator_code, domain_code)
+            , by = c("qof_period", "indicator_group_code")
             , all.x = FALSE, all.y = TRUE
         )
 
@@ -503,9 +520,14 @@ f__transform__meta__ccg_groups <- function(
             ) %>%
             mutate(
                 ccg_geography_code = ccg_code
-                , qof_period = qof$meta_org$qof_period %>% unique()
             ) %>%
-            unique()
+            unique() %>%
+            merge(
+                data.frame(
+                    qof_period = qof$meta_org$qof_period %>% unique()
+                    , stringsAsFactors = FALSE
+                )
+            )
     ) %>% bind_rows()
 
     invisible(qof)
