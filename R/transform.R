@@ -260,8 +260,8 @@ f__transform__data__add_orgtype <- function(qof) {
 #'
 f__transform__data__add_subtotals <- function(
     qof
-    , bCalcEngTotal = FALSE
-    , bCalcCCGTotals = FALSE
+    , bCalcEngTotal = TRUE
+    , bCalcCCGTotals = TRUE
     , lu_ccgs = NA
     , lu_ccg_groups = NA
 ) {
@@ -275,7 +275,7 @@ f__transform__data__add_subtotals <- function(
 
     # eng totals
     # only modify the data_ind and data_prev tables
-    l_add_eng <- function(x, bProcess = FALSE) {
+    l_add_eng <- function(x, bProcess = TRUE) {
         if (bProcess) {
 
             l_calc_subtotal <- function(y) {
@@ -325,7 +325,7 @@ f__transform__data__add_subtotals <- function(
     #' Consistently use practice_code as instance, ccg_code as type ... even for
     #' CCGs ...
     #'
-    l_add_ccgs <- function(x, bProcess = FALSE) {
+    l_add_ccgs <- function(x, bProcess = TRUE) {
         if (bProcess) {
 
             l_calc_subtotal <- function(y) {
@@ -358,15 +358,46 @@ f__transform__data__add_subtotals <- function(
         if (length(lu_ccg_groups) > 1 | !any(is.na(lu_ccg_groups))) {
 
             l_calc_subtotal <- function(y) {
-                y %>%
-                    # choose ccg quantities
-                    filter(org.type == "ccg::instance") %>%
+
+                # choose ccg quantities
+                y_ccgs <- y %>%
+                    filter(org.type == "ccg::instance")
+
+                # catch case when there are none ...
+                if (nrow(y_ccgs) == 0) {
+                    cat(
+                        "WARNING: l_add_groups: no CCG instances found"
+                        , "(CCG groups created will be NA)", "...", "\n"
+                    )
+
+                    # create dummy frame with ccgs fronm lu and qof_period from
+                    # data
+
+                    these_ccgs <- unique(lu_ccg_groups$ccg_code)
+                    these_periods <- unique(y$qof_period)
+
+                    y_vars <- merge(
+                        data.frame(practice_code = these_ccgs)
+                        , data.frame(qof_period = these_periods)
+                    ) %>% mutate_if(is.factor, as.character)
+
+                    y_na <- y[FALSE, ] %>%
+                        bind_rows(data.frame(practice_code = NA)) %>%
+                        select(-practice_code, -qof_period)
+
+                    y_ccgs <- merge(y_vars, y_na)
+                }
+
+                y_ccgs %>%
                     # tag ccg groups
                     merge(
                         lu_ccg_groups %>%
                             rename(practice_code = "ccg_code") %>%
                             select(practice_code, ccg_group_code, ccg_group_type)
-                        , all.y = TRUE
+                        # does this step need to include ALL ccg groups?
+                        # - perhaps for later consistent analysis.
+                        # Problem when there are no ccg instances ...
+                        , all.x = TRUE, all.y = TRUE
                         , by = "practice_code"
                     ) %>%
                     mutate(
