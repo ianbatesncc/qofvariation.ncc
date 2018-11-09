@@ -295,8 +295,10 @@ f__transform__data__add_subtotals <- function(
 
             x[these_tables] <- x[these_tables] %>%
                 lapply(function(y) {
-                    list(y, l_calc_subtotal(y)) %>%
-                        bind_rows()
+                    list(
+                        y
+                        , l_calc_subtotal(y)
+                    ) %>% bind_rows()
                 })
         }
 
@@ -345,8 +347,10 @@ f__transform__data__add_subtotals <- function(
 
             x[these_tables] <- x[these_tables] %>%
                 lapply(function(y) {
-                    list(y, l_calc_subtotal(y)) %>%
-                        bind_rows()
+                    list(
+                        y
+                        , l_calc_subtotal(y)
+                    ) %>% bind_rows()
                 })
         }
         invisible(x)
@@ -411,13 +415,13 @@ f__transform__data__add_subtotals <- function(
                     ungroup()
             }
 
-            l_group <- function(x) {
+            l_append <- function(x) {
                 list(x, l_calc_subtotal(x)) %>% bind_rows()
             }
 
             these_tables <- c("data_ind", "data_prev")
 
-            x[these_tables] <- x[these_tables] %>% lapply(l_group)
+            x[these_tables] <- x[these_tables] %>% lapply(l_append)
         }
 
         invisible(x)
