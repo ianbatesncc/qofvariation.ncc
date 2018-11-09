@@ -319,6 +319,7 @@ f__transform__data__add_subtotals <- function(
                     ) %>% bind_rows()
                 })
         }
+
         invisible(x)
     }
 
@@ -353,6 +354,7 @@ f__transform__data__add_subtotals <- function(
                     ) %>% bind_rows()
                 })
         }
+
         invisible(x)
     }
 
