@@ -553,7 +553,8 @@ f__process__compare <- function(
     # * Combine ####
 
     qof.combined <- list(tmp.nat, tmp.n2, tmp.ccg) %>%
-        bind_rows()
+        bind_rows() %>%
+        setDT()
 
     # Compare ####
 
