@@ -16,7 +16,7 @@ options(warn = 1)
 #' @importFrom usethis use_data
 #'
 usethis__use_data <- function(obj, name) {
-    if (getOption("verbose") == TRUE) {
+    if (verbosity.showatlevel("chatty")) {
         cat("INFO: (name, obj) = (", name, ", ", "\n")
         fglimpse(obj)
         cat(")", "\n")
@@ -90,10 +90,12 @@ l_readxl_wb <- function(
             msg <- paste(msg, "...", "alternative NOT found")
         }
 
-        cat(msg, "\n")
+        if (verbosity.showatlevel("chatty"))
+            cat(msg, "\n")
     }
 
-    cat("INFO: workbook: [", basename(this.file), "]", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: workbook: [", basename(this.file), "]", "\n")
 
     # may fail if workbook does not exist, or cannot open for whatever reason.
     # ... so skip!
@@ -134,7 +136,8 @@ l_readxl_ws_ind <- function(
     this.sheet
     , this.file
 ) {
-    cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
 
     ws <- readxl::read_excel(
         path = this.file
@@ -163,7 +166,8 @@ l_readxl_ws_ind <- function(
         )
     }
 
-    cat(", measures [", paste(is_ndep, collapse = " | "), "]", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat(", measures [", paste(is_ndep, collapse = " | "), "]", "\n")
 
     dat <- ws %>%
         select_at(vars(is_prac, is_ndep)) %>%
@@ -190,7 +194,8 @@ l_readxl_ws_ind <- function(
 #' @family Extract routines
 #'
 l_readxl_ws_prev <- function(this.sheet, this.file) {
-    cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: - worksheet: \\", this.sheet, "/") #, "\n")
 
     ws <- readxl::read_excel(
         path = this.file
@@ -214,7 +219,8 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
         ws <- ws %>% mutate_at(vars(is_num), as.numeric)
     )
 
-    cat(", measures [", paste(is_num, collapse = " | "), "]", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat(", measures [", paste(is_num, collapse = " | "), "]", "\n")
 
     dat <- ws %>%
         select_at(vars(is_prac, is_num)) %>%
@@ -263,7 +269,8 @@ f__extract__load_raw <- function(
     )
     , bSaveData = FALSE
 ) {
-    cat("INFO: f__extract__load_raw: loading data", "...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__extract__load_raw: loading data", "...", "\n")
 
     qof_root <- match.arg(qof_root)
 
@@ -528,7 +535,8 @@ f__extract__load_raw <- function(
 
         qof_stem <- sub("([0-9]{2})([0-9]{2})", "\\1-\\2", qof_root)
 
-        cat("WARNING: extract WIP for", qof_root, "\n")
+        if (verbosity.showatlevel("chatty"))
+            cat("WARNING: extract WIP for", qof_root, "\n")
 
         # File layout
         #
@@ -849,7 +857,8 @@ ages 50+,50OV
 
         qof_stem <- sub("([0-9]{2})([0-9]{2})", "\\1-\\2", qof_root)
 
-        cat("WARNING: extract WIP for", qof_root, "\n")
+        if (verbosity.showatlevel("chatty"))
+            cat("WARNING: extract WIP for", qof_root, "\n")
 
         # File layout
         #
@@ -1183,7 +1192,9 @@ ages 50+,50OV
                 )
 
             if (length(meta_m_data) == 0) {
-                cat("INFO: stripping out all indicators not in meta", "...", "\n")
+                if (verbosity.showatlevel("chatty"))
+                    cat("INFO: stripping out all indicators not in meta", "...", "\n")
+
                 qof.ind <- qof.ind[indicator_code %in% ind.meta, ]
             }
         }
@@ -1307,18 +1318,21 @@ f__combine_any <- function(
     l_period_variable <- function(this_qof, this_var) {
         this_varname <- paste(gsub("-", "_", this_qof), this_var, sep = "_")
 
-        cat("INFO: considering", this_varname, "...")
+        if (verbosity.showatlevel("chatty"))
+            cat("INFO: considering", this_varname, "...")
 
         this_rda <- paste0("./data/", this_varname, ".Rda")
 
         if (file.exists(this_rda)) {
-            cat("found", "\n")
+            if (verbosity.showatlevel("chatty"))
+                cat("found", "\n")
 
-            load(this_rda, verbose = TRUE)
+            load(this_rda, verbose = verbosity.showatlevel("chatty"))
 
             retval <- eval(as.name(this_varname)) %>% setDT()
         } else {
-            cat("NOT found", "\n")
+            if (verbosity.showatlevel("chatty"))
+                cat("NOT found", "\n")
 
             retval <- NULL
         }
@@ -1329,7 +1343,8 @@ f__combine_any <- function(
     # Return period tagged data for given variable (looped over periods)
 
     l_period <- function(this_var, these_qof) {
-        cat("INFO: considering", this_var, "...", "\n")
+        if (verbosity.showatlevel("chatty"))
+            cat("INFO: considering", this_var, "...", "\n")
 
         lapply(these_qof, l_period_variable, this_var = this_var) %>%
             rbindlist(use.names = TRUE, fill = TRUE)
@@ -1347,7 +1362,8 @@ f__combine_any <- function(
     # one file for each data item, meta_ind, meta_org, data_ind, data_prev
 
     if (bSaveData == TRUE) {
-        cat("INFO: saving", "...", "\n")
+        if (verbosity.showatlevel("chatty"))
+            cat("INFO: saving", "...", "\n")
 
         retval %>% purrr::walk2(., names(.), usethis__use_data)
     }

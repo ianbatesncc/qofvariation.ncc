@@ -1,4 +1,4 @@
-#' qofvariation.ncc.
+#' qofvariation.ncc-package.R
 #'
 #' Process QOF for visualisation (interactive?)
 #'
@@ -88,6 +88,73 @@ NULL
 #' @name family_of_reference
 #' @rdname families
 NULL
+
+#' possible verbosity levels (global)
+#'
+#' 0 - suppress (default)
+#' 1 - information
+#' 2 - chatty
+#'
+#' @rdname verbosity
+#'
+verbosity_levels <- seq(0, 2)
+names(verbosity_levels) <- c("suppress", "info", "chatty")
+
+#' verbosity level (global)
+#'
+#' 0 - suppress (default)
+#' 1 - information
+#' 2 - chatty
+#'
+#' @rdname verbosity
+#'
+verbosity_level <- verbosity_levels["chatty"]
+
+#' compare verbosity with setting for code chunk
+#'
+#' Chatty by default.  Can make less chatty by DECREASING verbosity level
+#' Conversely, INCREASE verbosity with INCREASING values ...
+#'
+#' ... warnings and errors always show
+#' ... switch messages off with 0
+#' ... useful stuff for 1
+#' ... details at level 2
+#'
+#' check level is greater than "suppress" yet lower than "code classification"
+#'
+#' @param this_msg_category
+#'
+#' @examples
+#' verbosity_level <- verbosity_levels["chatty"]
+#' names(verbosity_levels) %>% sapply(verbosity.showatlevel)
+#' names(verbosity_levels) %>% sapply(function(x) {
+#'   msg <- paste("global level: ", names(verbosity_level))
+#'   if (verbosity.showatlevel(x)) msg <- paste(msg, "This is a[n]", x, "message")
+#'   msg
+#' })
+#'
+#' if (verbosity.showatlevel("info")) cat("Hello World!\n")
+#'
+#' verbosity_level <- verbosity_levels["info"]
+#' names(verbosity_levels) %>% sapply(verbosity.showatlevel)
+#'
+#' if (verbosity.showatlevel("info")) cat("Hello World!\n")
+#'
+#' verbosity_level <- verbosity_levels["suppress"]
+#' names(verbosity_levels) %>% sapply(verbosity.showatlevel)
+#'
+#' if (verbosity.showatlevel("info")) cat("Hello World!\n")
+#'
+#' @rdname verbosity
+#'
+verbosity.showatlevel <- function(this_msg_category) {
+    this_msg_level <- verbosity_levels[this_msg_category]
+
+    return(
+        (verbosity_level != verbosity_levels["suppress"])
+        && (this_msg_level <= verbosity_level)
+    )
+}
 
 
 # Workaround to dodge check warnings about field names ####
