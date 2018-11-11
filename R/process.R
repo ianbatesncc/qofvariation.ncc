@@ -212,7 +212,7 @@ f__process__measures <- function(
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__measures: storing qof_measures_combined ...", "\n")
 
-        usethis__use_data(m.comb, "qof_measures_combined")
+        store_data(m.comb, "qof_measures")
     }
 
     invisible(m.comb)
@@ -322,7 +322,7 @@ performance, suboptimal,    denominator, 0,     1,     1
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__calc_measures_ind: storing qof_measures_ind ...", "\n")
 
-        usethis__use_data(q.ind.measures, "qof_measures_ind")
+        store_data(q.ind.measures, "qof_measures_ind")
     }
 
     #q.ind.measures %>% filter(FALSE) %>% str()
@@ -434,7 +434,7 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__calc_measures_ind: storing qof_measures_prev ...", "\n")
 
-        usethis__use_data(q.prev.measures, "qof_measures_prev")
+        store_data(q.prev.measures, "qof_measures_prev")
     }
 
     # return
@@ -668,7 +668,7 @@ f__process__compare <- function(
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__compare: storing qof_compare ...", "\n")
 
-        usethis__use_data(qof.comp, "qof_compare")
+        store_data(qof.comp, "qof_compare")
     }
 
     # return

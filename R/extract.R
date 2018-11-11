@@ -6,28 +6,80 @@
 
 options(warn = 1)
 
-#' Programmatic use of use_data
+#' Store an object
 #'
-#' Call use_data to save object with specified name.
+#' Save an object with specified name.
 #'
 #' @param obj (object) object to save
 #' @param name (char) name to use
+#' @param dir (char) directory to save to.
+#'
+#' if \code{dir} is \code{data} (default) then usethis::use_data is used.  if is
+#' \code{inst/data-int} then a call to \code{save} is made to the inst/data-int
+#' dir.
 #'
 #' @importFrom usethis use_data
+#' @importFrom usethis proj_path
 #'
-usethis__use_data <- function(obj, name) {
+store_data <- function(obj, name, dir = c("inst/data-int", "data")) {
+    dir <- match.arg(dir)
+
     if (verbosity.showatlevel("chatty")) {
         cat("INFO: (name, obj) = (", name, ", ", "\n")
         fglimpse(obj)
         cat(")", "\n")
     }
 
-    # to be explicit about the function to call
-    l_use_data <- usethis::use_data
+    retval <- switch(
+        dir
+        , "data" = {
+            # to be explicit about the function to call
+            l_use_data <- usethis::use_data
 
-    assign(name, obj)
-    do.call("l_use_data", list(as.name(name), overwrite = TRUE))
-    rm(name)
+            assign(name, obj)
+            do.call("l_use_data", list(as.name(name), overwrite = TRUE))
+            rm(name)
+        }
+        , "inst/data-int" = {
+            this_rds <- usethis::proj_path("inst/data-int/", name, ext = ".rds")
+            saveRDS(obj, file = this_rds, compress = "bzip2")
+        }
+    )
+
+    return(TRUE)
+}
+
+#' Restore an object
+#'
+#' Load an object with specified name.
+#'
+#' @inheritParams store_data
+#'
+restore_data <- function(name, dir = c("inst/data-int", "data")) {
+    dir <- match.arg(dir)
+
+    retval <- switch(
+        dir
+        , "data" = {
+            cat("WARNING: restore_data: not yet implemented", "\n")
+            NULL
+        }
+        , "inst/data-int" = {
+            this_rds <- usethis::proj_path("inst/data-int/", name, ext = "rds")
+            if (file.exists(this_rds)) {
+                if (verbosity.showatlevel("chatty"))
+                    cat("INFO: restore_data: reading", this_rds, "...", "\n")
+
+                readRDS(file = this_rds)
+            } else {
+                if (verbosity.showatlevel("chatty"))
+                    cat("WARNING: restore_data: NOT found", this_rds, "...", "\n")
+                NULL
+            }
+        }
+    )
+
+    return(retval)
 }
 
 
@@ -253,7 +305,7 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
 #'   \code{data_ind}  \tab Indicator data \cr
 #' }
 #'
-#' @importFrom purrr walk2
+#' @importFrom purrr pwalk
 #' @import readxl
 #'
 #' @family Internal routines
@@ -1231,7 +1283,12 @@ ages 50+,50OV
         these_names <- paste(gsub("-", "_", qof_root), generic_names, sep = "_")
         names(retval) <- these_names
 
-        retval %>% purrr::walk2(., names(.), usethis__use_data)
+        retval %>% {
+            purrr::pwalk(
+                list(obj = ., name = names(.), dir = "inst/data-int")
+                , store_data
+            )
+        }
     }
 
     # return
@@ -1291,7 +1348,7 @@ f__extract_any <- function(
 #' @inheritParams f__extract__load_raw
 #'
 #' @importFrom data.table setDT rbindlist
-#' @importFrom purrr walk2
+#' @importFrom purrr pwalk
 #'
 #' @return a list with named items
 #' \tabular{ll}{
@@ -1321,21 +1378,7 @@ f__combine_any <- function(
         if (verbosity.showatlevel("chatty"))
             cat("INFO: considering", this_varname, "...")
 
-        this_rda <- paste0("./data/", this_varname, ".Rda")
-
-        if (file.exists(this_rda)) {
-            if (verbosity.showatlevel("chatty"))
-                cat("found", "\n")
-
-            load(this_rda, verbose = verbosity.showatlevel("chatty"))
-
-            retval <- eval(as.name(this_varname)) %>% setDT()
-        } else {
-            if (verbosity.showatlevel("chatty"))
-                cat("NOT found", "\n")
-
-            retval <- NULL
-        }
+        retval <- restore_data(this_varname) %>% setDT()
 
         invisible(retval)
     }
@@ -1365,7 +1408,7 @@ f__combine_any <- function(
         if (verbosity.showatlevel("chatty"))
             cat("INFO: saving", "...", "\n")
 
-        retval %>% purrr::walk2(., names(.), usethis__use_data)
+        retval %>% purrr::pwalk(list(., names(.)), store_data)
     }
 
     # return
