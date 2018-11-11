@@ -702,39 +702,12 @@ f__process__compare <- function(
 f__main__load_data <- function(
     qof_root
 ) {
-    if (verbosity.showatlevel("chatty"))
-        cat("INFO: f__91__load_data: loading ...", "\n")
+    .Deprecated("data")
 
-    # Add org.type to data elements
-    l_add_orgtype <- function(x) {
-        if (verbosity.showatlevel("chatty"))
-            cat("INFO: l_add_orgtype: amending ...", "\n")
-
-        x$data <- x$data %>% lapply(mutate, org.type = "ccg::practice")
-
-        invisible(x)
-    }
-
-    # Tag on data source
-    l_add_qof_root <- function(x, qof_root) {
-        if (verbosity.showatlevel("chatty"))
-            cat("INFO: l_add_qof_root: amending ...", "\n")
-
-        x$data <- x$data %>% lapply(mutate, data_source = qof_root)
-        x$reference <- x$reference %>% lapply(mutate, data_source = qof_root)
-
-        invisible(x)
-    }
-
-    qof <- f__extract__load_raw(qof_root) %>%
-        # process lookups
-        f__91__preprocess() %>%
-        l_add_orgtype() %>%
-        l_add_qof_root(qof_root)
-
-    # return
-
-    return(qof)
+    return(list(
+        data_ind = qof_data_ind %>% filter(qof_period %in% qof_root)
+        , data_org = qof_data_org %>% filter(qof_period %in% qof_root)
+    ))
 }
 
 #' Load reference
@@ -755,22 +728,13 @@ f__main__load_data <- function(
 #'
 f__main__load_reference <- function(
     qof_root
-    , file_suffix = "__processed"
 ) {
-    if (verbosity.showatlevel("chatty"))
-        cat("INFO: f__91__load_reference: loading ...", "\n")
+    .Deprecated("data")
 
-    taskdir <- proj_root()
-
-    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_orgref", file_suffix, ".csv"))
-    q.orgref <- fread(file = this.file)
-
-    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_indmap", file_suffix, ".csv"))
-    q.indmap <- fread(file = this.file)
-
-    # return
-
-    return(reference = list(orgref = q.orgref, indmap = q.indmap))
+    return(list(
+        meta_ind = qof_meta_ind %>% filter(qof_period %in% qof_root)
+        , meta_org = qof_meta_org %>% filter(qof_period %in% qof_root)
+    ))
 }
 
 #' Load measures
@@ -793,26 +757,9 @@ f__main__load_measures <- function(
     qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
 ) {
-    if (verbosity.showatlevel("chatty"))
-        cat("INFO: f__91__load_measures: loading ...", "\n")
+    .Deprecated("data")
 
-    taskdir <- proj_root()
-
-    #this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_ind", file_suffix, ".csv"))
-    #q.ind <- fread(file = this.file)
-
-    #this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_prev", file_suffix, ".csv"))
-    #q.prev <- fread(file = this.file)
-
-    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_all", file_suffix, ".csv"))
-    q.all <- data.table::fread(file = this.file)
-
-    q.ind <- q.all %>% filter(m.type == "performance")
-    q.prev <- q.all %>% filter(m.type == "prevalence")
-
-    # return
-
-    return(list(prev = q.prev, ind = q.ind) %>% bind_rows())
+    return(qof_measures %>% filter(qof_period %in% qof_root))
 }
 
 #' Load compare
@@ -835,26 +782,9 @@ f__main__load_compare <- function(
     qof_root
     , file_suffix = "__eng_ccg_prac__compare__bench_spc23__eng_ccg"
 ) {
-    if (verbosity.showatlevel("chatty"))
-        cat("INFO: f__91__load_compare: loading ...", "\n")
+    .Deprecated("data")
 
-    taskdir <- proj_root()
-
-    #this.file <- paste_paths(taskdir, "./data-raw", paste0(qof_root, "_ind", file_suffix, ".csv"))
-    #q.ind <- fread(file = this.file)
-
-    #this.file <- paste_paths(taskdir, "./data-raw", paste0(qof_root, "_prev", file_suffix, ".csv"))
-    #q.prev <- fread(file = this.file)
-
-    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_all", file_suffix, ".csv"))
-    q.all <- data.table::fread(file = this.file)
-
-    q.ind <- q.all %>% filter(m.type == "performance")
-    q.prev <- q.all %>% filter(m.type == "prevalence")
-
-    # return
-
-    return(list(prev = q.prev, ind = q.ind) %>% bind_rows())
+    return(qof_compare %>% filter(qof_period %in% qof_root))
 }
 
 
