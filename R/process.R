@@ -318,7 +318,7 @@ performance, suboptimal,    denominator, 0,     1,     1
             cat("INFO: f__process__calc_measures_ind: NOT saving q.ind.measures ...", "\n")
     }
 
-    if (bSaveData) {
+    if (bSaveData & FALSE) {
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__calc_measures_ind: storing qof_measures_ind ...", "\n")
 
@@ -430,7 +430,7 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
             cat("INFO: f__process__calc_measures_prev: NOT saving q.prev.measures ...", "\n")
     }
 
-    if (bSaveData) {
+    if (bSaveData & FALSE) {
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__calc_measures_ind: storing qof_measures_prev ...", "\n")
 
