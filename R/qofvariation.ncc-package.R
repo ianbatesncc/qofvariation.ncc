@@ -1,4 +1,4 @@
-#' qofvariation.ncc-package.R
+#' qofvariation.ncc
 #'
 #' Process QOF for visualisation (interactive?)
 #'
@@ -108,7 +108,7 @@ names(verbosity_levels) <- c("suppress", "info", "chatty")
 #'
 #' @rdname verbosity
 #'
-verbosity_level <- verbosity_levels["chatty"]
+verbosity_level <- verbosity_levels["suppress"]
 
 #' compare verbosity with setting for code chunk
 #'

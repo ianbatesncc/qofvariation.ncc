@@ -1263,7 +1263,7 @@ ages 50+,50OV
 
     # flip measure backup
     qof.ind <- qof.ind %>%
-        dcast(... ~ measure, fun.aggregate = sum, fill = NA)
+        data.table::dcast(... ~ measure, fun.aggregate = sum, fill = NA)
 
     retval <- list(
         meta_org = qof.orgref
@@ -1376,7 +1376,7 @@ f__combine_any <- function(
         this_varname <- paste(gsub("-", "_", this_qof), this_var, sep = "_")
 
         if (verbosity.showatlevel("chatty"))
-            cat("INFO: considering", this_varname, "...")
+            cat("INFO: f__combine_any: l_period_variable: considering", this_varname, "...", "\n")
 
         retval <- restore_data(this_varname) %>% setDT()
 
@@ -1387,7 +1387,7 @@ f__combine_any <- function(
 
     l_period <- function(this_var, these_qof) {
         if (verbosity.showatlevel("chatty"))
-            cat("INFO: considering", this_var, "...", "\n")
+            cat("INFO: f__combine_any: l_period: considering", this_var, "...", "\n")
 
         lapply(these_qof, l_period_variable, this_var = this_var) %>%
             rbindlist(use.names = TRUE, fill = TRUE)

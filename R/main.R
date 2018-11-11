@@ -1,3 +1,24 @@
+#
+# development
+#
+
+if (FALSE) {
+    require("devtools")
+    require("testthat")
+    require("dplyr")
+    require("data.table")
+    require("readxl")
+
+    source("./R/qofvariation.ncc-package.R")
+    source("./R/utils.R")
+    source("./R/extract.R")
+    source("./R/transform.R")
+    source("./R/process.R")
+    source("./R/calcci.R")
+    source("./R/testci.R")
+}
+
+
 #' Process raw datasets
 #'
 #' Options to specify year. Option to specify if to run the raw process routines

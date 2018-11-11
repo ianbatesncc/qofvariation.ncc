@@ -1,6 +1,6 @@
 Package: qofvariation.ncc
 Title: Analysis of variation in QOF data
-Version: 0.0.1.9000
+Version: 0.0.2.9000
 Authors@R: person("Ian", "Bates", email = "ian.bates@nottscc.gov.uk", role = c("aut", "cre"))
 Description: Analysis of variation in QOF data.
 Depends:

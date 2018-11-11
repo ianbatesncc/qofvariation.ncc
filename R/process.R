@@ -39,11 +39,11 @@ f__process__reference_measures_compare <- function(
     qof
     , bWriteCSV = FALSE
 ) {
-    if (verbosity.showatlevel("chatty"))
+    if (verbosity.showatlevel("chatty")) {
         cat("INFO: f__process__reference_measures_compare: processing ...", "\n")
 
-    if (verbosity.showatlevel("chatty"))
         cat("INFO: bWriteCSV =", bWriteCSV, "\n")
+    }
 
     # measures and grouping
 
@@ -693,8 +693,8 @@ f__process__compare <- function(
 #'   Directory root for loading and saving any processed data.  Of the form
 #'   "qof-YYZZ"
 #'
-#' @return list of lists (see \code{\link{f__extract__load_raw}})
-#'
+# @return list of lists (see \code{\link{f__extract__load_raw}})
+#' @inheritParams f__transform__preprocess
 #'
 #' @family Internal routines
 #' @family Load routines
@@ -717,9 +717,7 @@ f__main__load_data <- function(
 #'   Directory root for loading and saving any processed data.  Of the form
 #'   "qof-YYZZ"
 #'
-#' @param file_suffix For loading and saving of any processed data
-#'
-#' @return reference list with named items \itemize{\item{orgref}\item{indmap}}
+#' @return reference list with named items \itemize{\item{meta_org}\item{meta_ind}}
 #'
 #'
 #' @family Internal routines
