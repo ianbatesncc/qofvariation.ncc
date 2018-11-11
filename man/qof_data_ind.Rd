@@ -3,19 +3,10 @@
 \docType{data}
 \name{qof_data_ind}
 \alias{qof_data_ind}
-\alias{qof_1718_data_ind}
-\alias{qof_1617_data_ind}
-\alias{qof_1516_data_ind}
 \title{QOF data for indicators}
 \format{An object of class \code{data.table} (inherits from \code{data.frame}) with 4817811 rows and 8 columns.}
 \usage{
 qof_data_ind
-
-qof_1718_data_ind
-
-qof_1617_data_ind
-
-qof_1516_data_ind
 }
 \description{
 \tabular{ll}{

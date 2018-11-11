@@ -6,17 +6,19 @@
 \usage{
 main(qof_root = c("qof-1718", "qof-1617", "qof-1516", "qof-1415",
   "qof-1314", "qof-1213", "qof-1112", "qof-1011", "qof-0910", "qof-0809",
-  "qof-0708", "qof-0607", "qof-0506", "qof-0405"), bProcessRaw = FALSE,
-  bWriteCSV = FALSE, bSaveData = FALSE, bLoadData = FALSE)
+  "qof-0708", "qof-0607", "qof-0506", "qof-0405"),
+  bExtractFromRaw = FALSE, bWriteCSV = FALSE, bSaveData = FALSE,
+  bLoadData = FALSE)
 }
 \arguments{
-\item{bProcessRaw}{(bool) if FALSE just load.  If TRUE process and then load.
-Default FALSE.}
+\item{bExtractFromRaw}{(bool) if FALSE just load.  If TRUE process and then
+load. Default FALSE.}
 
 \item{bWriteCSV}{(bool) Flag to indicate to write results to file.  Default
 FALSE.}
 
-\item{bSaveData}{(bool) Specify to save measures and compare phases.  Default FALSE.}
+\item{bSaveData}{(bool) Specify to save measures and compare phases.  Default
+FALSE.}
 
 \item{bLoadData}{(bool) Specify to load raw numbers too.  Default FALSE.}
 

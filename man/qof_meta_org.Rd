@@ -3,19 +3,10 @@
 \docType{data}
 \name{qof_meta_org}
 \alias{qof_meta_org}
-\alias{qof_1718_meta_org}
-\alias{qof_1617_meta_org}
-\alias{qof_1516_meta_org}
 \title{QOF reference data for organisations}
 \format{An object of class \code{data.table} (inherits from \code{data.frame}) with 53954 rows and 16 columns.}
 \usage{
 qof_meta_org
-
-qof_1718_meta_org
-
-qof_1617_meta_org
-
-qof_1516_meta_org
 }
 \description{
 \tabular{ll}{

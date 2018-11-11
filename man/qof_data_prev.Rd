@@ -3,19 +3,10 @@
 \docType{data}
 \name{qof_data_prev}
 \alias{qof_data_prev}
-\alias{qof_1718_data_prev}
-\alias{qof_1617_data_prev}
-\alias{qof_1516_data_prev}
 \title{QOF data for prevalence}
 \format{An object of class \code{data.table} (inherits from \code{data.frame}) with 1148773 rows and 6 columns.}
 \usage{
 qof_data_prev
-
-qof_1718_data_prev
-
-qof_1617_data_prev
-
-qof_1516_data_prev
 }
 \description{
 \tabular{ll}{

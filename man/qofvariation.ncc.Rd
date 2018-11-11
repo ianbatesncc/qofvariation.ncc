@@ -4,7 +4,7 @@
 \name{qofvariation.ncc}
 \alias{qofvariation.ncc}
 \alias{qofvariation.ncc-package}
-\title{qofvariation.ncc.}
+\title{qofvariation.ncc}
 \description{
 Process QOF for visualisation (interactive?)
 }
