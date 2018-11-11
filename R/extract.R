@@ -1262,7 +1262,7 @@ ages 50+,50OV
     }
 
     # flip measure backup
-    qof.ind <- q2 <- qof.ind %>%
+    qof.ind <- qof.ind %>%
         dcast(... ~ measure, fun.aggregate = sum, fill = NA)
 
     retval <- list(
