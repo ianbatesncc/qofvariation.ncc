@@ -473,8 +473,6 @@ f__process__compare <- function(
     if (verbosity.showatlevel("chatty"))
         cat("INFO: f__process__compare: processing statistical significance comparison ...", "\n")
 
-    taskdir <- proj_root()
-
     ##
     ## QOF
     ##

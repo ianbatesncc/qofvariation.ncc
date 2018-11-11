@@ -224,7 +224,6 @@ utils::globalVariables(
         , "sheet"
         , "statistic"
         , "statsig"
-        , "taskdir"
         , "tbl_heading"
         , "this_file"
         , "type_display_order"

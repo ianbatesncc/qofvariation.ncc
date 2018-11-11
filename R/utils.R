@@ -2,57 +2,6 @@
 # utils.R
 #
 
-#' Determine root path from within project development
-#'
-#' Concept of 'root directory' depends on context.
-#'
-#'    - from project root is ./R
-#'     - from ./inst/dashboard it is, not surprisingly, ./R ...
-#'
-#' @importFrom devtools package_file
-#'
-#' @family Helper routines
-#'
-proj_root <- function() {
-    normalizePath(
-        devtools::package_file()
-        , winslash = "/"
-        , mustWork = TRUE
-    )
-}
-
-#' Shortcut for constructing paths
-#'
-#' @param ... path elements.  Passed to paste.
-#'
-#' @note Written before usethis::proj_path was known ... very similar
-#'   functionality so use usethis instead.
-#'
-#' @importFrom devtools package_file
-#'
-#' @family Helper routines
-#'
-proj_path <- function(..., ext = NULL) {
-    if (!is.null(ext))
-        stop("this instance of proj_path does not accept ext as a separate parameter.")
-
-    normalizePath(
-        devtools::package_file(...)
-        , winslash = "/"
-        , mustWork = FALSE
-    )
-}
-proj_path <- usethis::proj_path
-
-#' Contruct paths
-#'
-#' @param ... path elements.  Passed to paste.
-#'
-paste_paths <- function(...) {
-    .Deprecated("proj_path")
-    proj_path(...)
-}
-
 #' Progress within a pipe
 #'
 #' Show a message then pass on the object invisibly.

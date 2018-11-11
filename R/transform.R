@@ -11,6 +11,8 @@
 #'
 #' @param bSaveData flag to write use_data sets
 #'
+#' @importFrom usethis proj_path
+#'
 #' @return list of lu_ccgs, lu_ccg_groups
 #'
 f__transform__create_local_lu <- function(
@@ -66,7 +68,7 @@ uop,4
         usethis::use_data(lu_ccgs, overwrite = TRUE)
         usethis::use_data(lu_ccg_groups, overwrite = TRUE)
 
-        this_csv <- proj_path("./data-raw", "lu_ccg_groups.csv")
+        this_csv <- usethis::proj_path("data-raw", "lu_ccg_groups.csv")
 
         if (verbosity.showatlevel("chatty"))
             cat("INFO: saving", this_csv, "...", "\n")
