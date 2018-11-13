@@ -11,6 +11,8 @@ main(qof_root = c("qof-1718", "qof-1617", "qof-1516", "qof-1415",
   bLoadData = FALSE)
 }
 \arguments{
+\item{qof_root}{(character) Of the form "qof-YYZZ"}
+
 \item{bExtractFromRaw}{(bool) if FALSE just load.  If TRUE process and then
 load. Default FALSE.}
 
@@ -21,8 +23,6 @@ FALSE.}
 FALSE.}
 
 \item{bLoadData}{(bool) Specify to load raw numbers too.  Default FALSE.}
-
-\item{qof_period}{(character) Of the form "YYZZ"}
 }
 \description{
 Options to specify year. Option to specify if to run the raw process routines

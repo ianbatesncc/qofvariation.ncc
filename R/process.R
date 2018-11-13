@@ -667,6 +667,7 @@ f__process__compare <- function(
 #' f__main__preprocess
 #'
 #' @inheritParams f__transform__preprocess
+#' @inheritParams f__extract__load_raw
 #'
 #' @return (list of data.frame objects) reference list with named items
 #'   \itemize{\item{data_ind}\item{data_prev}}
@@ -687,7 +688,7 @@ f__main__load_data <- function(
 
 #' Load reference
 #'
-#' @inheritParams f__transform__preprocess
+#' @inheritParams f__main__load_data
 #'
 #' @return (list of data.frame objects) reference list with named items
 #'   \itemize{\item{meta_org}\item{meta_ind}}
@@ -710,10 +711,7 @@ f__main__load_reference <- function(
 
 #' Load measures
 #'
-#' @param qof_root
-#'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
+#' @inheritParams f__main__load_data
 #'
 #' @param file_suffix For loading and saving of any processed data
 #'
@@ -735,12 +733,7 @@ f__main__load_measures <- function(
 
 #' Load compare
 #'
-#' @param qof_root
-#'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @param file_suffix For loading and saving of any processed data
+#' @inheritParams f__main__load_measures
 #'
 #' @return compare data frame
 #'

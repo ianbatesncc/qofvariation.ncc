@@ -111,9 +111,11 @@ verbosity_levels <- c(suppress = 0, info = 1, chatty = 2)
 #'
 #' check level is greater than "suppress" yet lower than "code classification"
 #'
-#' @param this_msg_category
+#' @param this_msg_category level of message
 #'
 #' @examples
+#'
+#' \dontrun{
 #' set_verbosity("chatty")
 #' sapply(names(verbosity_levels), verbosity.showatlevel)
 #' names(verbosity_levels) %>% sapply(function(x) {
@@ -133,7 +135,7 @@ verbosity_levels <- c(suppress = 0, info = 1, chatty = 2)
 #' sapply(names(verbosity_levels), verbosity.showatlevel)
 #'
 #' if (verbosity.showatlevel("info")) cat("Hello World!\n")
-#'
+#' }
 #' @rdname verbosity
 #'
 verbosity.showatlevel <- function(this_msg_category) {
@@ -150,6 +152,8 @@ verbosity.showatlevel <- function(this_msg_category) {
 #' set verbosity
 #'
 #' uses option "qccvariation.ncc.verbosity"
+#'
+#' @param slevel verbosity level to set
 #'
 #' @rdname verbosity
 #'

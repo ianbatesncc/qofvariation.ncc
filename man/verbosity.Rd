@@ -18,7 +18,9 @@ set_verbosity(slevel = names(verbosity_levels))
 get_verbosity()
 }
 \arguments{
-\item{this_msg_category}{}
+\item{this_msg_category}{level of message}
+
+\item{slevel}{verbosity level to set}
 }
 \description{
 0 - suppress (default)
@@ -39,6 +41,8 @@ uses option "qccvariation.ncc.verbosity"
 check level is greater than "suppress" yet lower than "code classification"
 }
 \examples{
+
+\dontrun{
 set_verbosity("chatty")
 sapply(names(verbosity_levels), verbosity.showatlevel)
 names(verbosity_levels) \%>\% sapply(function(x) {
@@ -58,6 +62,6 @@ set_verbosity("suppress")
 sapply(names(verbosity_levels), verbosity.showatlevel)
 
 if (verbosity.showatlevel("info")) cat("Hello World!\\n")
-
+}
 }
 \keyword{datasets}

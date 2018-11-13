@@ -25,7 +25,7 @@ if (FALSE) {
 #' Option to specify if to save results to disc as .csv Option to specify just
 #' to load the data
 #'
-#' @param qof_period (character) Of the form "YYZZ"
+#' @param qof_root (character) Of the form "qof-YYZZ"
 #' @param bExtractFromRaw (bool) if FALSE just load.  If TRUE process and then
 #'   load. Default FALSE.
 #' @param bWriteCSV (bool) Flag to indicate to write results to file.  Default

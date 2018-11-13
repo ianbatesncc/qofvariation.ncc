@@ -9,6 +9,8 @@ f__transform(qof, lu_ccgs = NA, lu_ccg_groups = NA)
 \arguments{
 \item{qof}{list of data items (see \code{\link{f__extract__load_raw}})}
 
+\item{lu_ccgs}{local ccgs.  NA means use Notts. default.}
+
 \item{lu_ccg_groups}{local ccg group lookups.  NA means use Notts. default.}
 }
 \description{

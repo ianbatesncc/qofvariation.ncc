@@ -8,8 +8,10 @@ f__main__load_compare(qof_root,
   file_suffix = "__eng_ccg_prac__compare__bench_spc23__eng_ccg")
 }
 \arguments{
-\item{qof_root}{Directory root for loading and saving any processed data.  Of the form
-"qof-YYZZ"}
+\item{qof_root}{(character)
+
+  Directory root for loading and saving any processed data.  Of the form
+  \code{qof-YYZZ}}
 
 \item{file_suffix}{For loading and saving of any processed data}
 }
