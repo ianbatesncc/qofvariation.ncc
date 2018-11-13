@@ -2,7 +2,9 @@
 
 export(f__main__load__reference_measures_compare)
 export(f__process__reference_measures_compare)
+export(get_verbosity)
 export(main)
+export(set_verbosity)
 import(data.table, except = c(dcast, melt))
 import(dplyr, except = c(first, between, last))
 import(readxl)

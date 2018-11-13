@@ -4,7 +4,7 @@
 \name{qof_measures}
 \alias{qof_measures}
 \title{QOF measures}
-\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 139416 rows and 12 columns.}
+\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 411768 rows and 11 columns.}
 \usage{
 qof_measures
 }

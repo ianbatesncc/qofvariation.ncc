@@ -6,9 +6,9 @@
 \usage{
 f__main__load_data(qof_root)
 }
-\arguments{
-\item{qof_root}{Directory root for loading and saving any processed data.  Of the form
-"qof-YYZZ"}
+\value{
+(list of data.frame objects) reference list with named items
+  \itemize{\item{data_ind}\item{data_prev}}
 }
 \description{
 Default is not to do anything further.

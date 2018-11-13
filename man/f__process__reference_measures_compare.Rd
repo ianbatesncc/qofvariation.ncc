@@ -9,10 +9,11 @@ f__process__reference_measures_compare(qof, bWriteCSV = FALSE)
 \arguments{
 \item{qof}{(list of data.frames) result of \code{f__transform}}
 
-\item{bWriteCSV}{Flag to indicate to write results to file.}
+\item{bWriteCSV}{(bool) Flag to indicate to write results to file.}
 }
 \value{
-a list with named items
+(list) a list with named items
+
 \describe{
     \item{qof (list)}{A list of data_ind, data_prev, meta_ind, meta_prev tables}
     \item{measures (data.frame)}{Measures}

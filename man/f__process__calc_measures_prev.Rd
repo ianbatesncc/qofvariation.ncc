@@ -8,14 +8,13 @@ f__process__calc_measures_prev(qof, bWriteCSV = FALSE,
   file_suffix = "__eng_ccg_prac__measure_ndv", bSaveData = TRUE)
 }
 \arguments{
-\item{qof}{list of lists (see \code{\link{f__extract__load_raw}})}
+\item{qof}{(list of lists) (see \code{\link{f__extract__load_raw}})}
 
-\item{bWriteCSV}{Flag to indicate to write results to file.}
+\item{bWriteCSV}{(bool) Flag to indicate to write results to file.}
 
-\item{file_suffix}{For loading and saving of any processed data}
+\item{file_suffix}{(character) For loading and saving of any processed data}
 
-\item{qof_root}{Directory root for loading and saving any processed data.  Of the form
-"qof-YYZZ"}
+\item{bSaveData}{(bool) Flag to store as package data}
 }
 \value{
 prevalence data frame

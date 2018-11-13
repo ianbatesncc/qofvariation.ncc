@@ -4,7 +4,7 @@
 \name{qof_meta_org}
 \alias{qof_meta_org}
 \title{QOF reference data for organisations}
-\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 53954 rows and 16 columns.}
+\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 22111 rows and 16 columns.}
 \usage{
 qof_meta_org
 }

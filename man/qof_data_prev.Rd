@@ -4,7 +4,7 @@
 \name{qof_data_prev}
 \alias{qof_data_prev}
 \title{QOF data for prevalence}
-\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 1148773 rows and 6 columns.}
+\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 464331 rows and 6 columns.}
 \usage{
 qof_data_prev
 }

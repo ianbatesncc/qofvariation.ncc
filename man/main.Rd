@@ -38,7 +38,7 @@ loads measures and reference data.  To additionally load raw data specify
 }
 \examples{
 \dontrun{
-v1 <- main(qof_root = "1516", bProcessRaw = TRUE,  bWriteCSV = TRUE)
-v2 <- main(qof_root = "1516", bProcessRaw = FALSE, bWriteCSV = FALSE)
+v1 <- main(qof_root = "1516", bExtractFromRaw = TRUE)
+v2 <- main(qof_root = "1516", bExtractFromRaw = FALSE)
 }
 }

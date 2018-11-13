@@ -14,7 +14,7 @@ f__main__load_measures(qof_root,
 \item{file_suffix}{For loading and saving of any processed data}
 }
 \value{
-measures data frame
+(data.frame) measures data frame
 }
 \description{
 Load measures

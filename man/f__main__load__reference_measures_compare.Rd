@@ -13,7 +13,7 @@ f__main__load__reference_measures_compare(qof_period = c("1617", "1516"),
 \item{bLoadData}{Specify to load raw numbers too.}
 }
 \value{
-a list with named items
+(list) a list with named items
 \describe{
     \item{data}{Raw numbers}
     \item{reference}{Reference tables}

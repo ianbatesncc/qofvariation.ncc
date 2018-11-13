@@ -9,17 +9,16 @@ f__process__compare(qof_measures, bWriteCSV = FALSE,
   bSaveData = TRUE)
 }
 \arguments{
-\item{qof_measures}{measures data frame}
+\item{qof_measures}{(data.frame) measures data frame}
 
-\item{bWriteCSV}{Flag to indicate to write results to file.}
+\item{bWriteCSV}{(bool) Flag to indicate to write results to file.}
 
-\item{file_suffix}{For loading and saving of any processed data}
+\item{file_suffix}{(character) For loading and saving of any processed data}
 
-\item{qof_root}{Directory root for loading and saving any processed data.  Of the form
-"qof-YYZZ"}
+\item{bSaveData}{(bool) Flag to store as package data}
 }
 \value{
-compare data frame
+(data.frame) compare data frame
 }
 \description{
 Benchmark against reference value e.g. England - CI overlap with reference

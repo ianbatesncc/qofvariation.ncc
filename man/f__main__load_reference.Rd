@@ -6,12 +6,9 @@
 \usage{
 f__main__load_reference(qof_root)
 }
-\arguments{
-\item{qof_root}{Directory root for loading and saving any processed data.  Of the form
-"qof-YYZZ"}
-}
 \value{
-reference list with named items \itemize{\item{meta_org}\item{meta_ind}}
+(list of data.frame objects) reference list with named items
+  \itemize{\item{meta_org}\item{meta_ind}}
 }
 \description{
 Load reference

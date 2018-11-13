@@ -4,7 +4,7 @@
 \name{qof_data_ind}
 \alias{qof_data_ind}
 \title{QOF data for indicators}
-\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 4817811 rows and 8 columns.}
+\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 1696201 rows and 8 columns.}
 \usage{
 qof_data_ind
 }

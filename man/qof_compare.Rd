@@ -4,7 +4,7 @@
 \name{qof_compare}
 \alias{qof_compare}
 \title{QOF measure comparisons}
-\format{An object of class \code{data.frame} with 402852 rows and 15 columns.}
+\format{An object of class \code{data.frame} with 1189251 rows and 13 columns.}
 \usage{
 qof_compare
 }

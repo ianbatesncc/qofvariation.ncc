@@ -3,16 +3,19 @@
 \docType{data}
 \name{verbosity_levels}
 \alias{verbosity_levels}
-\alias{verbosity_level}
 \alias{verbosity.showatlevel}
+\alias{set_verbosity}
+\alias{get_verbosity}
 \title{possible verbosity levels (global)}
-\format{An object of class \code{integer} of length 3.}
+\format{An object of class \code{numeric} of length 3.}
 \usage{
 verbosity_levels
 
-verbosity_level
-
 verbosity.showatlevel(this_msg_category)
+
+set_verbosity(slevel = names(verbosity_levels))
+
+get_verbosity()
 }
 \arguments{
 \item{this_msg_category}{}
@@ -22,12 +25,10 @@ verbosity.showatlevel(this_msg_category)
 1 - information
 2 - chatty
 
-0 - suppress (default)
-1 - information
-2 - chatty
-
 Chatty by default.  Can make less chatty by DECREASING verbosity level
 Conversely, INCREASE verbosity with INCREASING values ...
+
+uses option "qccvariation.ncc.verbosity"
 }
 \details{
 ... warnings and errors always show
@@ -38,23 +39,23 @@ Conversely, INCREASE verbosity with INCREASING values ...
 check level is greater than "suppress" yet lower than "code classification"
 }
 \examples{
-verbosity_level <- verbosity_levels["chatty"]
-names(verbosity_levels) \%>\% sapply(verbosity.showatlevel)
+set_verbosity("chatty")
+sapply(names(verbosity_levels), verbosity.showatlevel)
 names(verbosity_levels) \%>\% sapply(function(x) {
-  msg <- paste("global level: ", names(verbosity_level))
+  msg <- paste("global level: ", names(get_verbosity()))
   if (verbosity.showatlevel(x)) msg <- paste(msg, "This is a[n]", x, "message")
   msg
 })
 
 if (verbosity.showatlevel("info")) cat("Hello World!\\n")
 
-verbosity_level <- verbosity_levels["info"]
-names(verbosity_levels) \%>\% sapply(verbosity.showatlevel)
+set_verbosity("info")
+sapply(names(verbosity_levels), verbosity.showatlevel)
 
 if (verbosity.showatlevel("info")) cat("Hello World!\\n")
 
-verbosity_level <- verbosity_levels["suppress"]
-names(verbosity_levels) \%>\% sapply(verbosity.showatlevel)
+set_verbosity("suppress")
+sapply(names(verbosity_levels), verbosity.showatlevel)
 
 if (verbosity.showatlevel("info")) cat("Hello World!\\n")
 
