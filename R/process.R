@@ -19,9 +19,10 @@
 #' f__main__compare
 #'
 #' @param qof (list of data.frames) result of \code{f__transform}
-#' @param bWriteCSV Flag to indicate to write results to file.
+#' @param bWriteCSV (bool) Flag to indicate to write results to file.
 #'
-#' @return a list with named items
+#' @return (list) a list with named items
+#'
 #' \describe{
 #'     \item{qof (list)}{A list of data_ind, data_prev, meta_ind, meta_prev tables}
 #'     \item{measures (data.frame)}{Measures}
@@ -79,7 +80,7 @@ f__process__reference_measures_compare <- function(
 #' @param qof_period of the form "ZZYY"
 #' @param bLoadData Specify to load raw numbers too.
 #'
-#' @return a list with named items
+#' @return (list) a list with named items
 #' \describe{
 #'     \item{data}{Raw numbers}
 #'     \item{reference}{Reference tables}
@@ -142,14 +143,11 @@ f__main__load__reference_measures_compare <- function(
 #' f__main__measures_ind
 #' f__main__measures_prev
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
-#' @param bWriteCSV Flag to indicate to write results to file.
-#' @param qof_root
+#' @param qof (list of lists) (see \code{\link{f__extract__load_raw}})
+#' @param bWriteCSV (bool) Flag to indicate to write results to file.
+#' @param file_suffix (character) For loading and saving of any processed data
+#' @param bSaveData (bool) Flag to store as package data
 #'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @param file_suffix For loading and saving of any processed data
 #'
 #' @family Internal routines
 #' @family Process routines
@@ -222,14 +220,7 @@ f__process__measures <- function(
 
 #' Create QOF performance measures
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
-#' @param bWriteCSV Flag to indicate to write results to file.
-#' @param qof_root
-#'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @param file_suffix For loading and saving of any processed data
+#' @inheritParams f__process__measures
 #'
 #' @return performance data frame
 #'
@@ -346,14 +337,7 @@ performance, suboptimal,    denominator, 0,     1,     1
 
 #' Create QOF prevalance measures
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
-#' @param bWriteCSV Flag to indicate to write results to file.
-#' @param qof_root
-#'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @param file_suffix For loading and saving of any processed data
+#' @inheritParams f__process__measures
 #'
 #' @return prevalence data frame
 #'
@@ -449,16 +433,10 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 #' Benchmark against reference value e.g. England - CI overlap with reference
 #' SPC methods - compare point value with control limits
 #'
-#' @param qof_measures measures data frame
-#' @param bWriteCSV Flag to indicate to write results to file.
-#' @param qof_root
+#' @inheritParams f__process__measures
+#' @param qof_measures (data.frame) measures data frame
 #'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @param file_suffix For loading and saving of any processed data
-#'
-#' @return compare data frame
+#' @return (data.frame) compare data frame
 #'
 #'
 #' @family Internal routines
@@ -688,13 +666,10 @@ f__process__compare <- function(
 #' f__extract__load_raw
 #' f__main__preprocess
 #'
-#' @param qof_root
-#'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-# @return list of lists (see \code{\link{f__extract__load_raw}})
 #' @inheritParams f__transform__preprocess
+#'
+#' @return (list of data.frame objects) reference list with named items
+#'   \itemize{\item{data_ind}\item{data_prev}}
 #'
 #' @family Internal routines
 #' @family Load routines
@@ -712,12 +687,10 @@ f__main__load_data <- function(
 
 #' Load reference
 #'
-#' @param qof_root
+#' @inheritParams f__transform__preprocess
 #'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @return reference list with named items \itemize{\item{meta_org}\item{meta_ind}}
+#' @return (list of data.frame objects) reference list with named items
+#'   \itemize{\item{meta_org}\item{meta_ind}}
 #'
 #'
 #' @family Internal routines
@@ -744,7 +717,7 @@ f__main__load_reference <- function(
 #'
 #' @param file_suffix For loading and saving of any processed data
 #'
-#' @return measures data frame
+#' @return (data.frame) measures data frame
 #'
 #'
 #' @family Internal routines
@@ -785,5 +758,3 @@ f__main__load_compare <- function(
     return(qof_compare %>% filter(qof_period %in% qof_root))
 }
 
-
-# Done. ####
