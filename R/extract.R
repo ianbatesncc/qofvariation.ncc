@@ -306,6 +306,7 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
 #' }
 #'
 #' @importFrom purrr pwalk
+#' @importFrom stringi stri_trans_general
 #' @import readxl
 #'
 #' @family Internal routines
@@ -1272,7 +1273,18 @@ ages 50+,50OV
         , data_ind = qof.ind
     ) %>%
         # tag on qof_period
-        lapply(function(x) {x %>% mutate(qof_period = qof_root)})
+        lapply(function(x) {
+            mutate(x, qof_period = qof_root)
+        }) %>%
+        # ASCII-fy
+        lapply(function(x) {
+            mutate_if(
+                x
+                , is.character
+                , stringi::stri_trans_general
+                , id = "latin-ascii"
+            ) %>% data.table::setDT()
+        })
 
     generic_names <- c("meta_org", "meta_ind", "data_prev", "data_ind")
 
