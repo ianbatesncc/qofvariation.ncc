@@ -25,10 +25,6 @@ Save reference data
 }
 \seealso{
 Other Internal routines: \code{\link{f__extract__load_raw}},
-  \code{\link{f__main__load_compare}},
-  \code{\link{f__main__load_data}},
-  \code{\link{f__main__load_measures}},
-  \code{\link{f__main__load_reference}},
   \code{\link{f__process__calc_measures_ind}},
   \code{\link{f__process__calc_measures_prev}},
   \code{\link{f__process__compare}},
@@ -36,12 +32,16 @@ Other Internal routines: \code{\link{f__extract__load_raw}},
   \code{\link{f__transform__data__add_subtotals}},
   \code{\link{f__transform__meta__ccg_groups}},
   \code{\link{f__transform__preprocess}},
-  \code{\link{families}}
+  \code{\link{families}},
+  \code{\link{qof__main__load_compare}},
+  \code{\link{qof__main__load_data}},
+  \code{\link{qof__main__load_measures}},
+  \code{\link{qof__main__load_reference}}
 
 Other Save routines: \code{\link{families}}
 
-Other Reference routines: \code{\link{f__main__load_reference}},
-  \code{\link{families}}
+Other Reference routines: \code{\link{families}},
+  \code{\link{qof__main__load_reference}}
 }
 \concept{Internal routines}
 \concept{Reference routines}

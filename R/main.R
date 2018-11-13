@@ -18,6 +18,7 @@ if (FALSE) {
     source("./R/testci.R")
 }
 
+# EXTRACT, TRANSFORM, PROCESS, LOAD ####
 
 #' Process raw datasets
 #'
@@ -44,12 +45,13 @@ if (FALSE) {
 #'
 #' @examples
 #' \dontrun{
-#' v1 <- main(qof_root = "1516", bExtractFromRaw = TRUE)
-#' v2 <- main(qof_root = "1516", bExtractFromRaw = FALSE)
+#' v1 <- qof__main(qof_root = "1516", bExtractFromRaw = TRUE)
+#' v2 <- qof__main(qof_root = "1516", bExtractFromRaw = FALSE)
 #' }
+#'
 #' @export
 #'
-main <- function(
+qof__main <- function(
     qof_root = c(
         "qof-1718", "qof-1617"
         , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
@@ -69,13 +71,15 @@ main <- function(
     lu_ccg_groups <- lu_local$lu_ccg_groups
 
     # short inspection of lookup
-    lu_ccg_groups %>%
-        reshape2::dcast(
-            ... ~ ccg_code
-            , fun.aggregate = length
-            , value.var = "ccg_group_code"
-        ) %>%
-        print()
+    if (verbosity.showatlevel("chatty")) {
+        lu_ccg_groups %>%
+            reshape2::dcast(
+                ... ~ ccg_code
+                , fun.aggregate = length
+                , value.var = "ccg_group_code"
+            ) %>%
+            print()
+    }
 
     retval <- NULL
 
@@ -114,14 +118,159 @@ test_main <- function(bProcessRaw = TRUE) {
     v4 <- NA
 
     if (is.na(bProcessRaw) | bProcessRaw) {
-        v1 <- main(qof_root = "qof-1516", bExtractFromRaw = TRUE)
-        v3 <- main(qof_root = "qof-1617", bExtractFromRaw = TRUE)
+        v1 <- qof__main(qof_root = "qof-1516", bExtractFromRaw = TRUE)
+        v3 <- qof__main(qof_root = "qof-1617", bExtractFromRaw = TRUE)
     }
 
     if (is.na(bProcessRaw) | !bProcessRaw) {
-        v2 <- main(qof_root = "qof-1516", bExtractFromRaw = FALSE)
-        v4 <- main(qof_root = "qof-1617", bExtractFromRaw = FALSE)
+        v2 <- qof__main(qof_root = "qof-1516", bExtractFromRaw = FALSE)
+        v4 <- qof__main(qof_root = "qof-1617", bExtractFromRaw = FALSE)
     }
 
     invisible(list(v1 = v1, v2 = v2, v3 = v3, v4 = v4))
+}
+
+# LOAD ####
+
+#' Load preprocessed data
+#'
+#' Make package provided data available as one onbect.
+#'
+#' @inheritParams qof__main
+#'
+#' @return (list of objects) list(qof = list(meta_org, meta_ind, data_ind,
+#'   data_prev), measures, compare)
+#'
+#' @export
+#'
+qof__main__load <- function(qof_root = NULL) {
+    invisible(list(
+        qof = c(
+            qof__main__load_reference(qof_root)
+            , qof__main__load_data(qof_root)
+        )
+        , measures = qof__main__load_measures(qof_root)
+        , compare = qof__main__load_compare(qof_root)
+    ))
+}
+
+#' load raw data
+#'
+#' Default is not to do anything further.
+#'
+#' @note
+#' Call tree:
+#'
+#' f__extract__load_raw
+#' f__main__preprocess
+#'
+#' @inheritParams f__transform__preprocess
+#' @inheritParams f__extract__load_raw
+#'
+#' @return (list of data.frame objects) reference list with named items
+#'   \itemize{\item{data_ind}\item{data_prev}}
+#'
+#' @family Internal routines
+#' @family Load routines
+#'
+#' @export
+#'
+qof__main__load_data <- function(
+    qof_root = NULL
+) {
+    .Deprecated("data")
+
+    retval <-list(
+        data_ind = qof_data_ind
+        , data_prev = qof_data_prev
+    )
+
+    if (is.null(qof_root)) {
+        retval
+    } else {
+        retval %>% lapply(function(x){filter(x, qof_period %in% qof_root)})
+    }
+}
+
+#' Load reference
+#'
+#' @inheritParams qof__main__load_data
+#'
+#' @return (list of data.frame objects) reference list with named items
+#'   \itemize{\item{meta_org}\item{meta_ind}}
+#'
+#'
+#' @family Internal routines
+#' @family Load routines
+#' @family Reference routines
+#'
+#' @export
+#'
+qof__main__load_reference <- function(
+    qof_root = NULL
+) {
+    .Deprecated("data")
+
+    retval <- list(
+        meta_ind = qof_meta_ind
+        , meta_org = qof_meta_org
+    )
+
+    if (is.null(qof_root)) {
+        retval
+    } else {
+        retval %>% lapply(function(x){filter(x, qof_period %in% qof_root)})
+    }
+}
+
+#' Load measures
+#'
+#' @inheritParams qof__main__load_data
+#'
+#' @param file_suffix For loading and saving of any processed data
+#'
+#' @return (data.frame) measures data frame
+#'
+#'
+#' @family Internal routines
+#' @family Load routines
+#' @family Measure routines
+#'
+#' @export
+#'
+qof__main__load_measures <- function(
+    qof_root = NULL
+    , file_suffix = "__eng_ccg_prac__measure_ndv"
+) {
+    .Deprecated("data")
+
+    if (is.null(qof_root))
+        qof_measures
+    else
+        qof_measures %>% filter(qof_period %in% qof_root)
+}
+
+#' Load compare
+#'
+#' @inheritParams qof__main__load_measures
+#'
+#' @return compare data frame
+#'
+#'
+#' @family Internal routines
+#' @family Load routines
+#' @family Compare routines
+#'
+#' @export
+#'
+qof__main__load_compare <- function(
+    qof_root = NULL
+    , file_suffix = "__eng_ccg_prac__compare__bench_spc23__eng_ccg"
+) {
+    .Deprecated("data")
+
+    if (is.null(qof_root))
+        qof_compare
+    else
+        qof_compare %>% filter(qof_period %in% qof_root)
 }

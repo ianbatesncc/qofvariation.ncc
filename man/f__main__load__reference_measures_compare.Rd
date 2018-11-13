@@ -38,11 +38,11 @@ Other External routines: \code{\link{f__process__reference_measures_compare}},
   \code{\link{families}}
 
 Other Load routines: \code{\link{f__extract__load_raw}},
-  \code{\link{f__main__load_compare}},
-  \code{\link{f__main__load_data}},
-  \code{\link{f__main__load_measures}},
-  \code{\link{f__main__load_reference}},
-  \code{\link{families}}
+  \code{\link{families}},
+  \code{\link{qof__main__load_compare}},
+  \code{\link{qof__main__load_data}},
+  \code{\link{qof__main__load_measures}},
+  \code{\link{qof__main__load_reference}}
 }
 \concept{External routines}
 \concept{Load routines}

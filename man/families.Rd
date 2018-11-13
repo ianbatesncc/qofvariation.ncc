@@ -24,10 +24,6 @@ Other External routines: \code{\link{f__main__load__reference_measures_compare}}
   \code{\link{f__process__reference_measures_compare}}
 
 Other Internal routines: \code{\link{f__extract__load_raw}},
-  \code{\link{f__main__load_compare}},
-  \code{\link{f__main__load_data}},
-  \code{\link{f__main__load_measures}},
-  \code{\link{f__main__load_reference}},
   \code{\link{f__main__save_reference}},
   \code{\link{f__process__calc_measures_ind}},
   \code{\link{f__process__calc_measures_prev}},
@@ -35,27 +31,31 @@ Other Internal routines: \code{\link{f__extract__load_raw}},
   \code{\link{f__process__measures}},
   \code{\link{f__transform__data__add_subtotals}},
   \code{\link{f__transform__meta__ccg_groups}},
-  \code{\link{f__transform__preprocess}}
+  \code{\link{f__transform__preprocess}},
+  \code{\link{qof__main__load_compare}},
+  \code{\link{qof__main__load_data}},
+  \code{\link{qof__main__load_measures}},
+  \code{\link{qof__main__load_reference}}
 
 Other Load routines: \code{\link{f__extract__load_raw}},
   \code{\link{f__main__load__reference_measures_compare}},
-  \code{\link{f__main__load_compare}},
-  \code{\link{f__main__load_data}},
-  \code{\link{f__main__load_measures}},
-  \code{\link{f__main__load_reference}}
+  \code{\link{qof__main__load_compare}},
+  \code{\link{qof__main__load_data}},
+  \code{\link{qof__main__load_measures}},
+  \code{\link{qof__main__load_reference}}
 
 Other Save routines: \code{\link{f__main__save_reference}}
 
-Other Reference routines: \code{\link{f__main__load_reference}},
-  \code{\link{f__main__save_reference}}
+Other Reference routines: \code{\link{f__main__save_reference}},
+  \code{\link{qof__main__load_reference}}
 
-Other Measure routines: \code{\link{f__main__load_measures}},
-  \code{\link{f__process__calc_measures_ind}},
+Other Measure routines: \code{\link{f__process__calc_measures_ind}},
   \code{\link{f__process__calc_measures_prev}},
-  \code{\link{f__process__measures}}
+  \code{\link{f__process__measures}},
+  \code{\link{qof__main__load_measures}}
 
-Other Compare routines: \code{\link{f__main__load_compare}},
-  \code{\link{f__process__compare}}
+Other Compare routines: \code{\link{f__process__compare}},
+  \code{\link{qof__main__load_compare}}
 
 Other Helper routines: \code{\link{is_installed}},
   \code{\link{round_nearest}},
@@ -66,10 +66,6 @@ Other External routines: \code{\link{f__main__load__reference_measures_compare}}
   \code{\link{f__process__reference_measures_compare}}
 
 Other Internal routines: \code{\link{f__extract__load_raw}},
-  \code{\link{f__main__load_compare}},
-  \code{\link{f__main__load_data}},
-  \code{\link{f__main__load_measures}},
-  \code{\link{f__main__load_reference}},
   \code{\link{f__main__save_reference}},
   \code{\link{f__process__calc_measures_ind}},
   \code{\link{f__process__calc_measures_prev}},
@@ -77,27 +73,31 @@ Other Internal routines: \code{\link{f__extract__load_raw}},
   \code{\link{f__process__measures}},
   \code{\link{f__transform__data__add_subtotals}},
   \code{\link{f__transform__meta__ccg_groups}},
-  \code{\link{f__transform__preprocess}}
+  \code{\link{f__transform__preprocess}},
+  \code{\link{qof__main__load_compare}},
+  \code{\link{qof__main__load_data}},
+  \code{\link{qof__main__load_measures}},
+  \code{\link{qof__main__load_reference}}
 
 Other Load routines: \code{\link{f__extract__load_raw}},
   \code{\link{f__main__load__reference_measures_compare}},
-  \code{\link{f__main__load_compare}},
-  \code{\link{f__main__load_data}},
-  \code{\link{f__main__load_measures}},
-  \code{\link{f__main__load_reference}}
+  \code{\link{qof__main__load_compare}},
+  \code{\link{qof__main__load_data}},
+  \code{\link{qof__main__load_measures}},
+  \code{\link{qof__main__load_reference}}
 
 Other Save routines: \code{\link{f__main__save_reference}}
 
-Other Measure routines: \code{\link{f__main__load_measures}},
-  \code{\link{f__process__calc_measures_ind}},
+Other Measure routines: \code{\link{f__process__calc_measures_ind}},
   \code{\link{f__process__calc_measures_prev}},
-  \code{\link{f__process__measures}}
+  \code{\link{f__process__measures}},
+  \code{\link{qof__main__load_measures}}
 
-Other Compare routines: \code{\link{f__main__load_compare}},
-  \code{\link{f__process__compare}}
+Other Compare routines: \code{\link{f__process__compare}},
+  \code{\link{qof__main__load_compare}}
 
-Other Reference routines: \code{\link{f__main__load_reference}},
-  \code{\link{f__main__save_reference}}
+Other Reference routines: \code{\link{f__main__save_reference}},
+  \code{\link{qof__main__load_reference}}
 }
 \concept{Compare routines}
 \concept{External routines}
