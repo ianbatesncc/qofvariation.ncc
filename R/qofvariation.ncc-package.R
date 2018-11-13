@@ -97,18 +97,7 @@ NULL
 #'
 #' @rdname verbosity
 #'
-verbosity_levels <- seq(0, 2)
-names(verbosity_levels) <- c("suppress", "info", "chatty")
-
-#' verbosity level (global)
-#'
-#' 0 - suppress (default)
-#' 1 - information
-#' 2 - chatty
-#'
-#' @rdname verbosity
-#'
-verbosity_level <- verbosity_levels["suppress"]
+verbosity_levels <- c(suppress = 0, info = 1, chatty = 2)
 
 #' compare verbosity with setting for code chunk
 #'
@@ -125,23 +114,23 @@ verbosity_level <- verbosity_levels["suppress"]
 #' @param this_msg_category
 #'
 #' @examples
-#' verbosity_level <- verbosity_levels["chatty"]
-#' names(verbosity_levels) %>% sapply(verbosity.showatlevel)
+#' set_verbosity("chatty")
+#' sapply(names(verbosity_levels), verbosity.showatlevel)
 #' names(verbosity_levels) %>% sapply(function(x) {
-#'   msg <- paste("global level: ", names(verbosity_level))
+#'   msg <- paste("global level: ", names(get_verbosity()))
 #'   if (verbosity.showatlevel(x)) msg <- paste(msg, "This is a[n]", x, "message")
 #'   msg
 #' })
 #'
 #' if (verbosity.showatlevel("info")) cat("Hello World!\n")
 #'
-#' verbosity_level <- verbosity_levels["info"]
-#' names(verbosity_levels) %>% sapply(verbosity.showatlevel)
+#' set_verbosity("info")
+#' sapply(names(verbosity_levels), verbosity.showatlevel)
 #'
 #' if (verbosity.showatlevel("info")) cat("Hello World!\n")
 #'
-#' verbosity_level <- verbosity_levels["suppress"]
-#' names(verbosity_levels) %>% sapply(verbosity.showatlevel)
+#' set_verbosity("suppress")
+#' sapply(names(verbosity_levels), verbosity.showatlevel)
 #'
 #' if (verbosity.showatlevel("info")) cat("Hello World!\n")
 #'
@@ -150,10 +139,38 @@ verbosity_level <- verbosity_levels["suppress"]
 verbosity.showatlevel <- function(this_msg_category) {
     this_msg_level <- verbosity_levels[this_msg_category]
 
+    verbosity_level <- get_verbosity()
+
     return(
         (verbosity_level != verbosity_levels["suppress"])
         && (this_msg_level <= verbosity_level)
     )
+}
+
+#' set verbosity
+#'
+#' uses option "qccvariation.ncc.verbosity"
+#'
+#' @rdname verbosity
+#'
+#' @export
+#'
+set_verbosity <- function(slevel = names(verbosity_levels)) {
+    slevel = match.arg(slevel)
+
+    options(qccvariation.ncc.verbosity = verbosity_levels[slevel])
+
+    invisible(get_verbosity())
+}
+
+#' get verbosity
+#'
+#' @rdname verbosity
+#'
+#' @export
+#'
+get_verbosity <- function() {
+    getOption("qccvariation.ncc.verbosity")
 }
 
 
