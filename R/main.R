@@ -1,13 +1,38 @@
+#
+# development
+#
+
+if (FALSE) {
+    require("devtools")
+    require("testthat")
+    require("dplyr")
+    require("data.table")
+    require("readxl")
+
+    source("./R/qofvariation.ncc-package.R")
+    source("./R/utils.R")
+    source("./R/extract.R")
+    source("./R/transform.R")
+    source("./R/process.R")
+    source("./R/calcci.R")
+    source("./R/testci.R")
+}
+
+
 #' Process raw datasets
 #'
 #' Options to specify year. Option to specify if to run the raw process routines
 #' Option to specify if to save results to disc as .csv Option to specify just
 #' to load the data
 #'
-#' @param qof_period Of the form "YYZZ"
-#' @param bProcessRaw if FALSE just load.  If TRUE process and then load.
-#' @param bWriteCSV Flag to indicate to write results to file.
-#' @param bLoadData Specify to load raw numbers too.
+#' @param qof_root (character) Of the form "qof-YYZZ"
+#' @param bExtractFromRaw (bool) if FALSE just load.  If TRUE process and then
+#'   load. Default FALSE.
+#' @param bWriteCSV (bool) Flag to indicate to write results to file.  Default
+#'   FALSE.
+#' @param bSaveData (bool) Specify to save measures and compare phases.  Default
+#'   FALSE.
+#' @param bLoadData (bool) Specify to load raw numbers too.  Default FALSE.
 #'
 #' @note
 #'
@@ -17,109 +42,61 @@
 #' loads measures and reference data.  To additionally load raw data specify
 #' \code{bLoadData = TRUE}
 #'
-#'
-#'
 #' @examples
 #' \dontrun{
-#' v1 <- main(qof_period = "1516", bProcessRaw = TRUE, bWriteCSV = TRUE)
-#' v2 <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
+#' v1 <- main(qof_root = "1516", bExtractFromRaw = TRUE)
+#' v2 <- main(qof_root = "1516", bExtractFromRaw = FALSE)
 #' }
 #' @export
 #'
 main <- function(
-    qof_period = c("1617", "1516")
-    , bProcessRaw = FALSE
+    qof_root = c(
+        "qof-1718", "qof-1617"
+        , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
+        , "qof-1011", "qof-0910", "qof-0809", "qof-0708", "qof-0607"
+        , "qof-0506", "qof-0405"
+    )
+    , bExtractFromRaw = FALSE
     , bWriteCSV = FALSE
+    , bSaveData = FALSE
     , bLoadData = FALSE
 ) {
-    qof_period <- match.arg(qof_period)
+    qof_root <- match.arg(qof_root, several.ok = TRUE)
 
-    lu.orgs.ccgs.local <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
+    lu_local <- f__transform__create_local_lu()
 
-    lu.orgs.ccgs.groups <- data.table::fread(input = "
-ccg_group_type,ccg_group_type_name,ccg_code,ccg_group_code,ccg_group_name
-uop,Unit of Planning,02Q,nno,North Notts. UOP
-uop,Unit of Planning,04E,mno,Mid. Notts. UOP
-uop,Unit of Planning,04H,mno,Mid. Notts. UOP
-uop,Unit of Planning,04L,sno,South Notts. UOP
-uop,Unit of Planning,04M,sno,South Notts. UOP
-uop,Unit of Planning,04N,sno,South Notts. UOP
-uop,Unit of Planning,04K,sno,South Notts. UOP
-stp,Sus. and Trans. P-ship,04E,not,Nottinghamshire STP
-stp,Sus. and Trans. P-ship,04H,not,Nottinghamshire STP
-stp,Sus. and Trans. P-ship,04L,not,Nottinghamshire STP
-stp,Sus. and Trans. P-ship,04M,not,Nottinghamshire STP
-stp,Sus. and Trans. P-ship,04N,not,Nottinghamshire STP
-stp,Sus. and Trans. P-ship,04K,not,Nottinghamshire STP
-utla,Upper Tier LA,02Q,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04E,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04H,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04L,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04M,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04N,ncc,Nottinghamshire CC
-utla,Upper Tier LA,04K,nci,Nottingham City UA
-lep,Local Enterprise P-ship,02Q,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04E,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04H,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04L,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04M,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04N,n2,Nottingham and Nottinghamshire LEP N2
-lep,Local Enterprise P-ship,04K,n2,Nottingham and Nottinghamshire LEP N2
-"
-    ) %>%
-        merge(
-            data.table::fread(input = "
-ccg_group_type,type_display_order
-lep,1
-utla,2
-stp,3
-uop,4
-")
-            , by = "ccg_group_type"
-            , all.x = TRUE
-        )
-
-    if (bWriteCSV) {
-        this_csv <- proj_path("./data-raw", "lu__ccg_groups.csv")
-
-        cat("INFO: saving", this_file, "...", "\n")
-
-        data.table::fwrite(lu.orgs.ccgs.groups, file = this_csv)
-    }
+    lu_ccgs <- lu_local$lu_ccgs
+    lu_ccg_groups <- lu_local$lu_ccg_groups
 
     # short inspection of lookup
-    lu.orgs.ccgs.groups %>%
-        reshape2::dcast(... ~ ccg_code, fun.aggregate = length, value.var = "ccg_group_code") %>%
+    lu_ccg_groups %>%
+        reshape2::dcast(
+            ... ~ ccg_code
+            , fun.aggregate = length
+            , value.var = "ccg_group_code"
+        ) %>%
         print()
 
     retval <- NULL
 
-    if (!is.na(bProcessRaw)) {
-        if (bProcessRaw == TRUE) {
-            retval <- f__91__process__reference_measures_compare(
-                qof_period, bWriteCSV = bWriteCSV
-                , lu.orgs.ccgs.local = lu.orgs.ccgs.local
-                , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
-            )
-        } else {
-            retval <- f__91__load__reference_measures_compare(
-                qof_period
-                , bLoadData
-            )
-            if (bLoadData == TRUE) {
-                retval <- retval %>% f__91__amend_data__add_subtotals(
-                    bCalcEngTotal = TRUE
-                    , bCalcCCGTotals = TRUE
-                    , lu.orgs.ccgs.local = lu.orgs.ccgs.local
-                    , lu.orgs.ccgs.groups = lu.orgs.ccgs.groups
-                )
-            }
-        }
-    }
+    qof_extract <- f__extract(qof_root, bExtractFromRaw)
+
+    qof_transform <- qof_extract %>%
+        f__transform(lu_ccgs, lu_ccg_groups)
+
+    qof_measures <- qof_transform %>%
+        f__process__measures(bWriteCSV = bWriteCSV, bSaveData = bSaveData)
+
+    qof_compare <- qof_measures %>%
+        f__process__compare(bWriteCSV = bWriteCSV, bSaveData = bSaveData)
 
     # return
 
-    invisible(retval)
+    invisible(list(
+        qof = qof
+        , measures = qof_measures
+        , compare = qof_compare
+    ))
 }
 
 #' Test the main routine
@@ -137,13 +114,13 @@ test_main <- function(bProcessRaw = TRUE) {
     v4 <- NA
 
     if (is.na(bProcessRaw) | bProcessRaw) {
-        v1 <- main(qof_period = "1516", bProcessRaw = TRUE, bWriteCSV = TRUE)
-        v3 <- main(qof_period = "1617", bProcessRaw = TRUE, bWriteCSV = TRUE)
+        v1 <- main(qof_root = "qof-1516", bExtractFromRaw = TRUE)
+        v3 <- main(qof_root = "qof-1617", bExtractFromRaw = TRUE)
     }
 
     if (is.na(bProcessRaw) | !bProcessRaw) {
-        v2 <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
-        v4 <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
+        v2 <- main(qof_root = "qof-1516", bExtractFromRaw = FALSE)
+        v4 <- main(qof_root = "qof-1617", bExtractFromRaw = FALSE)
     }
 
     invisible(list(v1 = v1, v2 = v2, v3 = v3, v4 = v4))

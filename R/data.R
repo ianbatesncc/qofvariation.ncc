@@ -52,25 +52,6 @@ NULL
 #'
 "qof_meta_org"
 
-#' @name qof_meta_org
-"qof_1718_meta_org"
-
-#' @name qof_meta_org
-"qof_1617_meta_org"
-
-#' @name qof_meta_org
-"qof_1516_meta_org"
-
-# @name qof_meta_org
-# "qof_1415_meta_org"
-
-# @name qof_meta_org
-# "qof_1314_meta_org"
-
-# @name qof_meta_org
-# "qof_1213_meta_org"
-
-
 #' QOF reference data for indicators
 #'
 #' \tabular{ll}{
@@ -101,24 +82,6 @@ NULL
 #'
 "qof_meta_ind"
 
-#' @name qof_meta_ind
-"qof_1718_meta_ind"
-
-#' @name qof_meta_ind
-"qof_1617_meta_ind"
-
-#' @name qof_meta_ind
-"qof_1516_meta_ind"
-
-# @name qof_meta_ind
-# "qof_1415_meta_ind"
-
-# @name qof_meta_ind
-# "qof_1314_meta_ind"
-
-# @name qof_meta_ind
-# "qof_1213_meta_ind"
-
 #' QOF data for prevalence
 #'
 #' \tabular{ll}{
@@ -133,25 +96,6 @@ NULL
 #' @family qof_data
 #'
 "qof_data_prev"
-
-#' @name qof_data_prev
-"qof_1718_data_prev"
-
-#' @name qof_data_prev
-"qof_1617_data_prev"
-
-#' @name qof_data_prev
-"qof_1516_data_prev"
-
-# @name qof_data_prev
-# "qof_1415_data_prev"
-
-# @name qof_data_prev
-# "qof_1314_data_prev"
-
-# @name qof_data_prev
-# "qof_1213_data_prev"
-
 
 #' QOF data for indicators
 #'
@@ -181,20 +125,31 @@ NULL
 #'
 "qof_data_ind"
 
-#' @name qof_data_ind
-"qof_1718_data_ind"
+#' QOF measures
+#'
+#' indicator and prevalence as measures
+#'
+"qof_measures"
 
-#' @name qof_data_ind
-"qof_1617_data_ind"
+#' QOF measure comparisons
+#'
+#' Measures compared to benchmarks
+#'
+"qof_compare"
 
-#' @name qof_data_ind
-"qof_1516_data_ind"
+#' List of CCGs considered local
+#'
+"lu_ccgs"
 
-# @name qof_data_ind
-# "qof_1415_data_ind"
-
-# @name qof_data_ind
-# "qof_1314_data_ind"
-
-# @name qof_data_ind
-# "qof_1213_data_ind"
+#' Local CCG groups
+#'
+#' \tabular{ll}{
+#'  \code{ccg_group_type} \tab {<chr n=4>} \cr
+#'  \code{ccg_group_type_name} \tab {<chr n=4>} \cr
+#'  \code{ccg_code} \tab {<chr n=7>} \cr
+#'  \code{ccg_group_code} \tab {<chr n=7>} \cr
+#'  \code{ccg_group_name} \tab {<chr n=7>} \cr
+#'  \code{type_display_order} \tab {<int>} \cr
+#' }
+#'
+"lu_ccg_groups"

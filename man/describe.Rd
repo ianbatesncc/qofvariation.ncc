@@ -13,6 +13,23 @@ describe(x, width = NULL, showvalues = FALSE, type = c("describe",
 \item{width}{(int) console width, NULL means use default options()$width}
 
 \item{showvalues}{(bool) Show field values (default TRUE)}
+
+\item{type}{(character) specify describe or tabular lists.}
+}
+\value{
+\preformatted{
+#' \describe\{
+#'   \item\{\code\{field1\}\}\{description 1\}
+#'   \item\{\code\{field2\}\}\{description 2\}
+#'  ...
+#' \}
+
+#' \tabular\{ll\}\{
+#'   \{\{\code\{field1\}\} \tab \{description 1\} \cr
+#'   \{\{\code\{field2\}\} \tab \{description 1\} \cr
+#'   ...
+#' \}
+}
 }
 \description{
 Helper for generating roxygen documentation for a data.frame

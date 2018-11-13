@@ -2,57 +2,6 @@
 # utils.R
 #
 
-#' Determine root path from within project development
-#'
-#' Concept of 'root directory' depends on context.
-#'
-#'    - from project root is ./R
-#'     - from ./inst/dashboard it is, not surprisingly, ./R ...
-#'
-#' @importFrom devtools package_file
-#'
-#' @family Helper routines
-#'
-proj_root <- function() {
-    normalizePath(
-        devtools::package_file()
-        , winslash = "/"
-        , mustWork = TRUE
-    )
-}
-
-#' Shortcut for constructing paths
-#'
-#' @param ... path elements.  Passed to paste.
-#'
-#' @note Written before usethis::proj_path was known ... very similar
-#'   functionality so use usethis instead.
-#'
-#' @importFrom devtools package_file
-#'
-#' @family Helper routines
-#'
-proj_path <- function(..., ext = NULL) {
-    if (!is.null(ext))
-        stop("this instance of proj_path does not accept ext as a separate parameter.")
-
-    normalizePath(
-        devtools::package_file(...)
-        , winslash = "/"
-        , mustWork = FALSE
-    )
-}
-proj_path <- usethis::proj_path
-
-#' Contruct paths
-#'
-#' @param ... path elements.  Passed to paste.
-#'
-paste_paths <- function(...) {
-    .Deprecated("proj_path")
-    proj_path(...)
-}
-
 #' Progress within a pipe
 #'
 #' Show a message then pass on the object invisibly.
@@ -70,7 +19,9 @@ paste_paths <- function(...) {
 #' @family Helper routines
 #'
 status <- function(x, ...) {
-    cat(..., "\n");invisible(x)
+    if (verbosity.showatlevel("chatty"))
+        cat(..., "\n")
+    invisible(x)
 }
 
 #' Sum ignoring NAs
@@ -170,7 +121,8 @@ fglimpse <- function(x, width = NULL, showvalues = TRUE, ...) {
                             , " "
                             , data.frame(
                                 n = names(s)
-                                , v = formatC(as.numeric(s), digits = 3, width = 0)
+                                # avoid NA conversion messages - expected
+                                , v = formatC(suppressWarnings(as.numeric(s)), digits = 3, width = 0)
                             ) %>%
                                 mutate(l = paste0(n, ": ", v)) %>%
                                 .$l %>%
@@ -212,18 +164,20 @@ fglimpse <- function(x, width = NULL, showvalues = TRUE, ...) {
 #' @inheritParams fglimpse
 #' @param type (character) specify describe or tabular lists.
 #'
-#' \preformatted{
-#' \describe{
-#'   \item{\code{field1}}{description 1}
-#'   \item{\code{field2}}{description 2}
-#'   ...
-#' }
+#' @return
 #'
-#' \tabular{ll}{
-#'   {{\code{field1}} \tab {description 1} \cr
-#'   {{\code{field2}} \tab {description 1} \cr
-#'   ...
-#' }
+#' \preformatted{
+#' #' \describe\{
+#' #'   \item\{\code\{field1\}\}\{description 1\}
+#' #'   \item\{\code\{field2\}\}\{description 2\}
+#' #'  ...
+#' #' \}
+#'
+#' #' \tabular\{ll\}\{
+#' #'   \{\{\code\{field1\}\} \tab \{description 1\} \cr
+#' #'   \{\{\code\{field2\}\} \tab \{description 1\} \cr
+#' #'   ...
+#' #' \}
 #' }
 #'
 describe <- function(x, width = NULL, showvalues = FALSE, type = c("describe", "tabular")) {

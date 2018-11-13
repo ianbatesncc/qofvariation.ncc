@@ -25,8 +25,7 @@ Show a message then pass on the object invisibly.
 }
 \seealso{
 Other Helper routines: \code{\link{families}},
-  \code{\link{is_installed}}, \code{\link{proj_path}},
-  \code{\link{proj_root}}, \code{\link{round_nearest}},
+  \code{\link{is_installed}}, \code{\link{round_nearest}},
   \code{\link{setnames.clean}}, \code{\link{sum.rmna}},
   \code{\link{transpose}}
 }

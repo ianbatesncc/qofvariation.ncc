@@ -7,131 +7,196 @@
 # * join meta
 #
 
+#' Default local lookups
+#'
+#' @param bSaveData flag to write use_data sets
+#'
+#' @importFrom usethis proj_path
+#'
+#' @return list of lu_ccgs, lu_ccg_groups
+#'
+f__transform__create_local_lu <- function(
+    bSaveData = FALSE
+) {
+    lu_ccgs <- c("02Q", paste0("04", c("E", "H", "K", "L", "M", "N")))
+
+    lu_ccg_groups <- data.table::fread(input = "
+ccg_group_type,ccg_group_type_name,ccg_code,ccg_group_code,ccg_group_name
+uop,Unit of Planning,02Q,nno,North Notts. UOP
+uop,Unit of Planning,04E,mno,Mid. Notts. UOP
+uop,Unit of Planning,04H,mno,Mid. Notts. UOP
+uop,Unit of Planning,04L,sno,South Notts. UOP
+uop,Unit of Planning,04M,sno,South Notts. UOP
+uop,Unit of Planning,04N,sno,South Notts. UOP
+uop,Unit of Planning,04K,sno,South Notts. UOP
+stp,Sus. and Trans. P-ship,04E,not,Nottinghamshire STP
+stp,Sus. and Trans. P-ship,04H,not,Nottinghamshire STP
+stp,Sus. and Trans. P-ship,04L,not,Nottinghamshire STP
+stp,Sus. and Trans. P-ship,04M,not,Nottinghamshire STP
+stp,Sus. and Trans. P-ship,04N,not,Nottinghamshire STP
+stp,Sus. and Trans. P-ship,04K,not,Nottinghamshire STP
+utla,Upper Tier LA,02Q,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04E,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04H,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04L,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04M,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04N,ncc,Nottinghamshire CC
+utla,Upper Tier LA,04K,nci,Nottingham City UA
+lep,Local Enterprise P-ship,02Q,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04E,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04H,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04L,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04M,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04N,n2,Nottingham and Nottinghamshire LEP N2
+lep,Local Enterprise P-ship,04K,n2,Nottingham and Nottinghamshire LEP N2
+"
+    ) %>% merge(
+        data.table::fread(input = "
+ccg_group_type,type_display_order
+lep,1
+utla,2
+stp,3
+uop,4
+")
+        , by = "ccg_group_type"
+        , all.x = TRUE
+    )
+
+    #lu_ccgs <- lu_ccg_groups$ccg_code %>% unique()
+
+    if (bSaveData) {
+        usethis::use_data(lu_ccgs, overwrite = TRUE)
+        usethis::use_data(lu_ccg_groups, overwrite = TRUE)
+
+        this_csv <- usethis::proj_path("data-raw", "lu_ccg_groups.csv")
+
+        if (verbosity.showatlevel("chatty"))
+            cat("INFO: saving", this_csv, "...", "\n")
+
+        data.table::fwrite(lu_ccg_groups, file = this_csv)
+    }
+
+    return(list(
+        lu_ccgs = lu_ccgs
+        , lu_ccg_groups = lu_ccg_groups
+    ))
+
+}
+
 #' Preprocess
 #'
-#' optionally save tweaked reference data
+#' - melt data_ind, data_prev onto measure/value pairs
+#' - tag on meta_org ccg and indicator_group, domain_code
+#' - identify register indicators in meta_ind
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
-#' @param bWriteCSV Flag to indicate to write results to file.
+#' @param qof list of data items (see \code{\link{f__extract__load_raw}})
 #'
-#' @return a list of lists with named items
-#' \describe{
-#'     \item{reference}{
-#'         \itemize{\item{orgref}\item{indmap}}
-#'     }
-#'     \item{data}{
-#'         \itemize{\item{prev}\item{ind}\item{prev.melt}}
-#'     }
+#' @return a list with named items
+#' \tabular{ll}{
+#'   \code{meta_org}  \tab Organisation metadata \cr
+#'   \code{meta_ind}  \tab Indicator metadata \cr
+#'   \code{data_prev} \tab Prevalence data (molten on measure/value) \cr
+#'   \code{data_ind}  \tab Indicator data  (molten on measure/value) \cr
 #' }
 #'
 #' @family Internal routines
 #' @family Process routines
 #'
-f__91__preprocess <- function(
+f__transform__preprocess <- function(
     qof
-    , bWriteCSV = FALSE
 ) {
-    cat("INFO: f__91__preprocess: processing lookups ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__preprocess: processing lookups ...", "\n")
 
-    # orgref - organisation lookups ####
-
-    #qof$orgref %>% filter(FALSE) %>% str()
-    # Classes ‘data.table’ and 'data.frame':	7619 obs. of  13 variables:
-    # $ practice_code           : chr  "B82007" "B82020" "B82028" "B82053" ...
-    # $ practice_name           : chr  "TOWNHEAD SURGERY" "CROSSHILLS GROUP PRACTICE" "FISHER MEDICAL CENTRE" "DYNELEY HOUSE SURGERY" ...
-    # $ ccg_code                : chr  "02N" "02N" "02N" "02N" ...
-    # $ ccg_geography_code      : chr  "E38000001" "E38000001" "E38000001" "E38000001" ...
-    # $ ccg_name                : chr  "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" "NHS AIREDALE, WHARFEDALE AND CRAVEN CCG" ...
-    # $ subregion_code          : chr  "Q72" "Q72" "Q72" "Q72" ...
-    # $ subregion_geography_code: chr  "E39000029" "E39000029" "E39000029" "E39000029" ...
-    # $ subregion_name          : chr  "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" "NHS ENGLAND YORKSHIRE AND HUMBER" ...
-    # $ region_code             : chr  "Y54" "Y54" "Y54" "Y54" ...
-    # $ region_geography_code   : chr  "E40000001" "E40000001" "E40000001" "E40000001" ...
-    # $ region_name             : chr  "NORTH OF ENGLAND" "NORTH OF ENGLAND" "NORTH OF ENGLAND" "NORTH OF ENGLAND" ...
-    # $ country                 : chr  "ENGLAND" "ENGLAND" "ENGLAND" "ENGLAND" ...
-    # $ revised_maximum_points  : int  559 559 559 559 559 559 559 559 559 559 ...
+    # meta_org ####
 
     # drop uneeded columns
-    q.orgref <- qof$reference$orgref %>%
-        select(starts_with("practice"), starts_with("ccg")) %>%
+    # - that is, keep practice and ccg lookup ... and qof_period
+    q.meta_org <- qof$meta_org %>%
+        select(starts_with("practice"), starts_with("ccg"), qof_period) %>%
         data.table::setDT()
 
-    # indmap - qof indicator lookups ####
+    # meta_ind ####
 
-    #qof$indmap %>% filter(FALSE) %>% str()
-    # Classes ‘data.table’ and 'data.frame':	78 obs. of  8 variables:
-    # $ indicator_code             : chr  "AF001" "AF006" "AF007" "AST001" ...
-    # $ indicator_description      : chr  "The contractor establishes and maintains a register of patients with atrial fibrillation" "The percentage of patients with atrial fibrillation in whom stroke risk has been assessed using the CHA2DS2-VASc score risk str"| __truncated__ "In those patients with atrial fibrillation with a record of a CHA2DS2-VASc score of 2 or more, the percentage of patients who a"| __truncated__ "The contractor establishes and maintains a register of patients with asthma, excluding patients with asthma who have been presc"| __truncated__ ...
-    # $ indicator_point_value      : int  5 12 12 4 15 20 6 15 5 6 ...
-    # $ indicator_group_code       : chr  "AF" "AF" "AF" "AST" ...
-    # $ indicator_group_description: chr  "Atrial fibrillation" "Atrial fibrillation" "Atrial fibrillation" "Asthma" ...
-    # $ domain_code                : chr  "CL" "CL" "CL" "CL" ...
-    # $ domain_description         : chr  "Clinical" "Clinical" "Clinical" "Clinical" ...
-    # $ patient_list_type          : chr  "TOTAL" "TOTAL" "TOTAL" "TOTAL" ...
+    # data_ind ####
 
-    # process indicators ####
-
-    cat("INFO: f__91__preprocess: processing indicators ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__preprocess: processing indicators ...", "\n")
 
     # ind - qof indicator counts
     # Tag CCG
+
+    # melt onto measure/value fields
+
+    measure_vars <- qof$data_ind[FALSE, ] %>% select_if(is.numeric) %>% names()
+
+    q.data_ind <- qof$data_ind %>%
+        melt(
+            measure.vars = measure_vars
+            , variable.name = "measure", variable.factor = FALSE
+        )
+
     # Find register indicators
+    # attention for mulitple qof periods
 
-    #qof$ind %>% filter(FALSE) %>% str()
-    # Classes ‘data.table’ and 'data.frame':	1956549 obs. of  4 variables:
-    # $ practice_code : chr  "A81001" "A81001" "A81001" "A81001" ...
-    # $ indicator_code: chr  "AF001" "AF001" "AF006" "AF006" ...
-    # $ measure       : chr  "ACHIEVED_POINTS" "REGISTER" "ACHIEVED_POINTS" "DENOMINATOR" ...
-    # $ value         : num  5 96 12 57 2 53 12 76 4 71 ...
+    these_inds <- q.data_ind %>%
+        filter(measure == "REGISTER", !is.na(value)) %>%
+        select(qof_period, indicator_code) %>%
+        unique() %>%
+        mutate(is.register = TRUE)
 
-    ## Remove register-type indicators
-    # add an 'is.register' flag to the indicator map
-    q.indmap <- qof$reference$indmap %>%
-        mutate(is.register = (indicator_code %in% (
-            qof$data$ind %>%
-                filter(measure == "REGISTER") %>%
-                .$indicator_code %>%
-                unique()
-        ))) %>%
-        data.table::setDT()
+    # Add an 'is.register' flag to the indicator map
 
-    # filter out non-register indicators via join with indmap
-    q.ind <- qof$data$ind %>%
-        filter(!(indicator_code %in% (
-            q.indmap %>% filter(is.register == TRUE) %>% .$indicator_code))
+    q.meta_ind <- qof$meta_ind %>%
+        merge(
+            these_inds
+            , by = c("qof_period", "indicator_code")
+            , all.x = TRUE, all.y = TRUE
         ) %>%
+        mutate(is.register = ifelse(is.na(is.register), FALSE, is.register)) %>%
+        setDT()
+
+    # Remove register-type indicators
+
+    q.data_ind <- q.data_ind %>%
+        #filter(!(indicator_code %in% these_inds)) %>%
+        merge(
+            these_inds
+            , by = c("qof_period", "indicator_code")
+            , all.x = TRUE, all.y = FALSE
+        ) %>%
+        filter(is.na(is.register)) %>%
+        select(-is.register) %>%
         # lowercase measure
         # remove points
         # tag ccg, indicator group
         mutate(measure = tolower(measure)) %>%
-        filter(!(measure == tolower("ACHIEVED_POINTS"))) %>%
-        data.table::setDT() %>%
+        filter(!(measure %in% c("achieved_points", "register"))) %>%
+        setDT() %>%
         # tag ccg
-        merge(q.orgref %>% select(practice_code, ccg_code)
-              , by = "practice_code") %>%
-        # filter non-register AND tag indicator_group_code, domain_code
         merge(
-            q.indmap %>%
+            q.meta_org %>%
+                select(qof_period, practice_code, ccg_code)
+            , by = c("qof_period", "practice_code")
+            , all.x = TRUE
+        ) %>%
+        # tag non-register indicators with indicator_group_code, domain_code
+        # no need to use as filter as filtered above
+        # don't need all if no match (no right join)
+        merge(
+            q.meta_ind %>%
                 filter(is.register == FALSE) %>%
-                select(domain_code, indicator_code, indicator_group_code)
-            , by = "indicator_code"
+                select(qof_period, indicator_code, indicator_group_code, domain_code)
+            , by = c("qof_period", "indicator_code")
+            , all.x = TRUE, all.y = FALSE
         )
 
+    # data_prev  ####
 
-    # process prevalence  ####
-
-    cat("INFO: f__91__preprocess: processing prevalence ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__preprocess: processing prevalence ...", "\n")
 
     # prev - qof registers and list sizes
-    # Tag CCG
-
-    #qof$prev %>% filter(FALSE) %>% str()
-    # Classes ‘data.table’ and 'data.frame':	159999 obs. of  5 variables:
-    # $ practice_code       : chr  "A81001" "A81001" "A81001" "A81001" ...
-    # $ indicator_group_code: chr  "AF" "AST" "CAN" "CHD" ...
-    # $ register            : int  96 325 107 174 201 117 18 51 296 259 ...
-    # $ patient_list_type   : chr  "TOTAL" "TOTAL" "TOTAL" "TOTAL" ...
-    # $ patient_list_size   : int  4247 4247 4247 4247 3408 4247 2291 4247 3408 3451 ...
 
     # tag ccg
     # practice age list sizes, convenience
@@ -139,98 +204,149 @@ f__91__preprocess <- function(
     # ... can lose 'patient_list_type' too
     # spin down (register, patient_list_size) on measure
 
-    q.prev <- qof$data$prev %>%
-        merge(q.orgref %>% select(practice_code, ccg_code)
-              , by = "practice_code") %>%
-        #mutate(org.type = "ccg, practice") %>%
+    q.data_prev <- qof$data_prev %>%
+        # tag ccg
+        merge(
+            q.meta_org %>%
+                select(qof_period, practice_code, ccg_code)
+            , by = c("qof_period", "practice_code")
+            , all.x = TRUE
+        ) %>%
         select(-patient_list_type) %>%
-        # filter non-register AND tag indicator_code, domain_code
-        merge(q.indmap %>%
-                  filter(is.register == TRUE) %>%
-                  select(domain_code, indicator_group_code, indicator_code)
-              , by = "indicator_group_code"
+        # tag with register indicator code and domain_code
+        # use as a filter hence inner not left join
+        merge(
+            q.meta_ind %>%
+                filter(is.register == TRUE) %>%
+                select(qof_period, indicator_group_code, indicator_code, domain_code)
+            , by = c("qof_period", "indicator_group_code")
+            , all.x = FALSE, all.y = TRUE
         )
 
-    # q.prev.praclists <- q.prev %>%
-    #     select(practice_code, patient_list_type, patient_list_size) %>%
-    #     unique()
-    # q.prev.praclists.tbl <- q.prev.praclists %>%
-    #     dcast(... ~ patient_list_type, sum, value.var = "patient_list_size")
+    q.data_prev_melt <- q.data_prev %>%
+        melt(
+            measure.vars = c("register", "patient_list_size")
+            , variable.name = "measure", variable.factor = FALSE
+        )
 
-    q.prev.melt <- q.prev %>%
-        melt(measure.vars = c("register", "patient_list_size")
-             , variable.name = "measure", variable.factor = FALSE
-             , value.name = "value")
-
-    # return
+    # return ####
 
     return(list(
-        reference = list(
-            orgref = q.orgref
-            , indmap = q.indmap
-        )
-        , data = list(
-            ind = q.ind
-            , prev = q.prev
-            , prev.melt = q.prev.melt
-        )
+        meta_org = q.meta_org
+        , meta_ind = q.meta_ind
+        , data_prev = q.data_prev_melt
+        , data_ind = q.data_ind
     ))
+}
+
+#' Add org.type field to data
+#'
+#' Modifies dat_ind and data_prev tables by adding a field \code{org.type} with
+#' value \code{ccg::practice}
+#'
+#' @inheritParams f__transform__preprocess
+#'
+#' @return list of tables
+#'
+f__transform__data__add_orgtype <- function(qof) {
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__data__add_orgtype: amending ...", "\n")
+
+    these_tables <- c("data_ind", "data_prev")
+
+    qof[these_tables] <- qof[these_tables] %>%
+        lapply(mutate, org.type = "ccg::practice")
+
+    invisible(qof)
 }
 
 #' Amend data by adding subtotals
 #'
-#' Can add england totals, ccg totals, filter for local ccgs, and group by given lookup.
+#' Can add england totals, ccg totals, filter for local ccgs, and group by given
+#' lookup.
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
+#' @inheritParams f__transform__preprocess
+#'
 #' @param bCalcEngTotal Add an 'eng' that is total over all practices.
 #' @param bCalcCCGTotals Add CCG totals (group practices by ccg_code)
-#' @param lu.orgs.ccgs.local Filter on these ccgs (ccg_code)
-#' @param lu.orgs.ccgs.groups Groups of ccgs (ccg_code, practice_code -> type, instance)
+#' @param lu_ccgs Filter on these ccgs (ccg_code)
+#' @param lu_ccg_groups Groups of ccgs (ccg_code, practice_code -> type,
+#'   instance)
 #'
-#' @return list of lists (see \code{\link{f__extract__load_raw}})
+#' @return a list with named items
+#' \tabular{ll}{
+#'   \code{meta_org}  \tab Organisation metadata \cr
+#'   \code{meta_ind}  \tab Indicator metadata \cr
+#'   \code{data_prev} \tab Prevalence data \cr
+#'   \code{data_ind}  \tab Indicator data  \cr
+#' }
 #'
 #' @family Internal routines
 #' @family Process routines
 #'
-f__91__amend_data__add_subtotals <- function(
+f__transform__data__add_subtotals <- function(
     qof
-    , bCalcEngTotal = FALSE
-    , bCalcCCGTotals = FALSE
-    , lu.orgs.ccgs.local = NA
-    , lu.orgs.ccgs.groups = NA
+    , bCalcEngTotal = TRUE
+    , bCalcCCGTotals = TRUE
+    , lu_ccgs = NA
+    , lu_ccg_groups = NA
 ) {
-    cat("INFO: f__91__amend_data__add_subtotals: amending ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__data__add_subtotals: amending ...", "\n")
+
+    if (any(is.na(lu_ccgs)))
+        lu_ccgs <- f__transform__create_local_lu()$lu_ccgs
+
+    if (any(is.na(lu_ccg_groups)))
+        lu_ccg_groups <- f__transform__create_local_lu()$lu_ccg_groups
 
     # eng totals
-    l_add_eng <- function(x, bProcess = FALSE) {
+    # only modify the data_ind and data_prev tables
+    l_add_eng <- function(x, bProcess = TRUE) {
         if (bProcess) {
-            x$data <- x$data[c("ind", "prev.melt")] %>%
-                lapply(function(x) {
+
+            l_calc_subtotal <- function(y) {
+                y %>%
+                    filter(org.type == "ccg::practice") %>%
+                    group_by_at(vars(-value, -ccg_code, -practice_code)) %>%
+                    summarise_at(vars(value), sum, na.rm = TRUE) %>%
+                    ungroup() %>%
+                    mutate(
+                        org.type = "england"
+                        , ccg_code = "eng"
+                        , practice_code = "eng"
+                    )
+            }
+
+            these_tables <- c("data_ind", "data_prev")
+
+            x[these_tables] <- x[these_tables] %>%
+                lapply(function(y) {
                     list(
-                        x
-                        , x %>%
-                            filter(org.type == "ccg::practice") %>%
-                            group_by_at(vars(-value, -ccg_code, -practice_code)) %>%
-                            summarise_at(vars(value), sum, na.rm = TRUE) %>%
-                            ungroup() %>%
-                            mutate(ccg_code = "eng", practice_code = "eng", org.type = "england")
+                        y
+                        , l_calc_subtotal(y)
                     ) %>% bind_rows()
                 })
         }
+
         invisible(x)
     }
 
     # filter local ccgs
-    l_filter_ccgs <- function(x, lu.orgs.ccgs.local) {
-        if (length(lu.orgs.ccgs.local) > 1 | !any(is.na(lu.orgs.ccgs.local))) {
-            x$data <- x$data %>%
-                lapply(function(x) {
+    l_filter_ccgs <- function(x, lu_ccgs) {
+        if (length(lu_ccgs) > 1 | !any(is.na(lu_ccgs))) {
+
+            these_tables <- c("data_ind", "data_prev")
+
+            x[these_tables] <- x[these_tables] %>%
+                lapply(function(y) {
                     list(
-                        x %>% filter(org.type != "ccg::practice")
-                        , x %>% filter(org.type == "ccg::practice", ccg_code %in% lu.orgs.ccgs.local)
+                        y %>% filter(org.type != "ccg::practice")
+                        , y %>% filter(org.type == "ccg::practice", ccg_code %in% lu_ccgs)
                     ) %>% bind_rows()
                 })
         }
+
         invisible(x)
     }
 
@@ -239,101 +355,166 @@ f__91__amend_data__add_subtotals <- function(
     #' Consistently use practice_code as instance, ccg_code as type ... even for
     #' CCGs ...
     #'
-    l_add_ccgs <- function(x, bProcess = FALSE) {
+    l_add_ccgs <- function(x, bProcess = TRUE) {
         if (bProcess) {
-            x$data <- x$data[c("ind", "prev.melt")] %>%
-                lapply(function(x) {
+
+            l_calc_subtotal <- function(y) {
+                y %>%
+                    filter(org.type == "ccg::practice") %>%
+                    group_by_at(vars(-value, -practice_code)) %>%
+                    summarise_at(vars(value), sum, na.rm = TRUE) %>%
+                    ungroup() %>%
+                    mutate(
+                        org.type = "ccg::instance"
+                        , practice_code = ccg_code
+                        , ccg_code = "ccg"
+                    )
+            }
+
+            these_tables <- c("data_ind", "data_prev")
+
+            x[these_tables] <- x[these_tables] %>%
+                lapply(function(y) {
                     list(
-                        x,
-                        x %>%
-                            filter(org.type == "ccg::practice") %>%
-                            group_by_at(vars(-value, -practice_code)) %>%
-                            summarise_at(vars(value), sum, na.rm = TRUE) %>%
-                            ungroup() %>%
-                            mutate(
-                                practice_code = ccg_code
-                                , ccg_code = "ccg"
-                                , org.type = "ccg::instance"
-                            )
+                        y
+                        , l_calc_subtotal(y)
                     ) %>% bind_rows()
                 })
         }
+
         invisible(x)
     }
 
     # create ccg groups
     # really need to learn about quosures
-    l_add_groups <- function(x, lu.orgs.ccgs.groups) {
-        if (length(lu.orgs.ccgs.groups) > 1 | !any(is.na(lu.orgs.ccgs.groups))) {
+    l_add_groups <- function(x, lu_ccg_groups) {
+        if (length(lu_ccg_groups) > 1 | !any(is.na(lu_ccg_groups))) {
 
-            l_group <- function(x) {
-                list(
-                    x
-                    , x %>%
-                        # choose ccg quantities
-                        filter(org.type == "ccg::instance") %>%
-                        # tag ccg groups
-                        merge(
-                            lu.orgs.ccgs.groups %>%
-                                rename(practice_code = "ccg_code") %>%
-                                select(practice_code, ccg_group_code, ccg_group_type)
-                            , all.y = TRUE
-                            , by = "practice_code"
-                        ) %>%
-                        mutate(
-                            org.type = paste(ccg_group_type, "instance", sep = "::")
-                            , ccg_code = ccg_group_type
-                            , practice_code = ccg_group_code
-                        ) %>% select(-starts_with("ccg_group")) %>%
-                        # summarise over the new ccg groups
-                        group_by_at(vars(-value)) %>%
-                        summarise_at(vars(value), sum, na.rm = TRUE) %>%
-                        ungroup()
-                ) %>% bind_rows()
+            l_calc_subtotal <- function(y) {
+
+                # choose ccg quantities
+                y_ccgs <- y %>%
+                    filter(org.type == "ccg::instance")
+
+                # catch case when there are none ...
+                if (nrow(y_ccgs) == 0) {
+                    if (verbosity.showatlevel("chatty"))
+                        cat(
+                            "WARNING: l_add_groups: no CCG instances found"
+                            , "(CCG groups created will be NA)", "...", "\n"
+                        )
+
+                    # create dummy frame with ccgs fronm lu and qof_period from
+                    # data
+
+                    these_ccgs <- unique(lu_ccg_groups$ccg_code)
+                    these_periods <- unique(y$qof_period)
+
+                    y_vars <- merge(
+                        data.frame(practice_code = these_ccgs)
+                        , data.frame(qof_period = these_periods)
+                    ) %>% mutate_if(is.factor, as.character)
+
+                    y_na <- y[FALSE, ] %>%
+                        bind_rows(data.frame(practice_code = NA)) %>%
+                        select(-practice_code, -qof_period)
+
+                    y_ccgs <- merge(y_vars, y_na)
+                }
+
+                y_ccgs %>%
+                    # tag ccg groups
+                    merge(
+                        lu_ccg_groups %>%
+                            rename(practice_code = "ccg_code") %>%
+                            select(practice_code, ccg_group_code, ccg_group_type)
+                        # does this step need to include ALL ccg groups?
+                        # - perhaps for later consistent analysis.
+                        # Problem when there are no ccg instances ...
+                        , all.x = TRUE, all.y = TRUE
+                        , by = "practice_code"
+                    ) %>%
+                    mutate(
+                        org.type = paste(ccg_group_type, "instance", sep = "::")
+                        , ccg_code = ccg_group_type
+                        , practice_code = ccg_group_code
+                    ) %>% select(-starts_with("ccg_group")) %>%
+                    # summarise over the new ccg groups
+                    group_by_at(vars(-value)) %>%
+                    summarise_at(vars(value), sum, na.rm = TRUE) %>%
+                    ungroup()
             }
-            x$data <- x$data[c("ind", "prev.melt")] %>% lapply(l_group)
+
+            l_append <- function(x) {
+                list(x, l_calc_subtotal(x)) %>% bind_rows()
+            }
+
+            these_tables <- c("data_ind", "data_prev")
+
+            x[these_tables] <- x[these_tables] %>% lapply(l_append)
         }
+
         invisible(x)
     }
 
     qof %>%
-        status("INFO: - calculating england total ...") %>%
-        l_add_eng(bCalcEngTotal) %>%
-
-        status("INFO: - filtering local ccgs ...") %>%
-        l_filter_ccgs(c(lu.orgs.ccgs.local)) %>%
-
-        status("INFO: - calculating ccg totals ...") %>%
-        l_add_ccgs(bCalcCCGTotals) %>%
-
-        status("INFO: - calculating ccg groups ...") %>%
-        l_add_groups(lu.orgs.ccgs.groups) %>%
-
-        status("INFO: - done.") %>%
-
+        status(
+            "INFO: - calculating england total ..."
+        ) %>%
+        l_add_eng(bProcess = bCalcEngTotal) %>%
+        status(
+            "INFO: - filtering local ccgs ..."
+        ) %>%
+        l_filter_ccgs(c(lu_ccgs)) %>%
+        status(
+            "INFO: - calculating ccg totals ..."
+        ) %>%
+        l_add_ccgs(bProcess = bCalcCCGTotals) %>%
+        status(
+            "INFO: - calculating ccg groups ..."
+        ) %>%
+        l_add_groups(lu_ccg_groups) %>%
+        status(
+            "INFO: - done."
+        ) %>%
         invisible()
 }
 
 #' Merge ccg groups into orgref
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
-#' @param lu.orgs.ccgs.groups ccg group lookup (see \code{\link{main}})
+#' @inheritParams f__transform__preprocess
 #'
-#' @return list of lists (see \code{\link{f__extract__load_raw}})
+#' @param lu_ccg_groups ccg group lookup (see \code{\link{main}})
+#'
+#' @return a list with named items
+#' \tabular{ll}{
+#'   \code{meta_org}  \tab Organisation metadata \cr
+#'   \code{meta_ind}  \tab Indicator metadata \cr
+#'   \code{data_prev} \tab Prevalence data (molten on measure/value) \cr
+#'   \code{data_ind}  \tab Indicator data  (molten on measure/value) \cr
+#' }
+#'
+#' @seealso f__transform__create_local_lu
 #'
 #' @family Internal routines
 #' @family Process routines
 #'
-f__91__amend_orgref__ccg_groups <- function(
+f__transform__meta__ccg_groups <- function(
     qof
-    , lu.orgs.ccgs.groups = NA
+    , lu_ccg_groups = NA
 ){
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__transform__meta__ccg_groups: transforming meta_org ...", "\n")
+
     # ccg_group_type,ccg_group_name,ccg_code,ccg_group_code,ccg_group_name
     # uop,Unit of Planning,02Q,nno,North Notts. UOP
 
-    qof$reference$orgref <- list(
-        qof$reference$orgref
-        , lu.orgs.ccgs.groups %>%
+    if (any(is.na(lu_ccg_groups)))
+        lu_ccg_groups <- f__transform__create_local_lu()$lu_ccg_groups
+
+    qof$meta_org <- list(
+        qof$meta_org
+        , lu_ccg_groups %>%
             select(-ccg_code, -type_display_order) %>%
             rename(
                 practice_code = "ccg_group_code", practice_name = "ccg_group_name"
@@ -341,9 +522,14 @@ f__91__amend_orgref__ccg_groups <- function(
             ) %>%
             mutate(
                 ccg_geography_code = ccg_code
-                , data_source = qof$reference$orgref$data_source %>% unique()
             ) %>%
-            unique()
+            unique() %>%
+            merge(
+                data.frame(
+                    qof_period = qof$meta_org$qof_period %>% unique()
+                    , stringsAsFactors = FALSE
+                )
+            )
     ) %>% bind_rows()
 
     invisible(qof)
@@ -368,16 +554,18 @@ f__91__amend_orgref__ccg_groups <- function(
 #' @family Save routines
 #' @family Reference routines
 #'
-f__91__save_reference <- function(
+f__main__save_reference <- function(
     qof
     , qof_root
     , file_suffix = "__processed"
     , bWriteCSV = TRUE
 ) {
-    cat("INFO: f__91__save_reference: saving ...", "\n")
+    if (verbosity.showatlevel("chatty"))
+        cat("INFO: f__main__save_reference: saving ...", "\n")
 
     if (bWriteCSV == TRUE) {
-        cat("INFO: f__91__save_reference: saving reference data ...", "\n")
+        if (verbosity.showatlevel("chatty"))
+            cat("INFO: f__main__save_reference: saving reference data ...", "\n")
 
         this.file <- paste0("./data-raw/", qof_root, "_orgref", file_suffix, ".csv")
         fwrite(qof$reference$orgref, file = this.file)
@@ -385,4 +573,26 @@ f__91__save_reference <- function(
         this.file <- paste0("./data-raw/", qof_root, "_indmap", file_suffix, ".csv")
         fwrite(qof$reference$indmap, file = this.file)
     }
+}
+
+#' Apply all transforms
+#'
+#' @inheritParams f__transform__preprocess
+#'
+#' @param lu_ccgs local ccgs.  NA means use Notts. default.
+#' @param lu_ccg_groups local ccg group lookups.  NA means use Notts. default.
+#'
+#' @seealso f__transform__create_local_lu
+#'
+f__transform <- function(
+    qof
+    , lu_ccgs = NA
+    , lu_ccg_groups = NA
+    ) {
+    qof %>%
+        f__transform__preprocess() %>%
+        f__transform__data__add_orgtype() %>%
+        f__transform__data__add_subtotals(lu_ccgs = lu_ccgs, lu_ccg_groups = lu_ccg_groups) %>%
+        f__transform__meta__ccg_groups(lu_ccg_groups = lu_ccg_groups) %>%
+        invisible()
 }

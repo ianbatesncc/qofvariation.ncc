@@ -1,6 +1,6 @@
 Package: qofvariation.ncc
 Title: Analysis of variation in QOF data
-Version: 0.0.1.9000
+Version: 0.0.2.9000
 Authors@R: person("Ian", "Bates", email = "ian.bates@nottscc.gov.uk", role = c("aut", "cre"))
 Description: Analysis of variation in QOF data.
 Depends:
@@ -9,7 +9,7 @@ License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: bzip2
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Suggests:
     testthat
 Imports:
@@ -19,4 +19,5 @@ Imports:
     , purrr
     , readxl
     , reshape2
+    , stringi
     , usethis

@@ -3,19 +3,10 @@
 \docType{data}
 \name{qof_meta_ind}
 \alias{qof_meta_ind}
-\alias{qof_1718_meta_ind}
-\alias{qof_1617_meta_ind}
-\alias{qof_1516_meta_ind}
 \title{QOF reference data for indicators}
-\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 625 rows and 9 columns.}
+\format{An object of class \code{data.table} (inherits from \code{data.frame}) with 232 rows and 9 columns.}
 \usage{
 qof_meta_ind
-
-qof_1718_meta_ind
-
-qof_1617_meta_ind
-
-qof_1516_meta_ind
 }
 \description{
 \tabular{ll}{
