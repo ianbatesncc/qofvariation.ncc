@@ -212,7 +212,7 @@ f__process__measures <- function(
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__measures: storing qof_measures_combined ...", "\n")
 
-        store_data(m.comb, "qof_measures")
+        store_data(m.comb, "qof_measures", dir = "data")
     }
 
     invisible(m.comb)
@@ -668,7 +668,7 @@ f__process__compare <- function(
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__compare: storing qof_compare ...", "\n")
 
-        store_data(qof.comp, "qof_compare")
+        store_data(qof.comp, "qof_compare", dir = "data")
     }
 
     # return
@@ -706,7 +706,7 @@ f__main__load_data <- function(
 
     return(list(
         data_ind = qof_data_ind %>% filter(qof_period %in% qof_root)
-        , data_org = qof_data_org %>% filter(qof_period %in% qof_root)
+        , data_prev = qof_data_prev %>% filter(qof_period %in% qof_root)
     ))
 }
 

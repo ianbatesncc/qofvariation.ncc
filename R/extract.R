@@ -25,7 +25,7 @@ store_data <- function(obj, name, dir = c("inst/data-int", "data")) {
     dir <- match.arg(dir)
 
     if (verbosity.showatlevel("chatty")) {
-        cat("INFO: (name, obj) = (", name, ", ", "\n")
+        cat("INFO: dir, (name, obj) =", dir, ", (", name, ", ", "\n")
         fglimpse(obj)
         cat(")", "\n")
     }
@@ -41,7 +41,7 @@ store_data <- function(obj, name, dir = c("inst/data-int", "data")) {
             rm(name)
         }
         , "inst/data-int" = {
-            this_rds <- usethis::proj_path("inst/data-int/", name, ext = ".rds")
+            this_rds <- usethis::proj_path("inst/data-int/", name, ext = "rds")
             saveRDS(obj, file = this_rds, compress = "bzip2")
         }
     )
@@ -1398,8 +1398,6 @@ f__combine_any <- function(
     retval <- generic_names %>%
         lapply(l_period, these_qof = qof_root)
 
-    names(retval) <- generic_names
-
     # save
     #
     # one file for each data item, meta_ind, meta_org, data_ind, data_prev
@@ -1408,8 +1406,14 @@ f__combine_any <- function(
         if (verbosity.showatlevel("chatty"))
             cat("INFO: saving", "...", "\n")
 
-        retval %>% purrr::pwalk(list(., names(.)), store_data)
+        names(retval) <- paste("qof", generic_names, sep = "_")
+
+        retval %>% {
+            purrr::pwalk(list(., names(.), dir = "data"), store_data)
+        }
     }
+
+    names(retval) <- generic_names
 
     # return
     #
