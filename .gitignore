@@ -6,7 +6,9 @@
 data-raw/*/*.zip
 data-raw/qof*/*
 # processed package data
+data-raw/*.csv
 data/*.rda
+inst/data-int/*.rds
 # dashboards
 inst/dashboard/*.html
 inst/dashboard/qof_dashboard_cache/*

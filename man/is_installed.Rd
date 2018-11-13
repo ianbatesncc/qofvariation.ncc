@@ -14,7 +14,6 @@ check if package is installed
 }
 \seealso{
 Other Helper routines: \code{\link{families}},
-  \code{\link{proj_path}}, \code{\link{proj_root}},
   \code{\link{round_nearest}},
   \code{\link{setnames.clean}}, \code{\link{status}},
   \code{\link{sum.rmna}}, \code{\link{transpose}}

@@ -11,17 +11,18 @@
 #' @note
 #' Call tree:
 #'
-#' f__91__load_data
-#' f__91__amend_data__add_subtotals
-#' f__91__amend_orgref__ccg_groups
-#' f__91__save_reference
-#' f__91__measures
-#' f__91__compare
+#' f__main__load_data
+#' f__main__amend_data__add_subtotals
+#' f__main__amend_orgref__ccg_groups
+#' f__main__save_reference
+#' f__main__measures
+#' f__main__compare
 #'
 #' @param qof (list of data.frames) result of \code{f__transform}
-#' @param bWriteCSV Flag to indicate to write results to file.
+#' @param bWriteCSV (bool) Flag to indicate to write results to file.
 #'
-#' @return a list with named items
+#' @return (list) a list with named items
+#'
 #' \describe{
 #'     \item{qof (list)}{A list of data_ind, data_prev, meta_ind, meta_prev tables}
 #'     \item{measures (data.frame)}{Measures}
@@ -39,11 +40,11 @@ f__process__reference_measures_compare <- function(
     qof
     , bWriteCSV = FALSE
 ) {
-    if (verbosity.showatlevel("chatty"))
+    if (verbosity.showatlevel("chatty")) {
         cat("INFO: f__process__reference_measures_compare: processing ...", "\n")
 
-    if (verbosity.showatlevel("chatty"))
         cat("INFO: bWriteCSV =", bWriteCSV, "\n")
+    }
 
     # measures and grouping
 
@@ -71,15 +72,15 @@ f__process__reference_measures_compare <- function(
 #'
 #' @note Call tree:
 #'
-#' f__91__load_reference
-#' f__91__load_measures
-#' f__91__load_compare
-#' f__91__load_data
+#' f__main__load_reference
+#' f__main__load_measures
+#' f__main__load_compare
+#' f__main__load_data
 #'
 #' @param qof_period of the form "ZZYY"
 #' @param bLoadData Specify to load raw numbers too.
 #'
-#' @return a list with named items
+#' @return (list) a list with named items
 #' \describe{
 #'     \item{data}{Raw numbers}
 #'     \item{reference}{Reference tables}
@@ -92,12 +93,12 @@ f__process__reference_measures_compare <- function(
 #'
 #' @export
 #'
-f__91__load__reference_measures_compare <- function(
+f__main__load__reference_measures_compare <- function(
     qof_period = c("1617", "1516")
     , bLoadData = FALSE
 ) {
     if (verbosity.showatlevel("chatty"))
-        cat("INFO: f__91__load__reference_measures_compare: loading ...", "\n")
+        cat("INFO: f__main__load__reference_measures_compare: loading ...", "\n")
 
     qof_period <- match.arg(qof.period)
 
@@ -105,14 +106,14 @@ f__91__load__reference_measures_compare <- function(
 
     # Localisation
 
-    qof_reference <- f__91__load_reference(qof_root)
-    qof_measures <- f__91__load_measures(qof_root)
-    qof_compare <- f__91__load_compare(qof_root)
+    qof_reference <- f__main__load_reference(qof_root)
+    qof_measures <- f__main__load_measures(qof_root)
+    qof_compare <- f__main__load_compare(qof_root)
 
     lu.orgs.ccgs.local <- qof_measures$ccg_code %>% unique()
 
     if (bLoadData == TRUE) {
-        qof_data <- f__91__load_data(qof_root)$data
+        qof_data <- f__main__load_data(qof_root)$data
     } else {
         qof_data <- list(ind = data.frame(), prev.melt = data.frame())
     }
@@ -139,17 +140,14 @@ f__91__load__reference_measures_compare <- function(
 #' @note
 #' Call tree:
 #'
-#' f__91__measures_ind
-#' f__91__measures_prev
+#' f__main__measures_ind
+#' f__main__measures_prev
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
-#' @param bWriteCSV Flag to indicate to write results to file.
-#' @param qof_root
+#' @param qof (list of lists) (see \code{\link{f__extract__load_raw}})
+#' @param bWriteCSV (bool) Flag to indicate to write results to file.
+#' @param file_suffix (character) For loading and saving of any processed data
+#' @param bSaveData (bool) Flag to store as package data
 #'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @param file_suffix For loading and saving of any processed data
 #'
 #' @family Internal routines
 #' @family Process routines
@@ -212,7 +210,7 @@ f__process__measures <- function(
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__measures: storing qof_measures_combined ...", "\n")
 
-        usethis__use_data(m.comb, "qof_measures_combined")
+        store_data(m.comb, "qof_measures", dir = "data")
     }
 
     invisible(m.comb)
@@ -222,14 +220,7 @@ f__process__measures <- function(
 
 #' Create QOF performance measures
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
-#' @param bWriteCSV Flag to indicate to write results to file.
-#' @param qof_root
-#'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @param file_suffix For loading and saving of any processed data
+#' @inheritParams f__process__measures
 #'
 #' @return performance data frame
 #'
@@ -318,11 +309,11 @@ performance, suboptimal,    denominator, 0,     1,     1
             cat("INFO: f__process__calc_measures_ind: NOT saving q.ind.measures ...", "\n")
     }
 
-    if (bSaveData) {
+    if (bSaveData & FALSE) {
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__calc_measures_ind: storing qof_measures_ind ...", "\n")
 
-        usethis__use_data(q.ind.measures, "qof_measures_ind")
+        store_data(q.ind.measures, "qof_measures_ind")
     }
 
     #q.ind.measures %>% filter(FALSE) %>% str()
@@ -346,14 +337,7 @@ performance, suboptimal,    denominator, 0,     1,     1
 
 #' Create QOF prevalance measures
 #'
-#' @param qof list of lists (see \code{\link{f__extract__load_raw}})
-#' @param bWriteCSV Flag to indicate to write results to file.
-#' @param qof_root
-#'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @param file_suffix For loading and saving of any processed data
+#' @inheritParams f__process__measures
 #'
 #' @return prevalence data frame
 #'
@@ -430,11 +414,11 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
             cat("INFO: f__process__calc_measures_prev: NOT saving q.prev.measures ...", "\n")
     }
 
-    if (bSaveData) {
+    if (bSaveData & FALSE) {
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__calc_measures_ind: storing qof_measures_prev ...", "\n")
 
-        usethis__use_data(q.prev.measures, "qof_measures_prev")
+        store_data(q.prev.measures, "qof_measures_prev")
     }
 
     # return
@@ -449,16 +433,10 @@ prevalence,  qofprevalence, denominator, 0,     1,     NA
 #' Benchmark against reference value e.g. England - CI overlap with reference
 #' SPC methods - compare point value with control limits
 #'
-#' @param qof_measures measures data frame
-#' @param bWriteCSV Flag to indicate to write results to file.
-#' @param qof_root
+#' @inheritParams f__process__measures
+#' @param qof_measures (data.frame) measures data frame
 #'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @param file_suffix For loading and saving of any processed data
-#'
-#' @return compare data frame
+#' @return (data.frame) compare data frame
 #'
 #'
 #' @family Internal routines
@@ -472,8 +450,6 @@ f__process__compare <- function(
 ) {
     if (verbosity.showatlevel("chatty"))
         cat("INFO: f__process__compare: processing statistical significance comparison ...", "\n")
-
-    taskdir <- proj_root()
 
     ##
     ## QOF
@@ -670,7 +646,7 @@ f__process__compare <- function(
         if (verbosity.showatlevel("chatty"))
             cat("INFO: f__process__compare: storing qof_compare ...", "\n")
 
-        usethis__use_data(qof.comp, "qof_compare")
+        store_data(qof.comp, "qof_compare", dir = "data")
     }
 
     # return
@@ -688,91 +664,48 @@ f__process__compare <- function(
 #' Call tree:
 #'
 #' f__extract__load_raw
-#' f__91__preprocess
+#' f__main__preprocess
 #'
-#' @param qof_root
+#' @inheritParams f__transform__preprocess
 #'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @return list of lists (see \code{\link{f__extract__load_raw}})
-#'
+#' @return (list of data.frame objects) reference list with named items
+#'   \itemize{\item{data_ind}\item{data_prev}}
 #'
 #' @family Internal routines
 #' @family Load routines
 #'
-f__91__load_data <- function(
+f__main__load_data <- function(
     qof_root
 ) {
-    if (verbosity.showatlevel("chatty"))
-        cat("INFO: f__91__load_data: loading ...", "\n")
+    .Deprecated("data")
 
-    # Add org.type to data elements
-    l_add_orgtype <- function(x) {
-        if (verbosity.showatlevel("chatty"))
-            cat("INFO: l_add_orgtype: amending ...", "\n")
-
-        x$data <- x$data %>% lapply(mutate, org.type = "ccg::practice")
-
-        invisible(x)
-    }
-
-    # Tag on data source
-    l_add_qof_root <- function(x, qof_root) {
-        if (verbosity.showatlevel("chatty"))
-            cat("INFO: l_add_qof_root: amending ...", "\n")
-
-        x$data <- x$data %>% lapply(mutate, data_source = qof_root)
-        x$reference <- x$reference %>% lapply(mutate, data_source = qof_root)
-
-        invisible(x)
-    }
-
-    qof <- f__extract__load_raw(qof_root) %>%
-        # process lookups
-        f__91__preprocess() %>%
-        l_add_orgtype() %>%
-        l_add_qof_root(qof_root)
-
-    # return
-
-    return(qof)
+    return(list(
+        data_ind = qof_data_ind %>% filter(qof_period %in% qof_root)
+        , data_prev = qof_data_prev %>% filter(qof_period %in% qof_root)
+    ))
 }
 
 #' Load reference
 #'
-#' @param qof_root
+#' @inheritParams f__transform__preprocess
 #'
-#'   Directory root for loading and saving any processed data.  Of the form
-#'   "qof-YYZZ"
-#'
-#' @param file_suffix For loading and saving of any processed data
-#'
-#' @return reference list with named items \itemize{\item{orgref}\item{indmap}}
+#' @return (list of data.frame objects) reference list with named items
+#'   \itemize{\item{meta_org}\item{meta_ind}}
 #'
 #'
 #' @family Internal routines
 #' @family Load routines
 #' @family Reference routines
 #'
-f__91__load_reference <- function(
+f__main__load_reference <- function(
     qof_root
-    , file_suffix = "__processed"
 ) {
-    if (verbosity.showatlevel("chatty"))
-        cat("INFO: f__91__load_reference: loading ...", "\n")
+    .Deprecated("data")
 
-    taskdir <- proj_root()
-
-    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_orgref", file_suffix, ".csv"))
-    q.orgref <- fread(file = this.file)
-
-    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_indmap", file_suffix, ".csv"))
-    q.indmap <- fread(file = this.file)
-
-    # return
-
-    return(reference = list(orgref = q.orgref, indmap = q.indmap))
+    return(list(
+        meta_ind = qof_meta_ind %>% filter(qof_period %in% qof_root)
+        , meta_org = qof_meta_org %>% filter(qof_period %in% qof_root)
+    ))
 }
 
 #' Load measures
@@ -784,37 +717,20 @@ f__91__load_reference <- function(
 #'
 #' @param file_suffix For loading and saving of any processed data
 #'
-#' @return measures data frame
+#' @return (data.frame) measures data frame
 #'
 #'
 #' @family Internal routines
 #' @family Load routines
 #' @family Measure routines
 #'
-f__91__load_measures <- function(
+f__main__load_measures <- function(
     qof_root
     , file_suffix = "__eng_ccg_prac__measure_ndv"
 ) {
-    if (verbosity.showatlevel("chatty"))
-        cat("INFO: f__91__load_measures: loading ...", "\n")
+    .Deprecated("data")
 
-    taskdir <- proj_root()
-
-    #this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_ind", file_suffix, ".csv"))
-    #q.ind <- fread(file = this.file)
-
-    #this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_prev", file_suffix, ".csv"))
-    #q.prev <- fread(file = this.file)
-
-    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_all", file_suffix, ".csv"))
-    q.all <- data.table::fread(file = this.file)
-
-    q.ind <- q.all %>% filter(m.type == "performance")
-    q.prev <- q.all %>% filter(m.type == "prevalence")
-
-    # return
-
-    return(list(prev = q.prev, ind = q.ind) %>% bind_rows())
+    return(qof_measures %>% filter(qof_period %in% qof_root))
 }
 
 #' Load compare
@@ -833,31 +749,12 @@ f__91__load_measures <- function(
 #' @family Load routines
 #' @family Compare routines
 #'
-f__91__load_compare <- function(
+f__main__load_compare <- function(
     qof_root
     , file_suffix = "__eng_ccg_prac__compare__bench_spc23__eng_ccg"
 ) {
-    if (verbosity.showatlevel("chatty"))
-        cat("INFO: f__91__load_compare: loading ...", "\n")
+    .Deprecated("data")
 
-    taskdir <- proj_root()
-
-    #this.file <- paste_paths(taskdir, "./data-raw", paste0(qof_root, "_ind", file_suffix, ".csv"))
-    #q.ind <- fread(file = this.file)
-
-    #this.file <- paste_paths(taskdir, "./data-raw", paste0(qof_root, "_prev", file_suffix, ".csv"))
-    #q.prev <- fread(file = this.file)
-
-    this.file <- paste_paths(taskdir, "./data-raw/", paste0(qof_root, "_all", file_suffix, ".csv"))
-    q.all <- data.table::fread(file = this.file)
-
-    q.ind <- q.all %>% filter(m.type == "performance")
-    q.prev <- q.all %>% filter(m.type == "prevalence")
-
-    # return
-
-    return(list(prev = q.prev, ind = q.ind) %>% bind_rows())
+    return(qof_compare %>% filter(qof_period %in% qof_root))
 }
 
-
-# Done. ####

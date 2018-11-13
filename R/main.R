@@ -1,3 +1,24 @@
+#
+# development
+#
+
+if (FALSE) {
+    require("devtools")
+    require("testthat")
+    require("dplyr")
+    require("data.table")
+    require("readxl")
+
+    source("./R/qofvariation.ncc-package.R")
+    source("./R/utils.R")
+    source("./R/extract.R")
+    source("./R/transform.R")
+    source("./R/process.R")
+    source("./R/calcci.R")
+    source("./R/testci.R")
+}
+
+
 #' Process raw datasets
 #'
 #' Options to specify year. Option to specify if to run the raw process routines
@@ -23,8 +44,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' v1 <- main(qof_root = "1516", bProcessRaw = TRUE,  bWriteCSV = TRUE)
-#' v2 <- main(qof_root = "1516", bProcessRaw = FALSE, bWriteCSV = FALSE)
+#' v1 <- main(qof_root = "1516", bExtractFromRaw = TRUE)
+#' v2 <- main(qof_root = "1516", bExtractFromRaw = FALSE)
 #' }
 #' @export
 #'
@@ -93,13 +114,13 @@ test_main <- function(bProcessRaw = TRUE) {
     v4 <- NA
 
     if (is.na(bProcessRaw) | bProcessRaw) {
-        v1 <- main(qof_root = "qof-1516", bProcessRaw = TRUE)
-        v3 <- main(qof_root = "qof-1617", bProcessRaw = TRUE)
+        v1 <- main(qof_root = "qof-1516", bExtractFromRaw = TRUE)
+        v3 <- main(qof_root = "qof-1617", bExtractFromRaw = TRUE)
     }
 
     if (is.na(bProcessRaw) | !bProcessRaw) {
-        v2 <- main(qof_root = "qof-1516", bProcessRaw = FALSE)
-        v4 <- main(qof_root = "qof-1617", bProcessRaw = FALSE)
+        v2 <- main(qof_root = "qof-1516", bExtractFromRaw = FALSE)
+        v4 <- main(qof_root = "qof-1617", bExtractFromRaw = FALSE)
     }
 
     invisible(list(v1 = v1, v2 = v2, v3 = v3, v4 = v4))

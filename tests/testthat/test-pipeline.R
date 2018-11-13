@@ -1,18 +1,4 @@
-context("test-pipeline")
-
-# globals
-
-qof_root = c(
-    "qof-1718", "qof-1617"
-    , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
-    , "qof-1011", "qof-0910", "qof-0809", "qof-0708", "qof-0607"
-    , "qof-0506", "qof-0405"
-)[2]
-
-bExtractFromRaw = FALSE
-bWriteCSV = FALSE
-bSaveData = FALSE
-bLoadData = FALSE
+context("test-pipeline-ccg-lu")
 
 
 test_that("transform: can create local ccg lu", {
@@ -27,7 +13,8 @@ lu_local <- f__transform__create_local_lu()
 lu_ccgs <- lu_local$lu_ccgs
 lu_ccg_groups <- lu_local$lu_ccg_groups
 
-# tests
+
+context("test-pipeline-single-root")
 
 
 test_that("extract: can extract from pre-parsed", {
@@ -84,36 +71,12 @@ test_that("process: can compare from measures", {
     qof_compare <- qof_measures %>%
         f__process__compare(bWriteCSV = bWriteCSV, bSaveData = bSaveData)
 
-    testthat::expect_is(qof_compare, "list")
+    testthat::expect_is(qof_compare, "data.frame")
 })
 
 
-# multiple roots
+context("test-pipeline-multiple-roots")
 
-qof_roots <- c(
-    "qof-1718", "qof-1617"
-    , "qof-1516", "qof-1415", "qof-1314", "qof-1213", "qof-1112"
-    , "qof-1011", "qof-0910", "qof-0809", "qof-0708", "qof-0607"
-    , "qof-0506", "qof-0405"
-)[c(2, 3)]
-
-# find unique values across a number of dataframes
-#
-# function to take a list of dataframes, extract values from common field
-# name, and find unique value
-#
-l__unique <- function(x, method = c("sapply", "bindrows")) {
-    method <- match.arg(method)
-    if (method == "bindrows") {
-        x %>% bind_rows() %>% .$qof_period %>% unique()
-    } else {
-        x %>%
-            lapply(function(y) {
-                y$qof_period %>% unique()}
-            ) %>%
-            unlist() %>% unique()
-    }
-}
 
 test_that("pipeline: can handle multiple qof periods", {
     qof_extract <- f__extract(qof_roots, bExtractFromRaw)
@@ -136,9 +99,17 @@ test_that("pipeline: can handle multiple qof periods", {
 
     testthat::expect_is(qof_measures, "data.frame")
 
+    qmp <- qof_measures$qof_period %>% unique()
+
+    testthat::expect_equal(sort(qmp), sort(qof_roots))
+
 
     qof_compare <- qof_measures %>%
         f__process__compare(bWriteCSV = bWriteCSV, bSaveData = bSaveData)
 
-    testthat::expect_is(qof_compare, "list")
+    testthat::expect_is(qof_compare, "data.frame")
+
+    qcp <- qof_compare$qof_period %>% unique()
+
+    testthat::expect_equal(sort(qcp), sort(qof_roots))
 })

@@ -1,5 +1,14 @@
 CHANGELOG
 
+2018-11-10
+
+* FEATURE: movedata
+
+    Change data convention
+
+     - inst/data-int: qof_yyyy_{data_ind, data_prev, meta_ind, meta_org}.rda
+     - data: qof-data_ind, qof_data_prev, qof_meta_org, qof_meta_ind, qof_measures, qof_compare
+
 2018-11-09
 
 * FEATURE: quieten

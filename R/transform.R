@@ -11,6 +11,8 @@
 #'
 #' @param bSaveData flag to write use_data sets
 #'
+#' @importFrom usethis proj_path
+#'
 #' @return list of lu_ccgs, lu_ccg_groups
 #'
 f__transform__create_local_lu <- function(
@@ -66,7 +68,7 @@ uop,4
         usethis::use_data(lu_ccgs, overwrite = TRUE)
         usethis::use_data(lu_ccg_groups, overwrite = TRUE)
 
-        this_csv <- proj_path("./data-raw", "lu_ccg_groups.csv")
+        this_csv <- usethis::proj_path("data-raw", "lu_ccg_groups.csv")
 
         if (verbosity.showatlevel("chatty"))
             cat("INFO: saving", this_csv, "...", "\n")
@@ -552,18 +554,18 @@ f__transform__meta__ccg_groups <- function(
 #' @family Save routines
 #' @family Reference routines
 #'
-f__91__save_reference <- function(
+f__main__save_reference <- function(
     qof
     , qof_root
     , file_suffix = "__processed"
     , bWriteCSV = TRUE
 ) {
     if (verbosity.showatlevel("chatty"))
-        cat("INFO: f__91__save_reference: saving ...", "\n")
+        cat("INFO: f__main__save_reference: saving ...", "\n")
 
     if (bWriteCSV == TRUE) {
         if (verbosity.showatlevel("chatty"))
-            cat("INFO: f__91__save_reference: saving reference data ...", "\n")
+            cat("INFO: f__main__save_reference: saving reference data ...", "\n")
 
         this.file <- paste0("./data-raw/", qof_root, "_orgref", file_suffix, ".csv")
         fwrite(qof$reference$orgref, file = this.file)

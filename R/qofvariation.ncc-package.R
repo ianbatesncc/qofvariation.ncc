@@ -1,4 +1,4 @@
-#' qofvariation.ncc-package.R
+#' qofvariation.ncc
 #'
 #' Process QOF for visualisation (interactive?)
 #'
@@ -97,18 +97,7 @@ NULL
 #'
 #' @rdname verbosity
 #'
-verbosity_levels <- seq(0, 2)
-names(verbosity_levels) <- c("suppress", "info", "chatty")
-
-#' verbosity level (global)
-#'
-#' 0 - suppress (default)
-#' 1 - information
-#' 2 - chatty
-#'
-#' @rdname verbosity
-#'
-verbosity_level <- verbosity_levels["chatty"]
+verbosity_levels <- c(suppress = 0, info = 1, chatty = 2)
 
 #' compare verbosity with setting for code chunk
 #'
@@ -125,23 +114,23 @@ verbosity_level <- verbosity_levels["chatty"]
 #' @param this_msg_category
 #'
 #' @examples
-#' verbosity_level <- verbosity_levels["chatty"]
-#' names(verbosity_levels) %>% sapply(verbosity.showatlevel)
+#' set_verbosity("chatty")
+#' sapply(names(verbosity_levels), verbosity.showatlevel)
 #' names(verbosity_levels) %>% sapply(function(x) {
-#'   msg <- paste("global level: ", names(verbosity_level))
+#'   msg <- paste("global level: ", names(get_verbosity()))
 #'   if (verbosity.showatlevel(x)) msg <- paste(msg, "This is a[n]", x, "message")
 #'   msg
 #' })
 #'
 #' if (verbosity.showatlevel("info")) cat("Hello World!\n")
 #'
-#' verbosity_level <- verbosity_levels["info"]
-#' names(verbosity_levels) %>% sapply(verbosity.showatlevel)
+#' set_verbosity("info")
+#' sapply(names(verbosity_levels), verbosity.showatlevel)
 #'
 #' if (verbosity.showatlevel("info")) cat("Hello World!\n")
 #'
-#' verbosity_level <- verbosity_levels["suppress"]
-#' names(verbosity_levels) %>% sapply(verbosity.showatlevel)
+#' set_verbosity("suppress")
+#' sapply(names(verbosity_levels), verbosity.showatlevel)
 #'
 #' if (verbosity.showatlevel("info")) cat("Hello World!\n")
 #'
@@ -150,28 +139,57 @@ verbosity_level <- verbosity_levels["chatty"]
 verbosity.showatlevel <- function(this_msg_category) {
     this_msg_level <- verbosity_levels[this_msg_category]
 
+    verbosity_level <- get_verbosity()
+
     return(
         (verbosity_level != verbosity_levels["suppress"])
         && (this_msg_level <= verbosity_level)
     )
 }
 
+#' set verbosity
+#'
+#' uses option "qccvariation.ncc.verbosity"
+#'
+#' @rdname verbosity
+#'
+#' @export
+#'
+set_verbosity <- function(slevel = names(verbosity_levels)) {
+    slevel = match.arg(slevel)
+
+    options(qccvariation.ncc.verbosity = verbosity_levels[slevel])
+
+    invisible(get_verbosity())
+}
+
+#' get verbosity
+#'
+#' @rdname verbosity
+#'
+#' @export
+#'
+get_verbosity <- function() {
+    getOption("qccvariation.ncc.verbosity")
+}
+
 
 # Workaround to dodge check warnings about field names ####
+
 utils::globalVariables(
     c(
-        ":="
-        , "."
+        "."
+        , ":="
         , "ccg_code"
         , "ccg_group_code"
         , "ccg_group_type"
         , "ci.ref"
-        , "cilo"
-        , "cilo.ref"
-        , "cilo.var"
         , "cihi"
         , "cihi.ref"
         , "cihi.var"
+        , "cilo"
+        , "cilo.ref"
+        , "cilo.var"
         , "comp"
         , "comp.sense"
         , "comp_sense"
@@ -200,12 +218,12 @@ utils::globalVariables(
         , "level.spc"
         , "list_type"
         , "m.name"
-        , "m.type"
         , "m.stat"
+        , "m.type"
         , "measure"
         , "numerator"
-        , "org.type"
         , "org.code"
+        , "org.type"
         , "patient_list_size"
         , "patient_list_type"
         , "practice_code"
@@ -213,8 +231,16 @@ utils::globalVariables(
         , "practice_listsize"
         , "practicecode"
         , "prevalence"
+        , "qof"
         , "qof.period"
+        , "qof_compare"
+        , "qof_data_ind"
+        , "qof_data_prev"
         , "qof_measure"
+        , "qof_measures"
+        , "qof_meta_ind"
+        , "qof_meta_org"
+        , "qof_period"
         , "register"
         , "register_description"
         , "register_list_size"
@@ -224,7 +250,6 @@ utils::globalVariables(
         , "sheet"
         , "statistic"
         , "statsig"
-        , "taskdir"
         , "tbl_heading"
         , "this_file"
         , "type_display_order"

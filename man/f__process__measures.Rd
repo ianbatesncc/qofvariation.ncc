@@ -8,14 +8,13 @@ f__process__measures(qof, bWriteCSV = FALSE,
   file_suffix = "__eng_ccg_prac__measure_ndv", bSaveData = TRUE)
 }
 \arguments{
-\item{qof}{list of lists (see \code{\link{f__extract__load_raw}})}
+\item{qof}{(list of lists) (see \code{\link{f__extract__load_raw}})}
 
-\item{bWriteCSV}{Flag to indicate to write results to file.}
+\item{bWriteCSV}{(bool) Flag to indicate to write results to file.}
 
-\item{file_suffix}{For loading and saving of any processed data}
+\item{file_suffix}{(character) For loading and saving of any processed data}
 
-\item{qof_root}{Directory root for loading and saving any processed data.  Of the form
-"qof-YYZZ"}
+\item{bSaveData}{(bool) Flag to store as package data}
 }
 \description{
 Wrapper around measures_ind and measures_prev.
@@ -27,16 +26,16 @@ different underlying data structure.
 \note{
 Call tree:
 
-f__91__measures_ind
-f__91__measures_prev
+f__main__measures_ind
+f__main__measures_prev
 }
 \seealso{
-Other Internal routines: \code{\link{f__91__load_compare}},
-  \code{\link{f__91__load_data}},
-  \code{\link{f__91__load_measures}},
-  \code{\link{f__91__load_reference}},
-  \code{\link{f__91__save_reference}},
-  \code{\link{f__extract__load_raw}},
+Other Internal routines: \code{\link{f__extract__load_raw}},
+  \code{\link{f__main__load_compare}},
+  \code{\link{f__main__load_data}},
+  \code{\link{f__main__load_measures}},
+  \code{\link{f__main__load_reference}},
+  \code{\link{f__main__save_reference}},
   \code{\link{f__process__calc_measures_ind}},
   \code{\link{f__process__calc_measures_prev}},
   \code{\link{f__process__compare}},
@@ -51,7 +50,7 @@ Other Process routines: \code{\link{f__process__calc_measures_ind}},
   \code{\link{f__transform__meta__ccg_groups}},
   \code{\link{f__transform__preprocess}}
 
-Other Measure routines: \code{\link{f__91__load_measures}},
+Other Measure routines: \code{\link{f__main__load_measures}},
   \code{\link{f__process__calc_measures_ind}},
   \code{\link{f__process__calc_measures_prev}},
   \code{\link{families}}

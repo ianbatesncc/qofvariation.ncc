@@ -4,8 +4,8 @@
 \alias{f__transform__data__add_subtotals}
 \title{Amend data by adding subtotals}
 \usage{
-f__transform__data__add_subtotals(qof, bCalcEngTotal = FALSE,
-  bCalcCCGTotals = FALSE, lu_ccgs = NA, lu_ccg_groups = NA)
+f__transform__data__add_subtotals(qof, bCalcEngTotal = TRUE,
+  bCalcCCGTotals = TRUE, lu_ccgs = NA, lu_ccg_groups = NA)
 }
 \arguments{
 \item{qof}{list of data items (see \code{\link{f__extract__load_raw}})}
@@ -33,12 +33,12 @@ Can add england totals, ccg totals, filter for local ccgs, and group by given
 lookup.
 }
 \seealso{
-Other Internal routines: \code{\link{f__91__load_compare}},
-  \code{\link{f__91__load_data}},
-  \code{\link{f__91__load_measures}},
-  \code{\link{f__91__load_reference}},
-  \code{\link{f__91__save_reference}},
-  \code{\link{f__extract__load_raw}},
+Other Internal routines: \code{\link{f__extract__load_raw}},
+  \code{\link{f__main__load_compare}},
+  \code{\link{f__main__load_data}},
+  \code{\link{f__main__load_measures}},
+  \code{\link{f__main__load_reference}},
+  \code{\link{f__main__save_reference}},
   \code{\link{f__process__calc_measures_ind}},
   \code{\link{f__process__calc_measures_prev}},
   \code{\link{f__process__compare}},

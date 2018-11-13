@@ -6,28 +6,80 @@
 
 options(warn = 1)
 
-#' Programmatic use of use_data
+#' Store an object
 #'
-#' Call use_data to save object with specified name.
+#' Save an object with specified name.
 #'
 #' @param obj (object) object to save
 #' @param name (char) name to use
+#' @param dir (char) directory to save to.
+#'
+#' if \code{dir} is \code{data} (default) then usethis::use_data is used.  if is
+#' \code{inst/data-int} then a call to \code{save} is made to the inst/data-int
+#' dir.
 #'
 #' @importFrom usethis use_data
+#' @importFrom usethis proj_path
 #'
-usethis__use_data <- function(obj, name) {
+store_data <- function(obj, name, dir = c("inst/data-int", "data")) {
+    dir <- match.arg(dir)
+
     if (verbosity.showatlevel("chatty")) {
-        cat("INFO: (name, obj) = (", name, ", ", "\n")
+        cat("INFO: dir, (name, obj) =", dir, ", (", name, ", ", "\n")
         fglimpse(obj)
         cat(")", "\n")
     }
 
-    # to be explicit about the function to call
-    l_use_data <- usethis::use_data
+    retval <- switch(
+        dir
+        , "data" = {
+            # to be explicit about the function to call
+            l_use_data <- usethis::use_data
 
-    assign(name, obj)
-    do.call("l_use_data", list(as.name(name), overwrite = TRUE))
-    rm(name)
+            assign(name, obj)
+            do.call("l_use_data", list(as.name(name), overwrite = TRUE))
+            rm(name)
+        }
+        , "inst/data-int" = {
+            this_rds <- usethis::proj_path("inst/data-int/", name, ext = "rds")
+            saveRDS(obj, file = this_rds, compress = "bzip2")
+        }
+    )
+
+    return(TRUE)
+}
+
+#' Restore an object
+#'
+#' Load an object with specified name.
+#'
+#' @inheritParams store_data
+#'
+restore_data <- function(name, dir = c("inst/data-int", "data")) {
+    dir <- match.arg(dir)
+
+    retval <- switch(
+        dir
+        , "data" = {
+            cat("WARNING: restore_data: not yet implemented", "\n")
+            NULL
+        }
+        , "inst/data-int" = {
+            this_rds <- usethis::proj_path("inst/data-int/", name, ext = "rds")
+            if (file.exists(this_rds)) {
+                if (verbosity.showatlevel("chatty"))
+                    cat("INFO: restore_data: reading", this_rds, "...", "\n")
+
+                readRDS(file = this_rds)
+            } else {
+                if (verbosity.showatlevel("chatty"))
+                    cat("WARNING: restore_data: NOT found", this_rds, "...", "\n")
+                NULL
+            }
+        }
+    )
+
+    return(retval)
 }
 
 
@@ -253,7 +305,7 @@ l_readxl_ws_prev <- function(this.sheet, this.file) {
 #'   \code{data_ind}  \tab Indicator data \cr
 #' }
 #'
-#' @importFrom purrr walk2
+#' @importFrom purrr pwalk
 #' @import readxl
 #'
 #' @family Internal routines
@@ -274,7 +326,7 @@ f__extract__load_raw <- function(
 
     qof_root <- match.arg(qof_root)
 
-    qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
+    qof_data_path <- paste("data-raw", paste0(qof_root, "-csv"), sep = "/")
 
     if (qof_root %in% c("qof-1718", "qof-1617", "qof-1516")) {
 
@@ -283,18 +335,18 @@ f__extract__load_raw <- function(
         # qof_root <- "qof-1617" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
         # qof_root <- "qof-1516" ; qof_data_path <- paste(".", "data-raw", paste0(qof_root, "-csv"), sep = "/")
 
-        this.file <- proj_path(qof_data_path, "ORGANISATION_REFERENCE.csv")
+        this.file <- usethis::proj_path(qof_data_path, "ORGANISATION_REFERENCE.csv")
         qof.orgref <- fread(file = this.file) %>% setnames.clean()
 
-        this.file <- proj_path(qof_data_path, "INDICATOR_MAPPINGS.csv")
+        this.file <- usethis::proj_path(qof_data_path, "INDICATOR_MAPPINGS.csv")
         qof.indmap <- fread(file = this.file) %>% setnames.clean()
 
-        this.file <- proj_path(qof_data_path, "PREVALENCE.csv")
+        this.file <- usethis::proj_path(qof_data_path, "PREVALENCE.csv")
         qof.prev <- fread(file = this.file) %>% setnames.clean()
 
-        this.file <- proj_path(qof_data_path, "ACHIEVEMENT_EXCEPTIONS.csv")
+        this.file <- usethis::proj_path(qof_data_path, "ACHIEVEMENT_EXCEPTIONS.csv")
         if (!(file.exists(this.file)))
-            this.file <- proj_path(qof_data_path, "ACHIEVEMENT.csv")
+            this.file <- usethis::proj_path(qof_data_path, "ACHIEVEMENT.csv")
         qof.ind <- fread(file = this.file) %>% setnames.clean()
 
 
@@ -305,7 +357,7 @@ f__extract__load_raw <- function(
 
         # qof.orgref ####
 
-        this.file <- proj_path(qof_data_path, "PRAC_CONTROL.csv")
+        this.file <- usethis::proj_path(qof_data_path, "PRAC_CONTROL.csv")
         qof.orgref <- fread(file = this.file) %>% setnames.clean() %>%
             select(grep("_code$|_name$", names(.), value = TRUE)) %>%
             rename(
@@ -318,13 +370,13 @@ f__extract__load_raw <- function(
 
         # qof.indmap ####
 
-        this.file <- proj_path(qof_data_path, "INDICATOR_REFERENCE_FINAL.csv")
+        this.file <- usethis::proj_path(qof_data_path, "INDICATOR_REFERENCE_FINAL.csv")
         qof.ind <- fread(file = this.file) %>% setnames.clean()
 
-        this.file <- proj_path(qof_data_path, "INDICATOR_GRP_REFERENCE_FINAL.csv")
+        this.file <- usethis::proj_path(qof_data_path, "INDICATOR_GRP_REFERENCE_FINAL.csv")
         qof.grp <- fread(file = this.file) %>% setnames.clean()
 
-        this.file <- proj_path(qof_data_path, "INDICATOR_DOM_REFERENCE_FINAL.csv")
+        this.file <- usethis::proj_path(qof_data_path, "INDICATOR_DOM_REFERENCE_FINAL.csv")
         qof.dom <- fread(file = this.file) %>% setnames.clean()
 
         qof.indmap <- qof.ind %>%
@@ -350,7 +402,7 @@ f__extract__load_raw <- function(
 
         # qof.prev ####
 
-        this.file <- proj_path(qof_data_path, "PREVALENCE_BY_PRAC_v2.csv")
+        this.file <- usethis::proj_path(qof_data_path, "PREVALENCE_BY_PRAC_v2.csv")
         qof.prev <- fread(file = this.file) %>% setnames.clean() %>%
             select(
                 -ends_with("_name")
@@ -367,7 +419,7 @@ f__extract__load_raw <- function(
 
         # Need to merge in register and exceptions
 
-        this.file <- proj_path(qof_data_path, "EXCEPTION_OUTPUT.csv")
+        this.file <- usethis::proj_path(qof_data_path, "EXCEPTION_OUTPUT.csv")
         qof.exc <- fread(file = this.file) %>% setnames.clean() %>%
             select(
                 practice_code
@@ -375,13 +427,13 @@ f__extract__load_raw <- function(
                 , exceptions = exception_count
             )
 
-        this.file <- proj_path(qof_data_path, "REGISTER_SIZES.csv")
+        this.file <- usethis::proj_path(qof_data_path, "REGISTER_SIZES.csv")
         qof.reg <- fread(file = this.file) %>% setnames.clean() %>%
             rename(register = register_size) %>%
             mutate(indicator_group_code = substr(indicator_code, 1, nchar(indicator_code) - 3)) %>%
             select(-indicator_code)
 
-        this.file <- proj_path(qof_data_path, "INDICATORS_BY_PRAC.csv")
+        this.file <- usethis::proj_path(qof_data_path, "INDICATORS_BY_PRAC.csv")
         qof.ind <- fread(file = this.file) %>% setnames.clean() %>%
             rename(indicator_group_code = "indicator_group") %>%
             merge(
@@ -412,7 +464,7 @@ f__extract__load_raw <- function(
 
         # qof.orgref ####
 
-        this.file <- proj_path(qof_data_path, "PRAC_CONTROL.csv")
+        this.file <- usethis::proj_path(qof_data_path, "PRAC_CONTROL.csv")
         qof.orgref <- fread(file = this.file) %>% setnames.clean()
 
         names(qof.orgref) <- gsub("(code|name)$", "_\\1", names(qof.orgref))
@@ -435,13 +487,13 @@ f__extract__load_raw <- function(
 
         # qof.indmap ####
 
-        this.file <- proj_path(qof_data_path, "INDICATOR_REFERENCE.csv")
+        this.file <- usethis::proj_path(qof_data_path, "INDICATOR_REFERENCE.csv")
         qof.ind <- fread(file = this.file) %>% setnames.clean()
 
-        this.file <- proj_path(qof_data_path, "INDICATOR_GRP_REFERENCE.csv")
+        this.file <- usethis::proj_path(qof_data_path, "INDICATOR_GRP_REFERENCE.csv")
         qof.grp <- fread(file = this.file) %>% setnames.clean()
 
-        this.file <- proj_path(qof_data_path, "INDICATOR_DOM_REFERENCE.csv")
+        this.file <- usethis::proj_path(qof_data_path, "INDICATOR_DOM_REFERENCE.csv")
         qof.dom <- fread(file = this.file) %>% setnames.clean()
 
         qof.indmap <- qof.ind %>%
@@ -473,7 +525,7 @@ f__extract__load_raw <- function(
         #' @note HF double counted - register_description has HF and HF with LVD
         #'   - keep just HF
 
-        this.file <- proj_path(qof_data_path, "PREVALENCEBYPRAC.csv")
+        this.file <- usethis::proj_path(qof_data_path, "PREVALENCEBYPRAC.csv")
         qof.prev <- fread(file = this.file) %>% setnames.clean() %>%
             filter(register_description != "Heart Failure due to LVD") %>%
             select(
@@ -491,7 +543,7 @@ f__extract__load_raw <- function(
 
         # Need to merge in register and exceptions
 
-        this.file <- proj_path(qof_data_path, "exception_output_all_denoms.csv")
+        this.file <- usethis::proj_path(qof_data_path, "exception_output_all_denoms.csv")
         qof.exc <- fread(file = this.file) %>% setnames.clean() %>%
             select(
                 practice_code = practicecode
@@ -499,7 +551,7 @@ f__extract__load_raw <- function(
                 , exceptions = exception_count
             )
 
-        this.file <- proj_path(qof_data_path, "INDICATORSBYPRAC.csv")
+        this.file <- usethis::proj_path(qof_data_path, "INDICATORSBYPRAC.csv")
         qof.ind <- fread(file = this.file) %>% setnames.clean() %>%
             rename(
                 indicator_group_code = "indicator_group"
@@ -557,7 +609,7 @@ f__extract__load_raw <- function(
 
         # get orgref from Clinical summary
 
-        this.file <- proj_path(
+        this.file <- usethis::proj_path(
             qof_data_path
             , these_orgs["prac"]
             , paste0(qof_stem, "-data-tab-prac-clin-summ.xlsx")
@@ -597,7 +649,7 @@ f__extract__load_raw <- function(
         # so drop
         # CVDPP : there is no indicator to hold the register - create PP00
 
-        this.file <- proj_path(qof_data_path, paste0(qof_root, "-meta-ind.xlsx"))
+        this.file <- usethis::proj_path(qof_data_path, paste0(qof_root, "-meta-ind.xlsx"))
         xl <- list(wb = this.file, sheets = readxl::excel_sheets(this.file))
         qof.indmap <- readxl::read_excel(path = xl$wb, sheet = xl$sheets[1]) %>%
             setnames.clean() %>%
@@ -654,7 +706,7 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
         # Recursive extraction through a list of xl files
 
         these_files <- list.files(
-            proj_path(qof_data_path, these_orgs["prac"], these_doms["clin"])
+            usethis::proj_path(qof_data_path, these_orgs["prac"], these_doms["clin"])
             , pattern = "^qof.*\\.xlsx$"
             , include.dirs = FALSE
             , recursive = FALSE
@@ -675,7 +727,7 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
         # qof.prev ####
 
         these_files <- list.files(
-            proj_path(qof_data_path, these_orgs["prac"], these_doms["prev"])
+            usethis::proj_path(qof_data_path, these_orgs["prac"], these_doms["prev"])
             , pattern = "^qof.*\\.xlsx$"
             , include.dirs = FALSE
             , recursive = FALSE
@@ -878,7 +930,7 @@ ages 50+,50OV
 
         # get orgref from Clinical summary
 
-        this.file <- proj_path(
+        this.file <- usethis::proj_path(
             qof_data_path
             , these_orgs["prac"]
             , paste0(qof_stem, "-data-tab-pracs-clin-sum.xls")
@@ -925,7 +977,7 @@ ages 50+,50OV
         # so drop
         # CVDPP : there is no indicator to hold the register - create PP00
 
-        this.file <- proj_path(qof_data_path, paste0(qof_root, "-meta-ind.xlsx"))
+        this.file <- usethis::proj_path(qof_data_path, paste0(qof_root, "-meta-ind.xlsx"))
         xl <- list(wb = this.file, sheets = readxl::excel_sheets(this.file))
         qof.indmap <- readxl::read_excel(path = xl$wb, sheet = xl$sheets[1]) %>%
             setnames.clean() %>%
@@ -982,7 +1034,7 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
         # Recursive extraction through a list of xl files
 
         these_files <- list.files(
-            proj_path(qof_data_path, these_orgs["prac"])
+            usethis::proj_path(qof_data_path, these_orgs["prac"])
             , pattern = "^qof.*\\.xls"
             , include.dirs = FALSE
             , recursive = FALSE
@@ -1009,7 +1061,7 @@ SMOKE00,The practice can produce a register of patients with Smoking - pseudo-re
         # qof.prev ####
 
         these_files <- list.files(
-            proj_path(qof_data_path, these_orgs["prac"])
+            usethis::proj_path(qof_data_path, these_orgs["prac"])
             , pattern = "^q.*prev.*\\.xls$"
             , include.dirs = FALSE
             , recursive = FALSE
@@ -1210,8 +1262,8 @@ ages 50+,50OV
     }
 
     # flip measure backup
-    qof.ind <- q2 <- qof.ind %>%
-        dcast(... ~ measure, fun.aggregate = sum, fill = NA)
+    qof.ind <- qof.ind %>%
+        data.table::dcast(... ~ measure, fun.aggregate = sum, fill = NA)
 
     retval <- list(
         meta_org = qof.orgref
@@ -1231,7 +1283,12 @@ ages 50+,50OV
         these_names <- paste(gsub("-", "_", qof_root), generic_names, sep = "_")
         names(retval) <- these_names
 
-        retval %>% purrr::walk2(., names(.), usethis__use_data)
+        retval %>% {
+            purrr::pwalk(
+                list(obj = ., name = names(.), dir = "inst/data-int")
+                , store_data
+            )
+        }
     }
 
     # return
@@ -1291,7 +1348,7 @@ f__extract_any <- function(
 #' @inheritParams f__extract__load_raw
 #'
 #' @importFrom data.table setDT rbindlist
-#' @importFrom purrr walk2
+#' @importFrom purrr pwalk
 #'
 #' @return a list with named items
 #' \tabular{ll}{
@@ -1319,23 +1376,9 @@ f__combine_any <- function(
         this_varname <- paste(gsub("-", "_", this_qof), this_var, sep = "_")
 
         if (verbosity.showatlevel("chatty"))
-            cat("INFO: considering", this_varname, "...")
+            cat("INFO: f__combine_any: l_period_variable: considering", this_varname, "...", "\n")
 
-        this_rda <- paste0("./data/", this_varname, ".Rda")
-
-        if (file.exists(this_rda)) {
-            if (verbosity.showatlevel("chatty"))
-                cat("found", "\n")
-
-            load(this_rda, verbose = verbosity.showatlevel("chatty"))
-
-            retval <- eval(as.name(this_varname)) %>% setDT()
-        } else {
-            if (verbosity.showatlevel("chatty"))
-                cat("NOT found", "\n")
-
-            retval <- NULL
-        }
+        retval <- restore_data(this_varname) %>% setDT()
 
         invisible(retval)
     }
@@ -1344,7 +1387,7 @@ f__combine_any <- function(
 
     l_period <- function(this_var, these_qof) {
         if (verbosity.showatlevel("chatty"))
-            cat("INFO: considering", this_var, "...", "\n")
+            cat("INFO: f__combine_any: l_period: considering", this_var, "...", "\n")
 
         lapply(these_qof, l_period_variable, this_var = this_var) %>%
             rbindlist(use.names = TRUE, fill = TRUE)
@@ -1355,8 +1398,6 @@ f__combine_any <- function(
     retval <- generic_names %>%
         lapply(l_period, these_qof = qof_root)
 
-    names(retval) <- generic_names
-
     # save
     #
     # one file for each data item, meta_ind, meta_org, data_ind, data_prev
@@ -1365,8 +1406,14 @@ f__combine_any <- function(
         if (verbosity.showatlevel("chatty"))
             cat("INFO: saving", "...", "\n")
 
-        retval %>% purrr::walk2(., names(.), usethis__use_data)
+        names(retval) <- paste("qof", generic_names, sep = "_")
+
+        retval %>% {
+            purrr::pwalk(list(., names(.), dir = "data"), store_data)
+        }
     }
+
+    names(retval) <- generic_names
 
     # return
     #
