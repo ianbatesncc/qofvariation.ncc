@@ -274,3 +274,13 @@ qof__main__load_compare <- function(
     else
         qof_compare %>% filter(qof_period %in% qof_root)
 }
+
+#' access local CCG lu
+#'
+#' @return list(lu-ccgs (character vector), lu_ccg_groups (data.frame))
+#'
+#' @export
+#'
+qof__main__load_ccglu <- function() {
+    f__transform__create_local_lu()
+}
