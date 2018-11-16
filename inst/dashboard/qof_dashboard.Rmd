@@ -2,21 +2,22 @@
 title: "QOF variation dashboard"
 author: "Ian Bates"
 output: 
-flexdashboard::flex_dashboard:
-orientation: columns
-source_code: embed
-vertical_layout: fill # scroll
-runtime: shiny
+    flexdashboard::flex_dashboard:
+    orientation: rows
+    source_code: embed
+#    vertical_layout: fill # scroll
+    vertical_layout: scroll
+    runtime: shiny
 ---
 
 ```{r setup, include = FALSE, cache = FALSE}
 require("flexdashboard")
 require("shiny")
+#require("d3heatmap")
 require("DT")
-require("ggplot2")
-require("ggpubr")
 require("dplyr")
 require("data.table")
+require("qofvariation.ncc")
 
 knitr::opts_chunk$set(cache = FALSE)
 knitr::opts_chunk$set(echo = FALSE)
@@ -26,19 +27,15 @@ knitr::opts_chunk$set(echo = FALSE)
 Global page {.hidden}
 ====
 
-```{r global, include = FALSE, cache = TRUE}
+```{r global, include = FALSE, cache = FALSE}
 # load data in 'global' chunk so it can be shared by all users of the dashboard
 
-taskdir <- normalizePath(".")
-taskdir <- normalizePath("..")
-taskdir <- normalizePath("../..")
-taskdir <- devtools::wd()
-source(file = paste(taskdir, "./R/main.R", sep = "/"))
-#source(file = paste(taskdir, "./R/cdg_91_qof.R", sep = "/"))
+#dat <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
+qv <- qof__main__load(qof_root = "qof-1516")
+#qv <- qof__main__load(qof_root = "qof-1617")
+#qv <- qof__main__load(qof_root = "qof-1718")
 
-#dat <- main(qof_period = "1516", bProcessRaw = FALSE, bLoadData = FALSE)
-dat <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
-
+# add an orgtag field
 l_add_orgtag <- function(x, c1 = "ccg_code", c2 = "practice_code") {
     x %>%
         mutate(
@@ -50,9 +47,8 @@ l_add_orgtag <- function(x, c1 = "ccg_code", c2 = "practice_code") {
 }
 
 # Add ccg group lookup
-lu.orgs.ccgs.groups <- fread(
-    file = paste_paths(taskdir, "./data-raw/lu__ccg_groups.csv")
-) #%>% l_add_orgtag("ccg_group_type", "ccg_group_code")
+
+lu.orgs.ccgs.groups <- qof__main__load_ccglu()$lu_ccg_groups
 
 # Add display order
 #
@@ -67,9 +63,15 @@ l_add_display_order <- function(x, c1 = "org.type") {
             , by.x = "practice_code", by.y = "ccg_group_code"
             , all.x = TRUE
         ) %>%
-        mutate(display_order = ifelse(UQ(rlang::sym(c1)) == "england", 0, display_order)) %>%
-        mutate(display_order = ifelse(UQ(rlang::sym(c1)) == "ccg::instance", 10, display_order)) %>%
-        mutate(display_order = ifelse(is.na(display_order), 20, display_order))
+        mutate(display_order = ifelse(
+            UQ(rlang::sym(c1)) == "england", 0, display_order)
+        ) %>%
+        mutate(display_order = ifelse(
+            UQ(rlang::sym(c1)) == "ccg::instance", 10, display_order)
+        ) %>%
+        mutate(display_order = ifelse(
+            is.na(display_order), 20, display_order)
+        )
 }
 
 #' Filter indicators by given domain codes
@@ -92,12 +94,12 @@ l__filter_domain_codes_tokeep <- function(
 setnames.display <- function(x) {setnames(x, gsub("_|\\.", " ", names(x)))}
 
 # actually load data
-orgref <- dat$reference$orgref #%>% l_add_orgtag()
-indmap <- dat$reference$indmap
-measures <- dat$measures %>%
+orgref <- qv$qof$meta_org #%>% l_add_orgtag()
+indmap <- qv$qof$meta_ind #%>% l_add_orgtag()
+measures <- qv$measures %>%
     l_add_display_order() %>%
     l__filter_domain_codes_tokeep("CL") #%>% l_add_orgtag()
-compare <- dat$compare %>% 
+compare <- qv$compare %>% 
     l_add_display_order("org.type.var") %>%
     l__filter_domain_codes_tokeep("CL") #%>% l_add_orgtag()
 
@@ -173,9 +175,10 @@ prevalence <- measures %>%
         , register
     )
 
-lu__register_indicators <- indmap %>% 
-    filter(is.register == TRUE) %>%
-    .$indicator_code
+lu__register_indicators <- measures %>%
+    filter(m.type == "prevalence") %>%
+    .$indicator_code %>%
+    unique()
 
 these_indicators_noregister <- setdiff(these_indicators, lu__register_indicators)
 
@@ -199,7 +202,7 @@ counts <- measures %>%
         , m.stat %in% c("numerator", "denominator")
         #, !(indicator_code %in% lu__register_indicators)
     ) %>%
-    select(-m.type, -org.type, -data_source) %>%
+    select(-m.type, -org.type) %>%
     dcast(... ~ m.name + m.stat) %>%
     merge(
         register
@@ -216,7 +219,8 @@ counts <- measures %>%
         suboptimal = denominator - optimal
         # at some point attach a modelled value
         , model = 0
-        # when patients reports as excepted, but included anyway ... National RA seems a bother
+        # when patients reports as excepted, but included anyway ... National RA
+        # seems a bother
         , exceptions__effective = pmax(pmin(register - denominator, exceptions), 0)
         , exclusions = register - denominator - exceptions__effective
         # where there is no register .. reconstruct
@@ -225,9 +229,15 @@ counts <- measures %>%
     ) %>%
     # substitute the effective bits
     mutate(
-        register = ifelse(is.na(register), register__effective, register)
-        , exclusions = ifelse(is.na(exclusions), exclusions__effective, exclusions)
-        , exceptions = ifelse(!is.na(exceptions__effective), exceptions__effective, exceptions)
+        register = ifelse(
+            is.na(register), register__effective, register
+        )
+        , exclusions = ifelse(
+            is.na(exclusions), exclusions__effective, exclusions
+        )
+        , exceptions = ifelse(
+            !is.na(exceptions__effective), exceptions__effective, exceptions
+        )
     ) %>%
     select(-ends_with("__effective")) %>%
     select(-denominator)
@@ -266,6 +276,7 @@ sb__measures__performance <- measures %>%
         , indicator_group_code
         , indicator_code
         , m.type, m.name, m.stat, value, measure_label
+        , domain_code, qof_period
     )
 
 
@@ -296,7 +307,8 @@ sb__measures__prevalence <- measures %>%
     merge(sb__lu_prevalence, all.x = TRUE) %>%
     # merge in prevalence values
     merge(
-        measures %>% select(-org.type, -data_source, -display_order, -indicator_code) # , -domain_code)
+        measures %>%
+            select(-org.type, -display_order, -indicator_code) # , -domain_code)
         , by = c(
             "ccg_code", "practice_code"
             , "indicator_group_code"
@@ -929,8 +941,6 @@ sb__ind_dat <- reactive({
 
 renderPlot({
     
-    l_ind_melt <- sb__ind_dat()
-    
     cols <- c(
         optimal = "green4"
         , suboptimal = "darkorange"
@@ -938,6 +948,8 @@ renderPlot({
         , exclusions = "lightblue"
         , model = "gray50"
     )
+    
+    l_ind_melt <- sb__ind_dat()
     
     p <- ggplot(l_ind_melt) +
         geom_col(
@@ -970,9 +982,10 @@ renderPlot({
         theme(legend.position = "top") +
         labs(x = "", y = "Counts scaled relative to register (percent)")
     
-    #ylabel <- "Counts scaled relative to register (percent)"
     if (sb__scale_counts_largest_gp() == TRUE)
-        p <- p + labs(y = "Counts scaled relative to largest GP register overall (percent)") 
+        p <- p + labs(
+            y = "Counts scaled relative to largest GP register overall (percent)"
+        ) 
     
     p %>% print()
     
@@ -1086,7 +1099,7 @@ pd__compare_dat <- reactive({
             , (pd__this_ind_group() == "[All]") | (indicator_group_code == pd__this_ind_group())
             , (pd__this_measure() == "[All]") | (m.name == pd__this_measure())
         ) %>%
-        select(-org.type.var, -data_source, -m.type) %>%
+        select(-org.type.var, -m.type) %>%
         select(ccg_code, practice_code, indicator_group_code, indicator_code, org.type.ref, everything()) %>%
         dcast(... ~ compare.type + compare.param, value.var = "statsig", fun = function(x){paste(x, collapse = "")}) %>%
         mutate_if(is.character, as.factor) %>%
@@ -1121,7 +1134,7 @@ pd__measures_dat <- reactive({
             , (pd__this_ind_group() == "[All]") | (indicator_group_code == pd__this_ind_group())
             , (pd__this_measure() == "[All]") | (m.name == pd__this_measure())
         ) %>%
-        select(-org.type, -data_source, -m.type) %>%
+        select(-org.type, -m.type) %>%
         select(ccg_code, practice_code, indicator_group_code, indicator_code, everything()) %>%
         dcast(... ~ m.stat, fun = sum) %>%
         mutate_if(is.character, as.factor) %>%
@@ -1188,7 +1201,7 @@ pd__indmap_dat <- reactive({
             pd__this_ind_group() == "[All]" | 
                 indicator_group_code == pd__this_ind_group()
         ) %>%
-        select(-indicator_group_code, -data_source) %>%
+        select(-indicator_group_code) %>%
         mutate_if(is.character, as.factor) %>%
         invisible()
 })
@@ -1210,23 +1223,23 @@ DT::renderDataTable({
 
 
 
-Debug {.hidden}
+Debug
 ====
 
-Fila {.tabset}
+Debug {.tabset}
 ----
 
 ### Debug
 
 ``` {r debug_overview}
-cat("DEBUG: getwd =", getwd(), "\n")
-cat("DEBUG: taskdir =", taskdir, "\n")
+#cat("DEBUG: getwd =", getwd(), "\n")
+#cat("DEBUG: taskdir =", taskdir, "\n")
 ```
 
 ### compare
 
 ```{r debug_compare}
-cat("DEBUG: compare:", taskdir, "\n")
+#cat("DEBUG: compare:", taskdir, "\n")
 compare %>% mutate_if(is.character, as.factor) %>% str()
 compare %>% mutate_if(is.character, as.factor) %>% summary()
 
@@ -1235,7 +1248,7 @@ compare %>% mutate_if(is.character, as.factor) %>% summary()
 ### measures
 
 ```{r debug_measures}
-cat("DEBUG: measures:", taskdir, "\n")
+#cat("DEBUG: measures:", taskdir, "\n")
 measures %>% mutate_if(is.character, as.factor) %>% str()
 measures %>% mutate_if(is.character, as.factor) %>% summary()
 
@@ -1244,7 +1257,7 @@ measures %>% mutate_if(is.character, as.factor) %>% summary()
 ### orgref
 
 ```{r debug_orgref}
-cat("DEBUG: orgref:", taskdir, "\n")
+#cat("DEBUG: orgref:", taskdir, "\n")
 orgref %>% mutate_if(is.character, as.factor) %>% str()
 orgref %>% mutate_if(is.character, as.factor) %>% summary()
 
@@ -1253,7 +1266,7 @@ orgref %>% mutate_if(is.character, as.factor) %>% summary()
 ### indmap
 
 ```{r debug_indmap}
-cat("DEBUG: indmap:", taskdir, "\n")
+#cat("DEBUG: indmap:", taskdir, "\n")
 indmap %>% mutate_if(is.character, as.factor) %>% str()
 indmap %>% select(-ends_with("description")) %>% mutate_if(is.character, as.factor) %>% summary()
 
