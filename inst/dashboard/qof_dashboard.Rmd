@@ -15,9 +15,9 @@ require("flexdashboard")
 require("shiny")
 require("ggplot2")
 #require("d3heatmap")
-require("DT")
-require("dplyr")
-require("data.table")
+require("DT", warn.conflicts = FALSE)
+require("dplyr", warn.conflicts = FALSE)
+require("data.table", warn.conflicts = FALSE)
 require("qofvariation.ncc")
 
 knitr::opts_chunk$set(cache = FALSE)
@@ -32,9 +32,10 @@ Global page {.hidden}
 # load data in 'global' chunk so it can be shared by all users of the dashboard
 
 #dat <- main(qof_period = "1617", bProcessRaw = FALSE, bLoadData = FALSE)
-qv <- qof__main__load(qof_root = "qof-1516")
+#qv <- qof__main__load(qof_root = "qof-1516")
 #qv <- qof__main__load(qof_root = "qof-1617")
 #qv <- qof__main__load(qof_root = "qof-1718")
+qv <- qof__main__load(qof_root = c("qof-1718", "qof-1617", "qof-1516"))
 
 # add an orgtag field
 l_add_orgtag <- function(x, c1 = "ccg_code", c2 = "practice_code") {
@@ -107,7 +108,7 @@ practice_grouping <- list(
     orgref %>% 
         # filter out existing ccg groups
         filter(nchar(practice_code) > 3) %>%
-        select(practice_code, ccg_code) %>%
+        select(qof_period, practice_code, ccg_code) %>%
         merge(lu.orgs.ccgs.groups, by = "ccg_code", all.y = TRUE) %>%
         select(-type_display_order)
     
@@ -116,7 +117,7 @@ practice_grouping <- list(
         filter(nchar(practice_code) > 3) %>%
         # only local ccgs
         filter(ccg_code %in% c(lu.orgs.ccgs.groups$ccg_code %>% unique())) %>%
-        select(practice_code, ccg_code) %>%
+        select(qof_period, practice_code, ccg_code) %>%
         mutate(
             ccg_group_type = "ccg"
             , ccg_group_type_name = "ccg"
@@ -128,6 +129,8 @@ practice_grouping <- list(
     rbindlist(use.names = TRUE)
 
 # For inputs
+
+these_qof_periods <- measures$qof_period %>% unique() %>% sort()
 
 these_orgtypes <- measures$org.type %>% unique() %>% sort()
 these_ccg_groups <- practice_grouping$ccg_group_name %>% unique() %>% sort()
@@ -171,20 +174,19 @@ prevalence <- measures %>%
     dcast(... ~ m.stat) %>%
     rename(register = "numerator") %>%
     select(
-        ccg_code, practice_code, indicator_group_code
+        qof_period
+        , ccg_code, practice_code, indicator_group_code
         , register
     )
 
-# lu__register_indicators <- indmap %>% 
-#   filter(is.register == TRUE) %>%
-#   .$indicator_code
-
+# TODO v: dependent on qof_period
 lu__register_indicators <- measures %>%
     filter(m.type == "prevalence") %>%
     .$indicator_code %>%
     unique()
 
 these_indicators_noregister <- setdiff(these_indicators, lu__register_indicators)
+# TODO ^:
 
 register <- measures %>%
     filter(
@@ -196,7 +198,8 @@ register <- measures %>%
     dcast(... ~ m.stat) %>%
     rename(register = "numerator") %>%
     select(
-        ccg_code, practice_code, indicator_group_code
+        qof_period
+        , ccg_code, practice_code, indicator_group_code
         , register
     )
 
@@ -210,7 +213,7 @@ counts <- measures %>%
     dcast(... ~ m.name + m.stat) %>%
     merge(
         register
-        , by = c("ccg_code", "practice_code", "indicator_group_code")
+        , by = c("qof_period", "ccg_code", "practice_code", "indicator_group_code")
         , all.x = TRUE
     ) %>%
     rename(
@@ -276,7 +279,8 @@ sb__measures__performance <- measures %>%
     filter(!indicator_code %in% lu__register_indicators) %>%
     merge(sb__lu_performance, by = c("m.type", "m.name", "m.stat"), all.x = FALSE) %>%
     select(
-        ccg_code, practice_code
+        qof_period
+        , ccg_code, practice_code
         , indicator_group_code
         , indicator_code
         , m.type, m.name, m.stat, value, measure_label
@@ -306,7 +310,7 @@ sb__lu <- list(
 sb__measures__prevalence <- measures %>%
     # generate frame
     #filter(!indicator_code %in% lu__register_indicators) %>% 
-    select(ccg_code, practice_code, indicator_group_code, indicator_code) %>%
+    select(qof_period, ccg_code, practice_code, indicator_group_code, indicator_code) %>%
     unique() %>%
     merge(sb__lu_prevalence, all.x = TRUE) %>%
     # merge in prevalence values
@@ -314,7 +318,8 @@ sb__measures__prevalence <- measures %>%
         measures %>%
             select(-org.type, -display_order, -indicator_code) # , -domain_code)
         , by = c(
-            "ccg_code", "practice_code"
+            "qof_period"
+            , "ccg_code", "practice_code"
             , "indicator_group_code"
             , "m.type", "m.name", "m.stat"
         )
@@ -418,6 +423,15 @@ cat("INFO: possible input selections here", "\n")
 
 
 selectInput(
+    "hm__this_qof_period"
+    , label = "Select QOF period:"
+    , choices = these_qof_periods
+    , selected = these_qof_periods[1]
+    , selectize = FALSE
+    , multi = FALSE
+)
+
+selectInput(
     "hm__this_ccg_group"
     , label = "Select Practice grouping:"
     , choices = these_ccg_groups
@@ -505,6 +519,7 @@ Fila
 
 #cat("INFO: Heatmap", "\n")
 
+hm__this_qof_period <- reactive(input$hm__this_qof_period)
 hm__this_ccg_group <- reactive(input$hm__this_ccg_group)
 hm__this_ind_group <- reactive(input$hm__this_ind_group)
 hm__this_measure <- reactive(input$hm__this_measure)
@@ -518,9 +533,11 @@ hm__this_sort_option <- reactive(input$hm__this_sort_option)
 hm__tmp_practices_list <- reactive({
     
     # For development
+    l__this_qof_period <- these_qof_periods[1]
     l__this_ccg_group <- "Mid. Notts. UOP"
     l__bool_hide_practices <- FALSE
     
+    l__this_qof_period <- hm__this_qof_period()
     l__this_ccg_group <- hm__this_ccg_group()
     l__bool_hide_practices <- hm__bool_hide_practices()
     
@@ -544,7 +561,10 @@ hm__tmp_practices_list <- reactive({
     if (l__bool_hide_practices == FALSE) {
         relevant_practices <-
             practice_grouping %>%
-            filter(ccg_group_name == l__this_ccg_group) %>%
+            filter(
+                qof_period == l__this_qof_period
+                , ccg_group_name == l__this_ccg_group
+            ) %>%
             .$practice_code
     } else {
         relevant_practices <- c() # NULL
@@ -559,6 +579,7 @@ if (bRenderggplot) {
     
     hm__heatmap_dat__ggplot <- reactive({
         
+        l__this_qof_period <- hm__this_qof_period()
         l__this_ind_group <- hm__this_ind_group()
         l__this_measure <- hm__this_measure()
         l__this_comparator <- hm__this_comparator()
@@ -570,7 +591,8 @@ if (bRenderggplot) {
         this_dat <- compare %>%
             # filter on measure and comparison
             filter(
-                m.name == l__this_measure
+                qof_period == l__this_qof_period
+                , m.name == l__this_measure
                 , org.type.ref == l__this_comparator
                 , compare.type == l__this_comparison_method
                 , any(l__this_ind_group == "[All]") |
@@ -686,10 +708,13 @@ if (bRenderD3) {
     hm__this_group_cols <- reactive(input$hm__group_cols)
     
     hm__heatmap_dat__d3 <- reactive({
+        l__this_qof_period <- hm__this_qof_period()
+        
         this_dat <- compare %>%
             # filter on measure and comparison
             filter(
-                m.name == hm__this_measure()
+                qof_period == l__this_qof_period
+                , m.name == hm__this_measure()
                 , org.type.ref == hm__this_comparator()
                 , compare.type == hm__this_comparison_method()
             ) %>%
@@ -739,6 +764,7 @@ if (bRenderD3) {
 
 ```
 
+
 Stacked bars
 ====
 
@@ -748,6 +774,15 @@ Inputs {.sidebar}
 Show QOF dat for practice.
 
 ```{r stackedbar_input}
+
+selectInput(
+    "sb__this_qof_period"
+    , label = "Select QOF period:"
+    , choices = these_qof_periods
+    , selected = these_qof_periods[1]
+    , selectize = FALSE
+    , multi = FALSE
+)
 
 selectInput(
     "sb__this_ccg_group"
@@ -798,6 +833,7 @@ checkboxInput(
     , value = FALSE
 )
 
+sb__this_qof_period <- reactive(input$sb__this_qof_period)
 sb__this_ccg_group <- reactive(input$sb__this_ccg_group)
 sb__this_practice <- reactive(input$sb__this_practice)
 sb__bool_hide_practices <- reactive(input$sb__bool_hide_practices)
@@ -808,6 +844,7 @@ sb__scale_counts_largest_gp <- reactive(input$sb__scale_counts_largest_gp)
 
 sb__tmp_practices_list <- reactive({
     
+    l__this_qof_period <- sb__this_qof_period()
     l__this_practice <- sb__this_practice()
     l__bool_hide_practices <- sb__bool_hide_practices()
     l__this_ccg_group <- sb__this_ccg_group()
@@ -839,7 +876,10 @@ sb__tmp_practices_list <- reactive({
         if (l__this_practice == "[All]") {
             relevant_practices <-
                 practice_grouping %>%
-                filter(ccg_group_name == l__this_ccg_group) %>%
+                filter(
+                    qof_period == l__this_qof_period
+                    , ccg_group_name == l__this_ccg_group
+                ) %>%
                 .$practice_code
         } else {
             relevant_practices <- l__this_practice
@@ -866,6 +906,7 @@ sb__ind_dat <- reactive({
     
     # For debugging dynamic elements
     
+    l__this_qof_period <- these_qof_periods[1]
     l__this_indicator <- "CHD005" # "AF006"
     l__this_practice <- "C84001"
     l__bool_hide_practices <- FALSE
@@ -874,6 +915,7 @@ sb__ind_dat <- reactive({
     l__sort_desc = TRUE
     l__sb__scale_counts_largest_gp <- TRUE # FALSE
     
+    l__this_qof_period <- sb__this_qof_period()
     l__this_indicator <- sb__this_indicator()
     l__this_practice <- sb__this_practice()
     l__bool_hide_practices <- sb__bool_hide_practices()
@@ -883,27 +925,35 @@ sb__ind_dat <- reactive({
     l__sb__scale_counts_largest_gp <- sb__scale_counts_largest_gp()
     
     l__this_ccg <- orgref %>%
-        filter(practice_code == l__this_practice) %>%
+        filter(
+            qof_period == l__this_qof_period
+            , practice_code == l__this_practice
+        ) %>%
         .$ccg_code
     
     l__this_ind_group <- indmap %>%
-        filter(indicator_code == l__this_indicator) %>%
+        filter(
+            qof_period == l__this_qof_period
+            , indicator_code == l__this_indicator
+        ) %>%
         .$indicator_group_code
     
     l__sort_measure <- sb__measures %>%
         filter(
-            practice_code %in% l__tmp_practices_list
+            qof_period == l__this_qof_period
+            , practice_code %in% l__tmp_practices_list
             , indicator_code == l__this_indicator
             , measure_label == l__this_sort_measure
         )
     
     l_ind <- counts %>%
         filter(
-            practice_code %in% l__tmp_practices_list
+            qof_period == l__this_qof_period
+            , practice_code %in% l__tmp_practices_list
             , indicator_code == l__this_indicator
         ) %>% merge(
             l__sort_measure %>% select(-starts_with("m"), value_sort = value)
-            , by = c("ccg_code", "practice_code", "indicator_code")
+            , by = c("qof_period", "ccg_code", "practice_code", "indicator_code")
             # reverse value if descending
         ) %>%
         mutate(value_sort = (2 * (!l__sort_desc) - 1) * value_sort) %>%
