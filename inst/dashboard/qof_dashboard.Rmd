@@ -80,10 +80,9 @@ l_add_display_order <- function(x, c1 = "org.type") {
 #' @param domain_codes one of c("CL", "PH", "PHAS")
 #'
 l__filter_domain_codes_tokeep <- function(
-    x
-    , domain_codes = c("CL", "PH", "PHAS")
+    x, domain_codes = c("CL", "PH", "PHAS")
 ) {
-    domain_codes <- match.arg(domain.codes)
+    domain_codes <- match.arg(domain_codes)
     
     if ("domain_code" %in% colnames(x)) {
         x %>% filter(domain_code %in% domain_codes) %>% invisible()
@@ -175,6 +174,10 @@ prevalence <- measures %>%
         ccg_code, practice_code, indicator_group_code
         , register
     )
+
+# lu__register_indicators <- indmap %>% 
+#   filter(is.register == TRUE) %>%
+#   .$indicator_code
 
 lu__register_indicators <- measures %>%
     filter(m.type == "prevalence") %>%
@@ -328,6 +331,7 @@ sb__measures <- list(
 #
 # For sorting heatmaps
 #
+#
 
 hm__sort_options <- c("practice_code", "summary_measure")
 
@@ -398,7 +402,6 @@ Measures considered are:
 ### Discussion
 
 
-
 Heatmap
 ====
 
@@ -411,6 +414,9 @@ Show variation in QOF.
 
 bRenderD3 = FALSE
 bRenderggplot = TRUE
+cat("INFO: possible input selections here", "\n")
+
+
 selectInput(
     "hm__this_ccg_group"
     , label = "Select Practice grouping:"
@@ -1298,7 +1304,7 @@ DT::renderDataTable({
 Debug
 ====
 
-Debug {.tabset}
+Fila {.tabset}
 ----
 
 ### Debug
