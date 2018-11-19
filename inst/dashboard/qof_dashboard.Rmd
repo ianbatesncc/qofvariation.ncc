@@ -13,6 +13,7 @@ output:
 ```{r setup, include = FALSE, cache = FALSE}
 require("flexdashboard")
 require("shiny")
+require("ggplot2")
 #require("d3heatmap")
 require("DT")
 require("dplyr")
@@ -409,6 +410,7 @@ Show variation in QOF.
 ```{r heatmap_inputs}
 
 bRenderD3 = FALSE
+bRenderggplot = TRUE
 selectInput(
     "hm__this_ccg_group"
     , label = "Select Practice grouping:"
@@ -487,7 +489,16 @@ if (bRenderD3) {
 
 ```
 
-```{r heatmap_prepare_data}
+
+Fila
+-----------------------------------------------------------------------
+
+### Heatmap
+
+```{r heatmap_render}
+
+#cat("INFO: Heatmap", "\n")
+
 hm__this_ccg_group <- reactive(input$hm__this_ccg_group)
 hm__this_ind_group <- reactive(input$hm__this_ind_group)
 hm__this_measure <- reactive(input$hm__this_measure)
@@ -496,6 +507,7 @@ hm__this_comparison_method <- reactive(input$hm__this_comparison_method)
 hm__bool_hide_practices <- reactive(input$hm__bool_hide_practices)
 hm__sort_desc <- reactive(input$hm__sort_desc)
 hm__this_sort_option <- reactive(input$hm__this_sort_option)
+
 
 hm__tmp_practices_list <- reactive({
     
