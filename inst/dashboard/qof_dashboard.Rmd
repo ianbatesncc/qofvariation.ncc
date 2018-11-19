@@ -408,6 +408,7 @@ Show variation in QOF.
 
 ```{r heatmap_inputs}
 
+bRenderD3 = FALSE
 selectInput(
     "hm__this_ccg_group"
     , label = "Select Practice grouping:"
@@ -476,6 +477,13 @@ checkboxInput(
     , label = "Reverse sort"
     , value = FALSE
 )
+
+if (bRenderD3) {
+    
+    checkboxInput("hm__group_rows", "Group rows", FALSE)
+    checkboxInput("hm__group_cols", "Group cols", FALSE)
+    
+}
 
 ```
 
@@ -675,9 +683,40 @@ renderPlot({
                 , colour = "grey50"
             )
         )
+if (bRenderD3) {
     
+    hm__this_group_rows <- reactive(input$hm__group_rows)
+    hm__this_group_cols <- reactive(input$hm__group_cols)
     hm__data_summary <- hm__data$sort_summary_melt
     
+    hm__heatmap_dat__d3 <- reactive({
+        this_dat <- compare %>%
+            # filter on measure and comparison
+            filter(
+                m.name == hm__this_measure()
+                , org.type.ref == hm__this_comparator()
+                , compare.type == hm__this_comparison_method()
+            ) %>%
+            # filter on practices of interest
+            filter(practice_code %in% hm__tmp_practices_list()) %>%
+            mutate(
+                xticklabel = paste(indicator_group_code, indicator_code)
+                , yticklabel = paste(ccg_code, practice_code)
+            ) %>%
+            #select(ccg_code, practice_code, indicator_code, compare.param, statsig) %>%
+            select(xticklabel, yticklabel, compare.param, statsig) %>%
+            merge(lu_statsig_num, by = "statsig") %>%
+            # this handles benchmark and spc    
+            dcast(xticklabel ~ yticklabel, value.var = "istatsig", fun = sum)
+        
+        rownames(this_dat) <- this_dat %>%
+            select(xticklabel)
+        
+        this_dat <- this_dat %>% select(-ends_with("_code"))
+        
+        this_dat %>% invisible()
+        
+    })
     # blue to red through yellow
     this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
     cols <- c(
@@ -690,6 +729,25 @@ renderPlot({
         , p2 = this_col[5]
     )
     
+    renderD3heatmap({
+        # prepare matrix from reactive() components
+        
+        # ... and plot
+        
+        #this_col = colorRampPalette(c("blue", "yellow", "red"), space = "Lab")(5)
+        #this_col = "RdYlBu"
+        this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
+        this_idendrogram <- c(hm__this_group_rows(), hm__this_group_cols()) %*% c(1, 2) + 1
+        #this_idendrogram <- c(input$group_rows, input$group_cols) %*% c(1, 2) + 1
+        
+        dendrogram_opts <- c("none", "row", "column", "both")
+        
+        #print(dendrogram_opts[this_idendrogram])
+        
+        d3heatmap(
+            hm__heatmap_dat__d3()
+            , colors = this_col
+            , dendrogram = dendrogram_opts[this_idendrogram]
     p2 <- ggplot(hm__data_summary) +
         geom_col(
             aes(
@@ -714,6 +772,8 @@ renderPlot({
             axis.ticks = element_blank()
             , axis.text.x = element_blank()
         )
+    })
+}
     
     
     ggarrange(
