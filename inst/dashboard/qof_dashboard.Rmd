@@ -555,157 +555,135 @@ hm__tmp_practices_list <- reactive({
         unique() %>% invisible()
 })
 
-hm__heatmap_dat__ggplot <- reactive({
-
-    l__this_ind_group <- hm__this_ind_group()
-    l__this_measure <- hm__this_measure()
-    l__this_comparator <- hm__this_comparator()
-    l__this_comparison_method <- hm__this_comparison_method()
-    l__tmp_practices_list <- hm__tmp_practices_list()
-    l__hm__this_sort_option <- hm__this_sort_option()
-    l__hm__sort_desc <- hm__sort_desc()
+if (bRenderggplot) {
     
-    this_dat <- compare %>%
-        # filter on measure and comparison
-        filter(
-            m.name == l__this_measure
-            , org.type.ref == l__this_comparator
-            , compare.type == l__this_comparison_method
-            , any(l__this_ind_group == "[All]") |
-                indicator_group_code %in% l__this_ind_group
-        ) %>%
-        # filter on practices of interest
-        filter(practice_code %in% l__tmp_practices_list) %>%
-        mutate(
-            ind_label = paste(indicator_group_code, indicator_code)
-            , org_label = paste(ccg_code, practice_code)
-        ) %>%
-        select(display_order, ind_label, org_label, compare.param, statsig) %>%
-        merge(lu_statsig_num, by = "statsig") %>%
-        # this handles benchmark and spc    
-        #dcast(ccg_code + practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
-        group_by_at(vars(-compare.param, -istatsig, -statsig)) %>%
-        summarise_at(vars(istatsig), sum) %>%
-        ungroup() %>%
-        mutate(value_sort = 0)
-    
-    # Decide how to sort
-    if (l__hm__this_sort_option == "summary_measure") {
-        this_sort <- this_dat %>%
-            #filter(!is.na(istatsig)) %>%
-            group_by_at(vars(-ind_label, -istatsig)) %>%
-            summarise_at(
-                vars(istatsig)
-                , funs(
-                    m2 = sum(. < -1, na.rm = TRUE)
-                    , m1 = sum(. == -1, na.rm = TRUE)
-                    , z = sum(. == 0, na.rm = TRUE)
-                    , p1 = sum(. == 1, na.rm = TRUE)
-                    , p2 = sum(. > 1, na.rm = TRUE)
-                    , na = sum(is.na(.))
-                )
+    hm__heatmap_dat__ggplot <- reactive({
+        
+        l__this_ind_group <- hm__this_ind_group()
+        l__this_measure <- hm__this_measure()
+        l__this_comparator <- hm__this_comparator()
+        l__this_comparison_method <- hm__this_comparison_method()
+        l__tmp_practices_list <- hm__tmp_practices_list()
+        l__hm__this_sort_option <- hm__this_sort_option()
+        l__hm__sort_desc <- hm__sort_desc()
+        
+        this_dat <- compare %>%
+            # filter on measure and comparison
+            filter(
+                m.name == l__this_measure
+                , org.type.ref == l__this_comparator
+                , compare.type == l__this_comparison_method
+                , any(l__this_ind_group == "[All]") |
+                    indicator_group_code %in% l__this_ind_group
             ) %>%
+            # filter on practices of interest
+            filter(practice_code %in% l__tmp_practices_list) %>%
+            mutate(
+                ind_label = paste(indicator_group_code, indicator_code)
+                , org_label = paste(ccg_code, practice_code)
+            ) %>%
+            select(display_order, ind_label, org_label, compare.param, statsig) %>%
+            merge(lu_statsig_num, by = "statsig") %>%
+            # this handles benchmark and spc    
+            #dcast(ccg_code + practice_code ~ indicator_code, value.var = "istatsig", fun = sum)
+            group_by_at(vars(-compare.param, -istatsig, -statsig)) %>%
+            summarise_at(vars(istatsig), sum) %>%
             ungroup() %>%
-            mutate(n = m2 + m1 + z + p1 + p2 + na) %>%
-            # Lots of ways of doing this - this is reasonable
-            #mutate(value_sort = -(4*m2 + 2*m1 + 0*(z + na) - 2*p1 - 4*p2) / n)
-            #mutate(value_sort = -(1*m2 + 1*m1 + 0*(z + na) - 1*p1 - 1*p2) / n)
-            #mutate(value_sort = -(2*m2 + 1*m1 + 0*(z + na) - 1*p1 - 2*p2) / n)
-            mutate(value_sort = (3*m2 + 2*m1 + 0*(z + na) - 2*p1 - 3*p2) / n)
-    } else {
-        this_sort <- this_dat %>%
-            #filter(!is.na(istatsig)) %>%
-            select_at(vars(-ind_label, -istatsig)) %>%
-            unique() %>%
             mutate(value_sort = 0)
-    }
-
-    # to add sort methods
-    if (l__hm__sort_desc == TRUE) {
-        orgs_ordered <- this_sort %>%
-            arrange(display_order, desc(value_sort), desc(org_label)) %>%
-            .$org_label %>% unique()
-    } else {
-        orgs_ordered <- this_sort %>%
-            arrange(display_order, value_sort, org_label) %>%
-            .$org_label %>% unique()
-    }
-    
-    retval <- list(
-        this_dat
-        , this_sort
-    ) %>% lapply(
-        function(x, y) {
-            mutate(x, org_label_ordered = ordered(org_label, levels = rev(y)))
+        
+        # Decide how to sort
+        if (l__hm__this_sort_option == "summary_measure") {
+            this_sort <- this_dat %>%
+                #filter(!is.na(istatsig)) %>%
+                group_by_at(vars(-ind_label, -istatsig)) %>%
+                summarise_at(
+                    vars(istatsig)
+                    , funs(
+                        m2 = sum(. < -1, na.rm = TRUE)
+                        , m1 = sum(. == -1, na.rm = TRUE)
+                        , z = sum(. == 0, na.rm = TRUE)
+                        , p1 = sum(. == 1, na.rm = TRUE)
+                        , p2 = sum(. > 1, na.rm = TRUE)
+                        , na = sum(is.na(.))
+                    )
+                ) %>%
+                ungroup() %>%
+                mutate(n = m2 + m1 + z + p1 + p2 + na) %>%
+                # Lots of ways of doing this - this is reasonable
+                #mutate(value_sort = -(4*m2 + 2*m1 + 0*(z + na) - 2*p1 - 4*p2) / n)
+                #mutate(value_sort = -(1*m2 + 1*m1 + 0*(z + na) - 1*p1 - 1*p2) / n)
+                #mutate(value_sort = -(2*m2 + 1*m1 + 0*(z + na) - 1*p1 - 2*p2) / n)
+                mutate(value_sort = (3*m2 + 2*m1 + 0*(z + na) - 2*p1 - 3*p2) / n)
+        } else {
+            this_sort <- this_dat %>%
+                #filter(!is.na(istatsig)) %>%
+                select_at(vars(-ind_label, -istatsig)) %>%
+                unique() %>%
+                mutate(value_sort = 0)
         }
-        , orgs_ordered
-    ) %>% {
-        list(
-            heatmap = .[[1]]
-            , sort_summary = .[[2]]
-            , sort_summary_melt = .[[2]] %>%
-                melt(measure.vars = c("m2", "m1", "zm", "na", "zp", "p1", "p2"))
-        )
-    }
-    
-    retval %>% invisible()
-})
 
-
-```
-
-Fila
------------------------------------------------------------------------
-
-### Heatmap and Summary
-
-```{r heatmap_and_summary}
-
-renderPlot({
-    hm__data <- hm__heatmap_dat__ggplot()
-    
-    hm__data_heatmap <- hm__data$heatmap
-    
-    require("ggplot2")
-    require("ggpubr")
-    
-    p__base_size <- 12
-    
-    p <- ggplot(
-        hm__data_heatmap
-        #, aes(x = indicator_code, y = practice_code)
-        , aes(x = ind_label, y = org_label_ordered)
-    ) + 
-        geom_tile(aes(fill = istatsig), colour = "white") + 
-        #scale_fill_gradient(low = "white", high = "steelblue") +
-        #    this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
-        scale_fill_gradient2(
-            low = "#6666cc"
-            , mid = "#ffffee"
-            , high = "#cc8888"
-            , na.value = "#cccccc"
-            , space = "Lab") +
-        # styling
-        theme_grey(base_size = p__base_size) + 
-        labs(x = "", y = "", fill = "Level of variation (-2 low, +2 high)") + 
-        scale_x_discrete(expand = c(0, 0), position = "top") +
-        scale_y_discrete(expand = c(0, 0)) +
-        theme(
-            #legend.position = "none"
-            legend.position = "top"
-            , axis.ticks = element_blank()
-            , axis.text.x = element_text(
-                size = max(7, p__base_size * 0.67)
-                , angle = 60 # 45 30
-                , hjust = 0
-                , colour = "grey50"
+        # to add sort methods
+        if (l__hm__sort_desc == TRUE) {
+            orgs_ordered <- this_sort %>%
+                arrange(display_order, desc(value_sort), desc(org_label)) %>%
+                .$org_label %>% unique()
+        } else {
+            orgs_ordered <- this_sort %>%
+                arrange(display_order, value_sort, org_label) %>%
+                .$org_label %>% unique()
+        }
+        
+        this_dat <- this_dat %>%
+            # try to sort for plot
+            mutate(
+                org_label_ordered = ordered(org_label, levels = rev(orgs_ordered))
             )
-        )
+        
+        this_dat %>% invisible()
+    })
+    
+    renderPlot({
+    
+        p__base_size <- 12
+        
+        p <- ggplot(
+            hm__heatmap_dat__ggplot()
+            #, aes(x = indicator_code, y = practice_code)
+            , aes(x = ind_label, y = org_label_ordered)
+        ) + 
+            geom_tile(aes(fill = istatsig), colour = "white") + 
+            scale_fill_gradient2(
+                low = "#6666cc"
+                , mid = "#ffffee"
+                , high = "#cc8888"
+                , na.value = "#eeeeee"
+                , space = "Lab") +
+            # styling
+            theme_grey(base_size = p__base_size) + 
+            labs(x = "", y = "", fill = "Level of variation (-2 low, +2 high)") +
+            scale_x_discrete(expand = c(0, 0), position = "top") +
+            scale_y_discrete(expand = c(0, 0)) +
+            theme(
+                legend.position = "none" # "top"
+                , axis.ticks = element_blank()
+                , axis.text.x = element_text(
+                    size = max(7, p__base_size * 0.67)
+                    , angle = 60 # 45 30
+                    , hjust = 0
+                    , colour = "grey50"
+                )
+            ) + 
+            labs(caption = "Source: Secondary analysis of NHS Digital QOF data")
+        
+        p %>% print()
+    })
+    
+}
+
 if (bRenderD3) {
     
     hm__this_group_rows <- reactive(input$hm__group_rows)
     hm__this_group_cols <- reactive(input$hm__group_cols)
-    hm__data_summary <- hm__data$sort_summary_melt
     
     hm__heatmap_dat__d3 <- reactive({
         this_dat <- compare %>%
@@ -735,17 +713,6 @@ if (bRenderD3) {
         this_dat %>% invisible()
         
     })
-    # blue to red through yellow
-    this_col = colorRampPalette(c("#6666cc", "#ffffee", "#cc8888"), space = "Lab")(5)
-    cols <- c(
-        m2 = this_col[1]
-        , m1 = this_col[2]
-        , zm = this_col[3]
-        , na = "#dddddd"
-        , zp = this_col[3]
-        , p1 = this_col[4]
-        , p2 = this_col[5]
-    )
     
     renderD3heatmap({
         # prepare matrix from reactive() components
@@ -766,38 +733,9 @@ if (bRenderD3) {
             hm__heatmap_dat__d3()
             , colors = this_col
             , dendrogram = dendrogram_opts[this_idendrogram]
-    p2 <- ggplot(hm__data_summary) +
-        geom_col(
-            aes(
-                x = org_label_ordered
-                , y = value
-                , fill = variable
-            )
-            , position = position_fill(reverse = TRUE)
-            #, position = position_stack(reverse = TRUE)
-        ) +
-        coord_flip() + 
-        scale_fill_manual(values = cols) +
-        #scale_y_continuous(labels = scales::percent) +
-        scale_y_reverse(expand = c(0, 0)) +
-        #scale_y_continuous(expand = c(0, 0)) +
-        labs(x = "", y = "") + 
-        theme_grey() +
-        theme(legend.position = "none") + 
-        #theme(legend.position = "top") +
-        theme(
-            #legend.position = "none"
-            axis.ticks = element_blank()
-            , axis.text.x = element_blank()
         )
     })
 }
-    
-    
-    ggarrange(
-        p, p2, widths = c(3,1), align = "h", common.legend = TRUE
-    )
-})
 
 ```
 
