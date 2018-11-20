@@ -1,0 +1,105 @@
+IndicatorID,Indicator,Indicator full name,Definition,Rationale,Policy,Data source,Indicator production,Indicator source,Methodology,Standard population/values,Confidence interval details,Source of numerator,Definition of numerator,Source of denominator,Definition of denominator,Disclosure control,Caveats,Copyright,Data re-use,Links,Indicator number,Notes,Frequency,Rounding,Data quality,Indicator Content,Unit,Value type,Year type,Polarity
+92659,Estimated prevalence of diagnosed hypertension (16+),Modelled estimate of the prevalence of diagnosed hypertension,"The estimated prevalence of high blood pressure as estimated by a predictive model developed by Imperial College, London. The full details of the model are available  https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx .The primary data source is the Health Survey for England, 2013 & 2014 pooled data. Hypertension in the Health Survegy for England is defined as systolic blood pressure ≥140 or diastolic blood pressure ≥90, according to commonly used standards. This modelling exercise developed two prevalence estimates:
+
+Diagnosed hypertension, was derived from the number of patients that reported being told by a nurse or doctor that they had high BP.
+Undiagnosed hypertension, was derived from those patients that, first, were considered uncontrolled or untreated hypertensive and second, they did not report having been diagnosed high blood pressure.","Hypertension is a major risk factor for kidney disease, heart disease and stroke and a public health priority for PHE and the wider public health system. It can be prevented by improving lifestyle by reducing alcohol and salt consumption, maintaining healthy weight and increasing physical activity. Hypertension is mainly detected and managed in general practice.According to the 2015 Global of Burden of Disease (GBD) study, high systolic blood pressure ranks second amongst risk factors for overall Disabilty Adjusted Life Years (DALYs). See  https://vizhub.healthdata.org/gbd-compare/#settings=a0645aa2bb1fd4ad6c643b5a283961b37dcbca6b for further details.",Public Health England works with partners in a system board for preventing and managing hypertension.The action plan for tackling hypertension is available  https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/527916/Tackling_high_blood_pressure.pdf .,Health Survey for England 2013/ 2014: Estimates created by Imperial College London,"Imperial College, London","Models: HS for E 2013/2014Parameters: QOF, HS for E",Model development: logistic regressionPrevalence estimation: inverse probability weighting.Further details can be obtained  https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx and for  https://en.wikipedia.org/wiki/Inverse_probability_weighting follow this link.,,Inverse probablity weighting - NB CIs are derived from model variances not local population variance,,,,,,,,,,,,,,,,%,Proportion,Calendar,BOB - Blue orange blue
+92660,Estimated prevalence of undiagnosed hypertension (16+),Modelled estimate of the prevalence of undiagnosed Hypertension,"The estimated prevalence of undiagnosed high blood pressure as estimated by a predictive model developed by Imperial College, London. The full details of the model are available https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx .The primary data source is the Health Survey for England, 2013 & 2014 pooled data. Hypertension in the Health Survey for England is defined as systolic blood pressure ≥140 or diastolic blood pressure ≥90, according to commonly used standards.This modelling exercise developed two prevalence estimates:
+
+Diagnosed hypertension, was derived from the number of patients that reported being told by a nurse or doctor that they had high BP.
+Undiagnosed hypertension, was derived from those patients that, first, were considered uncontrolled or untreated hypertensive and second, they did not report having been diagnosed high blood pressure.","Hypertension is a major risk factor for kidney disease, heart disease and stroke and a public health priority for PHE and the wider public health system. It can be prevented by improving lifestyle by reducing alcohol and salt consumption, maintaining healthy weight and increasing physical activity. Hypertension is mainly detected and managed in general practice.According to the 2015 Global of Burden of Disease (GBD) study, high systolic blood pressure ranks second amongst risk factors for overall Disabilty Adjusted Life Years (DALYs). See https://vizhub.healthdata.org/gbd-compare/#settings=a0645aa2bb1fd4ad6c643b5a283961b37dcbca6b for further details.",Public Health England works with partners in a system board for preventing and managing hypertension.The action plan for tackling hypertension is available https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/527916/Tackling_high_blood_pressure.pdf .,Imperial College London,,"Models: HS for E 2013/2014Parameters: QOF, HS for E",Model development: logistic regressionPrevalence estimation: inverse probability weighting.Further details can be obtained https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx and for https://en.wikipedia.org/wiki/Inverse_probability_weighting follow this link.,,Inverse probablity weighting - NB CIs are derived from model variances not local population variance,,,,,,,,,,,,,,,,%,Proportion,Calendar,BOB - Blue orange blue
+92661,Estimated prevalence of depression (all ages),Modelled estimate of the prevalence of Depression  (all ages),"Patient-reported doctor-diagnosed depression, was derived from the number of patients that reported being diagnosed with depression by a health professional (variable BCond_7_HProf). The actual question is: “Did a doctor, psychiatrist or other professional tell you that you had the following condition: Depression?” No time restriction was put on the definition, so the diagnosis may have been made years ago and the disease will in many cases have resolved. The second outcome, undiagnosed depression, was derived from those respondents that reported they considered they experienced depression (variable DiagCX7), but were not diagnosed by a health professional. The actual question is: “Do you think that you have ever experienced any of these? Depression”. There is also a question: “In the last 12 months have you had: Depression?” which could be used to investigate annual incidence/point prevalence.",Major depression ranks 9th in the Global Burden of Disease as a major cause of morbidity.,,Health Survey for England 2014,Imperial College,,Logistic regression to create underlying model applied to local populations using inverse probability weighting,,Model based confidence intervals,"Estimates of disease counts are based on a logistic regression model developed by Imperial College based on the Health Survey for England 2014.Predictor variables in the final model are:
+
+Age group (25 + in 10 year age bands)
+Sex
+Ethnicity
+Employment status
+Smoking status
+BMI (4 groups - <18,5; 18.5 - 25; 25-30; 30 - 40, 40+)
+Marital status (yes/ no)
+Limiting long-lasting illness (yes/ no)
+Anxiety - self-reported
+Deprivation score (quartiles of IMD score)","Lifetime prevalence of depression as estimated from the Health Survey for England 2014 based on the question ""Did a doctor, psychiatrist or health professsional tell you that you had the following condition: Depression?""",Local population estimates,,,,,,,,,,,,,%,Proportion,Calendar,BOB - Blue orange blue
+92662,Estimated prevalence of CHD (55-79 yrs),Modelled estimate of the prevalence of coronary heart disease in people aged 55-79,Estimated prevalence of the prevalence of coronary heart disease in people aged 55-79.,,,Estimates modelled from the Whitehall II study,,Estimates modelled from the https://www.ucl.ac.uk/whitehallII .,Model development: logistic regressionPrevalence estimation: inverse probability weighting.Further details can be obtained https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx and for https://en.wikipedia.org/wiki/Inverse_probability_weighting .,,Inverse probablity weighting - NB CIs are derived from model variances not local population variance,"Estimates of disease counts are based on a logistic regression model developed by Imperial College based on the  https://www.ucl.ac.uk/whitehallII/ .Predictor variables in the final model are:
+
+Age group (55-79 in 5 year age bands)
+Sex
+Ethnicity
+Diabetes (yes or no)
+Smoking status
+BMI (4 groups - <18,5; 18.5 - 25; 25-30; 30+)
+Physical activity level (low; medium; high)
+CKD (EGFR <= 60; EGFR > 60)
+Deprivation score (quintiles of IMD score)","Coronary heart disease is defined in the Whitehall II studies as a range of clinical endpoints including: defininte angina, hospitalisation or death from CHD, abnormal ECGs, medication or other treatment for CHD; self-report.",,,Not required,"Note: These estimates are not directly comparable with 2011 CHD estimates or QOF registered estimates because of different age groups, case definitions and methods",Crown copyright,,,,,,,,,%,Proportion,Calendar,BOB - Blue orange blue
+92847,Estimated prevalence of CHD (55-79 yrs),Modelled estimate of the prevalence of coronary heart disease in people aged 55-79,Estimated prevalence of the prevalence of coronary heart disease in people aged 55-79.,Coronary heart disease ranks second in Global Burden of Disease estimates and is a major target of disease prevention.,,Estimates modelled from the Whitehall II study,Imperial College,Estimates modelled from the https://www.ucl.ac.uk/whitehallII .,Model development: logistic regressionPrevalence estimation: inverse probability weighting.Further details can be obtained https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx and for https://en.wikipedia.org/wiki/Inverse_probability_weighting .,,Inverse probablity weighting - NB CIs are derived from model variances not local population variance,"Estimates of disease counts are based on a logistic regression model developed by Imperial College based on the  https://www.ucl.ac.uk/whitehallII/ .Predictor variables in the final model are:
+
+Age group (55-79 in 5 year age bands)
+Sex
+Ethnicity
+Diabetes (yes or no)
+Smoking status
+BMI (4 groups - <18,5; 18.5 - 25; 25-30; 30+)
+Physical activity level (low; medium; high)
+CKD (EGFR <= 60; EGFR > 60)
+Deprivation score (quintiles of IMD score)","Coronary heart disease is defined in the Whitehall II studies as a range of clinical endpoints including: defininte angina, hospitalisation or death from CHD, abnormal ECGs, medication or other treatment for CHD; self-report.",The model is applied to age-sex population estimates of local populations using ONS MYE,,Not required,"Note: These estimates are not directly comparable with 2011 CHD estimates or QOF registered estimates because of different age groups, case definitions and methods.There are also some differences between the CHD estimates for general practices and local authorities so we have presented the data here as separate indicators.",Crown Copyright,,,,,Occasional,,,,%,Proportion,Calendar,BOB - Blue orange blue
+92663,Estimated prevalence of stroke (55-79 yrs),Modelled estimate of the prevalence of stroke in people aged 55-79,Estimated prevalenceof stroke in people aged 55-79,Stroke ranks 11th in 2013 GBD for England and is a major target for disease prevention.Stroke is the third most common cause of death in the developed world. One quarter of stroke deaths occur under the age of 65 years. There is evidence that appropriate diagnosis and management can improve outcomes.,,"Whitehall II studies (model)
+Local estimates",Imperial College,Estimates modelled from the https://www.ucl.ac.uk/whitehallII .,Model development: logistic regressionPrevalence estimation: inverse probability weighting.Further details can be obtained https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx and for https://en.wikipedia.org/wiki/Inverse_probability_weighting .,,Inverse probablity weighting - NB CIs are derived from model variances not local population variance,"Estimates of disease counts are based on a logistic regression model developed by Imperial College based on the  https://www.ucl.ac.uk/whitehallII/ .Predictor variables in the final model are:
+
+Age group (55-79 in 5 year age bands)
+Sex
+Ethnicity
+Diabetes (yes or no)
+Smoking status
+BMI (4 groups - <18,5; 18.5 - 25; 25-30; 30+)
+Physical activity level (low; medium; high)
+Deprivation score (quintiles of IMD score)","As defined in Whitehall II studies:
+
+Self-reported doctor diagnosed stroke/TIA
+Clinical record of stroke/ TIA
+Mortality from stroke",,,,"Note: These estimates are not directly comparable with 2011 stroke estimates or QOF registered estimates because of different age groups, case definitions and methods",Crown copyright,,,,,,,,,%,Proportion,Calendar,BOB - Blue orange blue
+92664,Estimated prevalence of peripheral arterial disease (PAD) (55-79 yrs),Modelled estimate of the prevalence of peripheral arterial disease in people aged 55-79.,Estimated prevalence of peripherial arterial disease in people aged 55-79,,,Whitehall II study,Imperial College,Estimates modelled from the https://www.ucl.ac.uk/whitehallII .,"Model development: logistic regressionPrevalence estimation: inverse probability weighting.Further details can be obtained https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx and for https://en.wikipedia.org/wiki/Inverse_probability_weighting .<br class=""Apple-interchange-newline"" /><br class=""Apple-interchange-newline"" /><br class=""Apple-interchange-newline"" /><br class=""Apple-interchange-newline"" />",,Inverse probablity weighting - NB CIs are derived from model variances not local population variance,"Estimates of disease counts are based on a logistic regression model developed by Imperial College based on the  https://www.ucl.ac.uk/whitehallII/ .Predictor variables in the final model are:
+
+Age group (55-79 in 5 year age bands)
+Sex
+Ethnicity
+Diabetes (yes or no)
+Smoking status
+BMI (4 groups - <18,5; 18.5 - 25; 25-30; 30+)
+Physical activity level (low; medium; high)
+CKD (EGFR <= 60; EGFR > 60)
+Deprivation score (quintiles of IMD score)","Coronary heart disease is defined in the Whitehall II studies as a range of clinical endpoints including: defininte angina, hospitalisation or death from CHD, abnormal ECGs, medication or other treatment for CHD; self-report.",,,,,Crown copyright,,,,,,,,,%,Proportion,Calendar,BOB - Blue orange blue
+92848,Estimated prevalence of peripheral arterial disease (PAD) (55-79 yrs),Modelled estimate of the prevalence of peripheral arterial disease in people aged 55-79,Estimated prevalenceof peripheral arterial disease in people aged 55-79,,,Whitehall II study,Imperial College,Estimates modelled from the https://www.ucl.ac.uk/whitehallII .,"Model development: logistic regressionPrevalence estimation: inverse probability weighting.Further details can be obtained https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx and for https://en.wikipedia.org/wiki/Inverse_probability_weighting .<br class=""Apple-interchange-newline"" /><br class=""Apple-interchange-newline"" /><br class=""Apple-interchange-newline"" />",,Inverse probablity weighting - NB CIs are derived from model variances not local population variance,"Estimates of disease counts are based on a logistic regression model developed by Imperial College based on the  https://www.ucl.ac.uk/whitehallII/ .Predictor variables in the final model are:
+
+Age group (55-79 in 5 year age bands)
+Sex
+Ethnicity
+Diabetes (yes or no)
+Smoking status
+BMI (4 groups - <18,5; 18.5 - 25; 25-30; 30+)
+Physical activity level (low; medium; high)
+CKD (EGFR <= 60; EGFR > 60)
+Deprivation score (quintiles of IMD score)","Peripheral arterial disease is defined in the Whitehall II studies from self report:-
+
+Doctor diagnosed intermittent claudication or 'bad-circulation'
+Leg pain on walking",,,,,Crown copyright,,,,,,,,,%,Proportion,Calendar,BOB - Blue orange blue
+92783,Estimated prevalence of Heart failure (16+),Modelled estimate of the prevalence of Heart failure,Estimated prevalence of the prevalence of heart failure,Heart failure affect 1-2% of the population and generally has a poor prognosis and is expensive to treat. There is evidence of under-detection and under-reporting. It can be prevented through cardiovascular disease prevention measures and clinical outcomes improved through better treatment.,,Clinical Practice Research Datalink (CPRD),Imperial College for Public Health England,Estimates modelled from CPRD.,Model development: logistic regressionPrevalence estimation: inverse probability weighting.Further details can be obtained https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx and for https://en.wikipedia.org/wiki/Inverse_probability_weighting .,,Confidence intervals calculated by bootstrap methods.,"Estimates of disease counts are based on a logistic regression model developed by Imperial College based on CPRD.Predictor variables in the final model are:
+
+Age - sex group (16-44; 45-64; 56-74; 75+)
+Ethnicity(White; Black; Asian; Mixed; Other)
+BMI (<18.5; 18.5-25; 25-30;, 30+)
+Smoking status (current; ex-; non-)
+CHD (yes/ no)
+Hypertension (yes/ no)
+Diabetes (yes/ no)
+Atrial fibrillation (yes/ no)
+Alcohol consumption (non-drinker; 0-14 units per week; 14-42 units; 42+ units)","CPRD recorded heart failure based on agree Read Code lists
+Additional clinical algorithm to identify additional cases
+HES linked record of admission for heart failure
+Inferred heart failure based on symptoms and prescribing",,,,,Crown Copyright,,,,,,,,,%,Proportion,Calendar,BOB - Blue orange blue
+92658,Estimated prevalence of COPD (all ages),Modelled estimate of the prevalence of Chronic Obstructive Pulmonary Disease (all ages),Estimated prevalence,,,CPRD,Imperial College,Logistic regression model developed in CPRD and applied to lower tier local authorirty and GP popuulations,Model development: logistic regressionPrevalence estimation: inverse probability weighting.Further details can be obtained https://github.com/julianflowers/prevalence_estimates/blob/master/Hypertension-model-2016-Technical-Document-v2.5.docx and for https://en.wikipedia.org/wiki/Inverse_probability_weighting .,,Local CIs based on model derived variances.,"Estimates of disease counts are based on a logistic regression model developed by Imperial College based on CPRD.Predictor variables in the final model are:
+
+Age group (10 year age bands)
+Sex
+Smoking status (current; ex-; non-)
+Deprivation score (quintiles of IMD score)","CPRD recorded COPD based on agree Read Code lists
+HES linked record of admission for COPD
+Inferred COPD based on symptoms and prescribing","Local population estimates, smoking prevalences.",,,,Crown copyright,,,,C-statistic for the final model = 0.91,,,,,%,Proportion,Calendar,BOB - Blue orange blue
