@@ -104,6 +104,19 @@ compare <- qv$compare %>%
     l_add_display_order("org.type.var") %>%
     l__filter_domain_codes_tokeep("CL") #%>% l_add_orgtag()
 
+# alter sense of exceptions for heatmap.
+# for exceptions Change Worse -> Better and Better -> Worse.  All other measures
+# to be left alone.
+
+lu_exceptions_swap_sense <- fread(input = "
+m.name,statsig,statsig_override
+exceptions,Better,Worse
+exceptions,Worse,Better
+")
+
+compare <- compare %>% setDT() %>%
+    .[lu_exceptions_swap_sense, on = c("m.name", "statsig"), statsig := statsig_override]
+
 practice_grouping <- list(
     orgref %>% 
         # filter out existing ccg groups
@@ -149,17 +162,32 @@ these_comparators <- compare$org.type.ref %>% unique() %>% sort()
 
 
 # for e.g. Heatmap
+# converts a string to a value.  Hmmm.
 
-lu_statsig_num <- fread(input = "
+lu_statsig_num__highisbetter <- fread(input = "
 statsig,istatsig
 Better,1
+Worse,-1
+"
+)
+
+lu_statsig_num__highisworse <- lu_statsig_num__highisbetter %>%
+    mutate(istatsig = -istatsig)
+
+lu_statsig_num__hilo <- fread(input = "
+statsig,istatsig
 Higher,1
 Similar,0
 Lower,-1
-Worse,-1
 Not tested,NA
 "
 )
+
+lu_statsig_num <- list(
+    lu_statsig_num__hilo
+    , lu_statsig_num__highisbetter
+    #, lu_statsig_num__highisworse
+) %>% bind_rows()
 
 #
 # for stacked bar
