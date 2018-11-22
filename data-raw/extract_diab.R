@@ -1,6 +1,25 @@
 #' Extract diabetes prevelance from PHE model
 #'
 
+download_diab <- function(bForceOverwrite = FALSE) {
+    this_xlsx <- "./data-raw/phe-dm/Diabetes_prevalence_estimates_for_CCGs_by_GP_registered_populations.xlsx"
+
+    # this_url <- "https://www.gov.uk/government/publications/diabetes-prevalence-estimates-for-local-populations"
+    this_url <- "https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/611266/Diabetes_prevalence_estimates_for_CCGs_by_GP_registered_populations.xlsx"
+
+    if ((!file.exists(this_xlsx)) || (bForceOverwrite == TRUE)) {
+        cat("INFO: download_diab: downloading", "...", "\n")
+        cat("INFO: URL :", this_url, "\n")
+        cat("INFO: DEST:", this_xlsx, "\n")
+
+        status <- download.file(url = this_url, destfile = this_xlsx, mode = "wb")
+    } else {
+        status <- (!file.exists(this_xlsx)) + 0L # 0 - exists, 1 - does not exist
+    }
+
+    invisible(status)
+}
+
 #' Function to grab xl and put into an R object for later manipulation.
 #'
 #'
