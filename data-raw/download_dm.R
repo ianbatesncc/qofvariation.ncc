@@ -95,14 +95,14 @@ download_ft <- function(
 
 #' Download source diabetes model
 #'
-download_diab <- function(bForceOverwrite = FALSE) {
+download_dm <- function(bForceOverwrite = FALSE) {
     this_xlsx <- "./data-raw/phe-dm/Diabetes_prevalence_estimates_for_CCGs_by_GP_registered_populations.xlsx"
 
     # this_url <- "https://www.gov.uk/government/publications/diabetes-prevalence-estimates-for-local-populations"
     this_url <- "https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/611266/Diabetes_prevalence_estimates_for_CCGs_by_GP_registered_populations.xlsx"
 
     if ((!file.exists(this_xlsx)) || (bForceOverwrite == TRUE)) {
-        cat("INFO: download_diab: downloading", "...", "\n")
+        cat("INFO: download_dm: downloading", "...", "\n")
         cat("INFO: URL :", this_url, "\n")
         cat("INFO: DEST:", this_xlsx, "\n")
 
@@ -148,12 +148,12 @@ load_ft <- function(
 
 #' load the diabetes data
 #'
-load_diab <- function() {
+load_dm <- function() {
     require("data.table")
 
-    this_csv <- "./data-raw/phe-dm/phe_diab_data.csv"
+    this_csv <- "./data-raw/phe-dm/dm_data.csv"
 
-    cat("INFO: load_diab: loading", this_csv, "...", "\n")
+    cat("INFO: load_dm: loading", this_csv, "...", "\n")
     if (file.exists(this_csv)) {
         fread(this_csv)
     } else {
@@ -167,7 +167,7 @@ load_diab <- function() {
 #' Function to grab xl and put into an R object for later manipulation.
 #'
 #'
-extract_diab <- function(
+extract_dm <- function(
     bWriteCSV = TRUE
 ) {
     require("readxl")
@@ -197,9 +197,9 @@ extract_diab <- function(
         )
 
     if (bWriteCSV) {
-        this_csv <- "./data-raw/phe-dm/phe_diab_data.csv"
+        this_csv <- "./data-raw/phe-dm/dm_data.csv"
 
-        cat("INFO: extract_diab: saving", this_csv, "...", "\n")
+        cat("INFO: extract_dm: saving", this_csv, "...", "\n")
         fwrite(rv, this_csv)
     }
 
@@ -334,20 +334,20 @@ main__download_ft <- function(
 #'
 #' Process if necessary, or just load existing.
 #'
-main__download_diab <- function(
+main__download_dm <- function(
     bForceDownload = FALSE
     , bWriteCSV = FALSE
 ) {
 
     if (!any(c(bForceDownload, bWriteCSV))) {
-        rv <- load_diab()
+        rv <- load_dm()
 
     } else {
-        download_diab(bForceOverwrite = bForceDownload)
-        rv <- extract_diab(bWriteCSV = bWriteCSV)
+        download_dm(bForceOverwrite = bForceDownload)
+        rv <- extract_dm(bWriteCSV = bWriteCSV)
 
         if (bWriteCSV)
-            rv <- load_diab()
+            rv <- load_dm()
     }
 
     invisible(rv)
