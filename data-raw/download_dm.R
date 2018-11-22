@@ -1,11 +1,16 @@
 #' Download disease models from PHE fingertips
 #'
+#'  Two sets - fingertips and diabetes separate.
+#'  Combine for later processing and merging into QOFe
+#'
+#'
+
 # Download ####
 
 #' Download PHE fingertips model
 #'
 #'
-download_dm <- function(
+download_ft <- function(
     bWriteCSV = FALSE
 ) {
     require("dplyr")
@@ -18,13 +23,13 @@ download_dm <- function(
     this_domain_name <- "Modelled estimates"
 
     # API: get profile id
-    cat("INFO: download_dm: API: get profile id", "...", "\n")
+    cat("INFO: download_ft: API: get profile id", "...", "\n")
 
     this_profile <- profiles(ProfileName = this_profile_name) %>%
         filter(DomainName == this_domain_name)
 
     # API: get profile indicator ids
-    cat("INFO: download_dm: API: get profile indicator ids", "...", "\n")
+    cat("INFO: download_ft: API: get profile indicator ids", "...", "\n")
 
     these_indicators <- indicators(
         #ProfileID = this_profile$ProfileID
@@ -32,14 +37,14 @@ download_dm <- function(
     )
 
     # API: get indicator metadata
-    cat("INFO: download_dm: API: get indicator metadata", "...", "\n")
+    cat("INFO: download_ft: API: get indicator metadata", "...", "\n")
 
     ft_meta <- indicator_metadata(DomainID = this_profile$DomainID)
 
     # I want GP and CCGs
 
     # API: get area type ids
-    cat("INFO: download_dm: API: get area type ids", "...", "\n")
+    cat("INFO: download_ft: API: get area type ids", "...", "\n")
 
     all_areatypes <- area_types()
 
@@ -48,7 +53,7 @@ download_dm <- function(
         unique()
 
     # API: get indicator specific area types
-    cat("INFO: download_dm: API: get indicator specific area types", "...", "\n")
+    cat("INFO: download_ft: API: get indicator specific area types", "...", "\n")
 
     these_indicator_areatypes <- these_indicators$IndicatorID %>%
         lapply(indicator_areatypes) %>%
@@ -56,7 +61,7 @@ download_dm <- function(
         filter(AreaTypeID == gp_areatype$AreaTypeID)
 
     # API: get data
-    cat("INFO: download_dm: API: get data", "...", "\n")
+    cat("INFO: download_ft: API: get data", "...", "\n")
 
     ft_data <- fingertips_data(
         IndicatorID = these_indicator_areatypes$IndicatorID
@@ -68,14 +73,14 @@ download_dm <- function(
     if (bWriteCSV) {
 
         these_csvs <- c(
-            ft_meta = "./data-raw/phe-dm/ft_dm_meta.csv"
-            , ft_data = "./data-raw/phe-dm/ft_dm_data__noccg.csv"
+            ft_meta = "./data-raw/phe-dm/ft_meta.csv"
+            , ft_data = "./data-raw/phe-dm/ft_data__noccg.csv"
         )
 
-        cat("INFO: download_dm: saving", these_csvs["ft_meta"], "...", "\n")
+        cat("INFO: download_ft: saving", these_csvs["ft_meta"], "...", "\n")
         fwrite(ft_meta, these_csvs["ft_meta"])
 
-        cat("INFO: download_dm: saving", these_csvs["ft_data"], "...", "\n")
+        cat("INFO: download_ft: saving", these_csvs["ft_data"], "...", "\n")
         fwrite(ft_data, these_csvs["ft_data"])
     }
 
@@ -112,14 +117,14 @@ download_diab <- function(bForceOverwrite = FALSE) {
 
 #' load the ft meta and data
 #'
-load_dm <- function(
+load_ft <- function(
     bWithCCG = TRUE
 ) {
     require("data.table")
 
     these_csvs <- c(
-        ft_meta = "./data-raw/phe-dm/ft_dm_meta.csv"
-        , ft_data = "./data-raw/phe-dm/ft_dm_data__noccg.csv"
+        ft_meta = "./data-raw/phe-dm/ft_meta.csv"
+        , ft_data = "./data-raw/phe-dm/ft_data__noccg.csv"
     )
 
     if (bWithCCG == TRUE) {
@@ -130,7 +135,7 @@ load_dm <- function(
     lapply(
         these_csvs
         , function(x) {
-            cat("INFO: load_dm: loading", x, "...", "\n")
+            cat("INFO: load_ft: loading", x, "...", "\n")
             if (file.exists(x)) {
                 fread(x)
             } else {
@@ -208,7 +213,7 @@ extract_diab <- function(
 #'  - obtain CCG level estimates based on all age denominator
 #'
 #'
-process_dm <- function(
+process_ft <- function(
     ft
     , bWriteCSV = FALSE
 ) {
@@ -280,10 +285,10 @@ process_dm <- function(
     if (bWriteCSV) {
 
         these_csvs <- c(
-            ft_data = "./data-raw/phe-dm/ft_dm_data.csv"
+            ft_data = "./data-raw/phe-dm/ft_data.csv"
         )
 
-        cat("INFO: process_dm: saving", these_csvs["ft_data"], "...", "\n")
+        cat("INFO: process_ft: saving", these_csvs["ft_data"], "...", "\n")
         fwrite(ft$ft_data, these_csvs["ft_data"])
     }
 
@@ -300,25 +305,25 @@ process_dm <- function(
 #'  - add CCG totals
 #'  - restore
 #'
-main__download_dm <- function(
+main__download_ft <- function(
     bDownload = FALSE
     , bAddCCGs = FALSE
     , bWriteCSV = FALSE
 ) {
 
     if (!any(c(bDownload, bAddCCGs, bWriteCSV))) {
-        ft <- load_dm(bWithCCG = TRUE)
+        ft <- load_ft(bWithCCG = TRUE)
 
     } else {
 
         if (bDownload) {
-            ft <- download_dm(bWriteCSV = bWriteCSV)
+            ft <- download_ft(bWriteCSV = bWriteCSV)
         } else {
-            ft <- load_dm(bWithCCG = FALSE)
+            ft <- load_ft(bWithCCG = FALSE)
         }
 
         if (bAddCCGs) {
-            ft <- process_dm(ft, bWriteCSV = bWriteCSV)
+            ft <- process_ft(ft, bWriteCSV = bWriteCSV)
         }
     }
 
