@@ -228,11 +228,13 @@ extract_dm <- function(
 #'  - obtain CCG level estimates based on all age denominator
 #'
 #'
-process_ft <- function(
+transform_ft__add_ccgs <- function(
     ft
     , bWriteCSV = FALSE
 ) {
     require("dplyr")
+
+    cat("INFO: transform_ft__add_ccgs: adding CCGs", "...", "\n")
 
     # AreaType == GP, Age == "All ages" has a denominator ... useful for
     # estimating / approximating CCG level values
@@ -331,7 +333,7 @@ main__download_ft <- function(
         }
 
         if (bAddCCGs) {
-            ft <- process_ft(ft, bWriteCSV = bWriteCSV)
+            ft <- transform_ft__add_ccgs(ft, bWriteCSV = bWriteCSV)
         }
     }
 
