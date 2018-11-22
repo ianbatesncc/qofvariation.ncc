@@ -1,5 +1,8 @@
 #' Download disease models from PHE fingertips
 #'
+# Download ####
+
+#' Download PHE fingertips model
 #'
 #'
 download_dm <- function(
@@ -116,6 +119,9 @@ load_dm <- function(
     )
 }
 
+# Extract ####
+# Transform ####
+
 #' Process the ft download
 #'
 #'  - obtain CCG level estimates based on all age denominator
@@ -204,6 +210,8 @@ process_dm <- function(
 
     invisible(ft)
 }
+
+# Load ####
 
 #' Process the chain
 #'

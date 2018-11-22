@@ -1,6 +1,10 @@
 #' Extract diabetes prevelance from PHE model
 #'
 
+# Download ####
+
+#' Download source
+#'
 download_diab <- function(bForceOverwrite = FALSE) {
     this_xlsx <- "./data-raw/phe-dm/Diabetes_prevalence_estimates_for_CCGs_by_GP_registered_populations.xlsx"
 
@@ -19,6 +23,9 @@ download_diab <- function(bForceOverwrite = FALSE) {
 
     invisible(status)
 }
+
+# Extract ####
+# Transform ####
 
 #' Function to grab xl and put into an R object for later manipulation.
 #'
@@ -76,4 +83,29 @@ load_diab <- function() {
         cat("WARNING: file not found", "\n")
         NULL
     }
+}
+
+# Load ####
+
+#' Load dataset
+#'
+#' Proces sif necessary, or just load existing.
+#'
+main__download_diab <- function(
+    bForceDownload = FALSE
+    , bWriteCSV = FALSE
+) {
+
+    if (!any(c(bForceDownload, bWriteCSV))) {
+        rv <- load_diab()
+
+    } else {
+        download_diab(bForceOverwrite = bForceDownload)
+        rv <- extract_diab(bWriteCSV = bWriteCSV)
+
+        if (bWriteCSV)
+            rv <- load_diab()
+    }
+
+    invisible(rv)
 }
