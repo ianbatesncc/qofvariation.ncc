@@ -68,29 +68,19 @@ download_ft <- function(
         , AreaTypeID = gp_areatype$AreaTypeID
     )
 
+    ft <- list(
+        ft_meta = ft_meta %>% setnames.clean()
+        , ft_data = ft_data %>% setnames.clean()
+    )
+
     # Save
 
-    if (bWriteCSV) {
-
-        these_csvs <- c(
-            ft_meta = "./data-raw/phe-dm/ft_meta.csv"
-            , ft_data = "./data-raw/phe-dm/ft_data__noccg.csv"
-        )
-
-        cat("INFO: download_ft: saving", these_csvs["ft_meta"], "...", "\n")
-        fwrite(ft_meta, these_csvs["ft_meta"])
-
-        cat("INFO: download_ft: saving", these_csvs["ft_data"], "...", "\n")
-        fwrite(ft_data, these_csvs["ft_data"])
-    }
+    if (bWriteCSV)
+        save_ft(ft, prefix = "__raw")
 
     # Return
 
-    retval <- list(
-        ft_meta = ft_meta
-        , ft_data = ft_data
-    )
-
+    invisible(ft)
 }
 
 #' Download source diabetes model
@@ -115,22 +105,47 @@ download_dm <- function(bForceOverwrite = FALSE) {
 }
 
 
-#' load the ft meta and data
+#' Save ft data and meta
 #'
-load_ft <- function(
-    bWithCCG = TRUE
+#' @param ft (list of data.frames) with named items ft_data, ft_meta
+#'
+#' @return (bool) TRUE
+#'
+save_ft <- function(
+    ft
+    , bWriteData = TRUE
+    , bWriteMeta = TRUE
+    , prefix = ""
 ) {
     require("data.table")
 
     these_csvs <- c(
-        ft_meta = "./data-raw/phe-dm/ft_meta.csv"
-        , ft_data = "./data-raw/phe-dm/ft_data__noccg.csv"
+        ft_meta = paste0("./data-raw/phe-dm/ft_meta", prefix, ".csv")
+        , ft_data = paste0("./data-raw/phe-dm/ft_data", prefix, ".csv")
     )
 
-    if (bWithCCG == TRUE) {
-        these_csvs <- gsub("__noccg\\.csv", ".csv", these_csvs)
+    if (bWriteMeta) {
+        cat("INFO: save_ft: saving", these_csvs["ft_meta"], "...", "\n")
+        fwrite(ft$ft_meta, these_csvs["ft_meta"])
     }
 
+    if (bWriteData) {
+        cat("INFO: save_ft: saving", these_csvs["ft_data"], "...", "\n")
+        fwrite(ft$ft_data, these_csvs["ft_data"])
+    }
+
+    return(TRUE)
+}
+
+#' load the ft meta and data
+#'
+load_ft <- function(prefix = "") {
+    require("data.table")
+
+    these_csvs <- c(
+        ft_meta = paste0("./data-raw/phe-dm/ft_meta", prefix, ".csv")
+        , ft_data = paste0("./data-raw/phe-dm/ft_data", prefix, ".csv")
+    )
 
     lapply(
         these_csvs
@@ -139,7 +154,7 @@ load_ft <- function(
             if (file.exists(x)) {
                 fread(x)
             } else {
-                cat("WARNING: file not found", "\n")
+                cat("WARNING: load_ft: file not found", "\n")
                 NULL
             }
         }
@@ -157,7 +172,7 @@ load_dm <- function() {
     if (file.exists(this_csv)) {
         fread(this_csv)
     } else {
-        cat("WARNING: file not found", "\n")
+        cat("WARNING: load_dm: file not found", "\n")
         NULL
     }
 }
@@ -282,15 +297,8 @@ process_ft <- function(
 
     # Save
 
-    if (bWriteCSV) {
-
-        these_csvs <- c(
-            ft_data = "./data-raw/phe-dm/ft_data.csv"
-        )
-
-        cat("INFO: process_ft: saving", these_csvs["ft_data"], "...", "\n")
-        fwrite(ft$ft_data, these_csvs["ft_data"])
-    }
+    if (bWriteCSV)
+        save_ft(ft, bWriteMeta = FALSE)
 
     # return
 
@@ -312,14 +320,14 @@ main__download_ft <- function(
 ) {
 
     if (!any(c(bDownload, bAddCCGs, bWriteCSV))) {
-        ft <- load_ft(bWithCCG = TRUE)
+        ft <- load_ft()
 
     } else {
 
         if (bDownload) {
-            ft <- download_ft(bWriteCSV = bWriteCSV)
+            ft <- download_ft(bWriteCSV = TRUE)
         } else {
-            ft <- load_ft(bWithCCG = FALSE)
+            ft <- load_ft(prefix = "__raw")
         }
 
         if (bAddCCGs) {
@@ -351,4 +359,9 @@ main__download_dm <- function(
     }
 
     invisible(rv)
+}
+
+main__load_dpm <- function() {
+    ft <- main__download_ft()
+    dm <- main__download_dm()
 }
