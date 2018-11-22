@@ -5,6 +5,10 @@
 #'
 #'
 
+setnames.clean <- function(x) {
+    setnames(x, gsub("\\.*$", "", make.names(tolower(colnames(x)))))
+}
+
 # Download ####
 
 #' Download PHE fingertips model
