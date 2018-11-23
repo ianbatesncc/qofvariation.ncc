@@ -277,7 +277,7 @@ extract_dm <- function(
         filter(!is.na(org_name)) %>%
         mutate(
             denominator = numerator / value
-            , units = 1
+            , multiplier = 1
         )
 
     if (bWriteCSV) {
@@ -531,6 +531,21 @@ TOTAL,0,90
     return(pop_conversions)
 }
 
+#' Add more fields to align with qof
+#'
+#'  - indicator_group, list_type
+#'
+#'
+transform_dm__align_qof <- function(dm) {
+    cat("INFO: transform_dm__align_qof: aligning", "...", "\n")
+
+    dm %>%
+        mutate(
+            indicator_group_code = "DM"
+            , model_list_type = "16OV"
+        )
+}
+
 # Load ####
 
 #' Process the chain
@@ -592,7 +607,9 @@ main__load_dpm <- function() {
 
     ft <- main__download_ft() %>%
         transform_ft__align_qof()
-    dm <- main__download_dm()
+
+    dm <- main__download_dm() %>%
+        transform_dm__align_qof()
 
     pop_conversions <- load_pop() %>%
         transform_pop__eng_totals() %>%
