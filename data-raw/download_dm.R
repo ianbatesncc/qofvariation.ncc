@@ -159,6 +159,7 @@ download_pop <- function(
     return(retval)
 }
 
+
 #' Save ft data and meta
 #'
 #' @param ft (list of data.frames) with named items ft_data, ft_meta
@@ -316,44 +317,44 @@ transform_ft__add_ccgs <- function(
     # list sizes
 
     gp_allage_den <- ft$ft_data %>%
-        filter(AreaType == "GP", Age == "All ages") %>%
+        filter(areatype == "GP", age == "All ages") %>%
         select(
-            starts_with("Area")
-            , starts_with("Parent")
-            , Sex, Age
-            , Denominator
-            , starts_with("Time")
+            starts_with("area")
+            , starts_with("parent")
+            , sex, age
+            , denominator
+            , starts_with("time")
         ) %>%
-        filter(!is.na(Denominator)) %>%
+        filter(!is.na(denominator)) %>%
         unique()
 
     # assemble GP denominator
 
     gp_data_allage <- ft$ft_data %>%
-        filter(AreaType == "GP") %>%
-        select(-Denominator) %>%
+        filter(areatype == "GP") %>%
+        select(-denominator) %>%
         merge(
-            gp_allage_den %>% select(AreaCode, Denominator)
-            , by = "AreaCode"
+            gp_allage_den %>% select(areacode, denominator)
+            , by = "areacode"
             , all.x = TRUE, all.y = FALSE
         )
 
     # estimate CCG value
 
     ccg_data_allage <- gp_data_allage %>%
-        mutate(Valuenote = trimws(paste(Valuenote, "all age denominator"))) %>%
-        mutate(Count = Value * Denominator) %>%
+        mutate(valuenote = trimws(paste(valuenote, "value weighted by all age denominator"))) %>%
+        mutate(count = value * denominator) %>%
         group_by_at(vars(
-            -Value, -Count, -Denominator
-            , -AreaCode, -AreaName
+            -value, -count, -denominator
+            , -starts_with("area")
             , -ends_with("limit")
         )) %>%
-        summarise_at(vars(Count, Denominator), sum, na.rm = TRUE) %>%
+        summarise_at(vars(count, denominator), sum, na.rm = TRUE) %>%
         ungroup() %>%
-        mutate(Value = Count / Denominator) %>%
-        rename(AreaCode = "ParentCode", AreaName = "ParentName") %>%
-        mutate(AreaType = "CCGs (2017/18)") %>%
-        select(starts_with("Indicator"), starts_with("Area"), Value, Valuenote) %>%
+        mutate(value = count / denominator) %>%
+        rename(areacode = "parentcode", areaname = "parentname") %>%
+        mutate(areatype = "CCGs (2017/18)") %>%
+        select(starts_with("indicator"), starts_with("area"), value, valuenote) %>%
         setDT()
 
     # tag back into dataset
@@ -361,8 +362,8 @@ transform_ft__add_ccgs <- function(
     ft$ft_data <- ft$ft_data %>% setDT()
 
     ft$ft_data[
-        ccg_data_allage, on = c("AreaType", "AreaCode")
-        , `:=`(Value = i.Value, Valuenote = i.Valuenote)
+        ccg_data_allage, on = c("areatype", "areacode")
+        , `:=`(value = i.value, valuenote = i.valuenote)
         ]
 
     # Save
@@ -371,6 +372,88 @@ transform_ft__add_ccgs <- function(
         save_ft(ft, bWriteMeta = FALSE)
 
     # return
+
+    invisible(ft)
+}
+
+#' Align to QOF
+#'
+#' - add list_type
+#' - add domain_code
+#' - additionally strip to minimum fields
+#'
+#' May need to map domain_code to qof periods ...
+#'
+transform_ft__align_qof <- function(
+    ft
+    , bWriteCSV = FALSE
+) {
+    cat("INFO: transform_ft__align_qof: aligning", "...", "\n")
+
+    lu <- fread(input = "
+indicatorid, indicatorname, age, indicator_group_code, model_list_type
+92658, Estimated prevalence of COPD (all ages),                               All ages,  COPD, TOTAL
+92659, Estimated prevalence of diagnosed hypertension (16+),                  16+ yrs,   HYP_DIAG, 16OV
+92660, Estimated prevalence of undiagnosed hypertension (16+),                16+ yrs,   HYP_UNDIAG, 16OV
+92661, Estimated prevalence of depression (all ages),                         All ages,  DEP, TOTAL
+92663, Estimated prevalence of stroke (55-79 yrs),                            55-79 yrs, STIA, 55_79
+92783, Estimated prevalence of Heart failure (16+),                           16+ yrs,   HF, 16OV
+92847, Estimated prevalence of CHD (55-79 yrs),                               55-79 yrs, CHD, 55_79
+92848, Estimated prevalence of peripheral arterial disease (PAD) (55-79 yrs), 55-79 yrs, PAD, 55_79
+99265960, Estimated prevalence of diagnosed AND undiagnosed hypertension (16+),  16+ yrs,   HYP, 16OV
+")
+
+    lu_hyp <- fread(input = "
+indicatorid, indicatorid_new, indicatorname, age, indicator_group_code, model_list_type
+92659, 99265960, Estimated prevalence of diagnosed AND undiagnosed hypertension (16+),  16+ yrs,   HYP, 16OV
+92660, 99265960, Estimated prevalence of diagnosed AND undiagnosed hypertension (16+),  16+ yrs,   HYP, 16OV
+")
+
+    # Care needed when readjusting model estimatesd proportions to QOF
+    #
+    # - some models use different definitions so not appropriate for direct
+    # comparison
+    # - where age bands are different can adjust.
+    #
+    # - model and qof SAME: no adjustment
+    # - model and qof DIFFERENT:
+    #   ? model narrower: assume outside narrow band numbers are zero: reduce
+    #     model proportion by population weighted factor
+    #   ? model wider: assume small numbers in different age band difference no
+    #     adjustment to model
+    #
+
+    # merge the two hypertension estimates into one
+
+    ft$ft_data <- list(
+        ft$ft_data %>%
+            filter(!(indicatorid %in% lu_hyp$indicatorid))
+
+        , ft$ft_data %>%
+            filter((indicatorid %in% lu_hyp$indicatorid)) %>%
+            mutate(
+                indicatorid = unique(lu_hyp$indicatorid_new)
+                , indicatorname = unique(lu_hyp$indicatorname)
+            ) %>%
+            group_by_at(vars(
+                -value
+                , -ends_with("limit")
+                , -starts_with("compared")
+            )) %>%
+            summarise_at(vars(value), sum) %>%
+            ungroup()
+    ) %>% bind_rows()
+
+    # tag on group_code and list_type
+
+    ft$ft_data <- ft$ft_data %>%
+        select_at(setdiff(names(.), c("indicator_group_code", "model_list_type"))) %>%
+        setDF() %>%
+        merge(
+            lu %>% select(indicatorid, indicator_group_code, model_list_type)
+            , by = "indicatorid"
+            , all.x = TRUE, all.y = FALSE
+        )
 
     invisible(ft)
 }
@@ -505,7 +588,10 @@ main__download_dm <- function(
 }
 
 main__load_dpm <- function() {
-    ft <- main__download_ft()
+    require("dplyr")
+
+    ft <- main__download_ft() %>%
+        transform_ft__align_qof()
     dm <- main__download_dm()
 
     pop_conversions <- load_pop() %>%
