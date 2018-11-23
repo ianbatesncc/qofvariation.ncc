@@ -108,6 +108,56 @@ download_dm <- function(bForceOverwrite = FALSE) {
     invisible(status)
 }
 
+#' Download England population for ageband proportions
+#'
+#' https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland
+#'
+download_pop <- function(
+    bForceDownload = FALSE
+    , bForceUnzip = FALSE
+) {
+    this_url <- "https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland/mid2001tomid2017detailedtimeseries/ukdetailedtimeseries2001to2017.zip"
+    this_zip <- "./data-raw/phe-dm/ukdetailedtimeseries2001to2017.zip"
+
+    if ((!file.exists(this_zip)) | (bForceDownload == TRUE)) {
+        cat("INFO: download_pop: downloading zip", "...", "\n")
+
+        status <- download.file(url = this_url, destfile = this_zip, mode = "wb")
+    }
+
+    if (file.exists(this_zip)) {
+
+        these_csvs <- unzip(this_zip, list = TRUE)
+        this_csv <- these_csvs %>% filter(Name %like% "MYEB1") %>% .$Name
+
+        this_csv <- paste(dirname(this_zip), this_csv, sep = "/")
+
+        if ((!file.exists(this_csv)) || (bForceUnzip == TRUE)) {
+            cat("INFO: download_pop: unzipping csv", "...", "\n")
+
+            unzip(
+                this_zip
+                , files = this_csv
+                , overwrite = TRUE
+                , exdir = dirname(this_zip)
+            )
+        }
+
+        if (file.exists(this_csv)) {
+            retval <- this_csv
+
+        } else {
+            cat("WARNING: download_pop: csv file", this_csv, "not found ...", "\n")
+            retval <- NA
+        }
+
+    } else {
+        cat("WARNING: download_pop: zip file", this_zip, "not found ...", "\n")
+        retval <- NA
+    }
+
+    return(retval)
+}
 
 #' Save ft data and meta
 #'
@@ -177,6 +227,20 @@ load_dm <- function() {
         fread(this_csv)
     } else {
         cat("WARNING: load_dm: file not found", "\n")
+        NULL
+    }
+}
+
+load_pop <- function() {
+    require("data.table")
+
+    this_csv <- download_pop()
+
+    cat("INFO: load_pop: loading", this_csv, "...", "\n")
+    if (file.exists(this_csv)) {
+        fread(this_csv) %>% setnames.clean()
+    } else {
+        cat("WARNING: load_pop: file not found", "\n")
         NULL
     }
 }
@@ -311,6 +375,79 @@ transform_ft__add_ccgs <- function(
     invisible(ft)
 }
 
+transform_pop__eng_totals <- function(pop) {
+    require("data.table")
+    require("dplyr")
+    require("stringr")
+
+    cat("INFO: transform_pop__eng_totals: aggregating", "...", "\n")
+
+    # get England totals, colapse on gender, melt on period
+
+    pop_eng <- pop %>%
+        filter(country == "E") %>%
+        setDT() %>%
+        melt(
+            measure.vars = patterns("^population_")
+            , variable.name = "period", variable.factor = FALSE
+        ) %>%
+        mutate(period = as.numeric(str_sub(period, -4, -1))) %>%
+        group_by_at(vars(age, period)) %>%
+        summarise_at(vars(value), sum) %>%
+        ungroup() %>%
+        mutate(org_code = "E92000001", org_name = "England")
+
+    return(pop_eng)
+}
+
+#' Find england totals and proportions
+#'
+#'
+transform_pop__model_bands <- function(pop_eng) {
+
+    cat("INFO: transform_pop__model_bands: calculating", "...", "\n")
+
+    lu_bands <- fread(input = "
+list_type,age_start,age_end
+TOTAL,0,90
+16OV,16,90
+17OV,17,90
+18OV,18,90
+55_79,55,79
+30_74,30,74
+50OV,50,90
+")
+
+    pop_eng_ab <- pop_eng %>%
+        merge(lu_bands) %>%
+        filter(age >= age_start, age <= age_end) %>%
+        group_by_at(vars(-age, -value)) %>%
+        summarise_at(vars(value), sum) %>%
+        ungroup() %>%
+        mutate(nyears = age_end - age_start + 1) %>%
+        select(-starts_with("age"))
+
+    lu_measures <- merge(
+        data.frame(from = lu_bands$list_type)
+        , data.frame(to = lu_bands$list_type)
+    )
+
+    pop_conversions <- lu_measures %>%
+        merge(
+            pop_eng_ab %>%
+                select(list_type, period, value_from = value)
+            , by.x = "from", by.y = "list_type"
+        ) %>%
+        merge(
+            pop_eng_ab %>%
+                select(list_type, period, value_to = value)
+            , by.x = c("to", "period"), by.y = c("list_type", "period")
+        ) %>%
+        mutate(p_from_to = value_to / value_from, multiplier = 1)
+
+    return(pop_conversions)
+}
+
 # Load ####
 
 #' Process the chain
@@ -370,4 +507,8 @@ main__download_dm <- function(
 main__load_dpm <- function() {
     ft <- main__download_ft()
     dm <- main__download_dm()
+
+    pop_conversions <- load_pop() %>%
+        transform_pop__eng_totals() %>%
+        transform_pop__model_bands()
 }
