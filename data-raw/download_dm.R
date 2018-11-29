@@ -546,6 +546,41 @@ transform_dm__align_qof <- function(dm) {
         )
 }
 
+#' Combine models into one R object
+#'
+transform_combine <- function(
+    ft
+    , dm
+) {
+    list(
+        ft$ft_data %>%
+            filter(areatype %like% "CCG") %>%
+            mutate(org_type = "ccg::instance") %>%
+            select(
+                indicator_group_code
+                , model_list_type
+                , period = timeperiod
+                , org_code = areacode
+                , org_name = areaname
+                , org_type
+                , value
+            )
+
+        , dm %>%
+            mutate(org_type = "ccg::instance") %>%
+            select(
+                indicator_group_code
+                , model_list_type
+                , period
+                , org_code
+                , org_name
+                , org_type
+                , value
+            )
+    ) %>%
+        bind_rows()
+}
+
 # Load ####
 
 #' Process the chain
@@ -610,6 +645,17 @@ main__load_dpm <- function() {
 
     dm <- main__download_dm() %>%
         transform_dm__align_qof()
+
+    rv <- transform_combine(ft, dm)
+
+    rv %>%
+        filter(period == 2015) %>%
+        dcast(
+            org_code ~ indicator_group_code
+            , value.var = "value", fun = length
+            , fill = NA_real_
+        ) %>%
+        View()
 
     pop_conversions <- load_pop() %>%
         transform_pop__eng_totals() %>%
