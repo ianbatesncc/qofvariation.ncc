@@ -300,7 +300,6 @@ extract_dm <- function() {
 #'
 transform_ft__add_ccgs <- function(
     ft
-    , bWriteCSV = FALSE
 ) {
     require("dplyr")
 
@@ -343,18 +342,22 @@ transform_ft__add_ccgs <- function(
     # estimate CCG value
 
     ccg_data_allage <- gp_data_allage %>%
-        mutate(valuenote = trimws(paste(valuenote, "value weighted by all age denominator"))) %>%
         mutate(count = value * denominator) %>%
+        select(
+            -starts_with("area")
+            , -ends_with("limit")
+            , -starts_with("comparedto")
+            , -valuenote, -newdata, -recenttrend
+        ) %>%
         group_by_at(vars(
             -value, -count, -denominator
-            , -starts_with("area")
-            , -ends_with("limit")
         )) %>%
         summarise_at(vars(count, denominator), sum, na.rm = TRUE) %>%
         ungroup() %>%
         mutate(value = count / denominator) %>%
         rename(areacode = "parentcode", areaname = "parentname") %>%
         mutate(areatype = "CCGs (2017/18)") %>%
+        mutate(valuenote = "value weighted by all age denominator") %>%
         select(starts_with("indicator"), starts_with("area"), value, valuenote) %>%
         setDT()
 
@@ -363,14 +366,9 @@ transform_ft__add_ccgs <- function(
     ft$ft_data <- ft$ft_data %>% setDT()
 
     ft$ft_data[
-        ccg_data_allage, on = c("areatype", "areacode")
+        ccg_data_allage, on = c("indicatorid", "areatype", "areacode")
         , `:=`(value = i.value, valuenote = i.valuenote)
         ]
-
-    # Save
-
-    if (bWriteCSV)
-        save_ft(ft, bWriteMeta = FALSE)
 
     # return
 
@@ -387,7 +385,6 @@ transform_ft__add_ccgs <- function(
 #'
 transform_ft__align_qof <- function(
     ft
-    , bWriteCSV = FALSE
 ) {
     cat("INFO: transform_ft__align_qof: aligning", "...", "\n")
 
@@ -459,7 +456,26 @@ indicatorid, indicatorid_new, indicatorname, age, indicator_group_code, model_li
     invisible(ft)
 }
 
-transform_pop__eng_totals <- function(pop) {
+#' Add more fields to align with qof
+#'
+#'  - indicator_group, list_type
+#'
+#'
+transform_dm__align_qof <- function(
+    dm
+) {
+    cat("INFO: transform_dm__align_qof: aligning", "...", "\n")
+
+    dm %>%
+        mutate(
+            indicator_group_code = "DM"
+            , model_list_type = "16OV"
+        )
+}
+
+transform_pop__eng_totals <- function(
+    pop
+) {
     require("data.table")
     require("dplyr")
     require("stringr")
@@ -487,7 +503,9 @@ transform_pop__eng_totals <- function(pop) {
 #' Find england totals and proportions
 #'
 #'
-transform_pop__model_bands <- function(pop_eng) {
+transform_pop__model_bands <- function(
+    pop_eng
+) {
 
     cat("INFO: transform_pop__model_bands: calculating", "...", "\n")
 
@@ -530,21 +548,6 @@ TOTAL,0,90
         mutate(p_from_to = value_to / value_from, multiplier = 1)
 
     return(pop_conversions)
-}
-
-#' Add more fields to align with qof
-#'
-#'  - indicator_group, list_type
-#'
-#'
-transform_dm__align_qof <- function(dm) {
-    cat("INFO: transform_dm__align_qof: aligning", "...", "\n")
-
-    dm %>%
-        mutate(
-            indicator_group_code = "DM"
-            , model_list_type = "16OV"
-        )
 }
 
 #' Combine models into one R object
@@ -610,27 +613,102 @@ dpm__download_prevmodel <- function(
 
 
 
-main__load_dpm <- function() {
-    require("dplyr")
+if (FALSE) {
+    lu_ccgs_geo <- ft$ft_data %>%
+        filter(areatype %like% "CCG") %>%
+        filter(grepl("Basset|Mansf|Newark|Notting|Rush", areaname)) %>%
+        count(areatype, areacode, areaname)
 
-    ft <- main__download_ft() %>%
+    ft <- ft %>%
+        transform_ft__add_ccgs() %>%
         transform_ft__align_qof()
 
-    dm <- main__download_dm() %>%
+    dm <- dm %>%
         transform_dm__align_qof()
 
-    rv <- transform_combine(ft, dm)
+    dpm <- transform_combine(ft, dm)
 
-    rv %>%
-        filter(period == 2015) %>%
+    dpm %>%
+        #filter(period == 2015) %>%
+        filter(org_code %in% lu_ccgs_geo$areacode) %>%
         dcast(
-            org_code ~ indicator_group_code
-            , value.var = "value", fun = length
+            period + org_code ~ indicator_group_code
+            , value.var = "value", fun = sum
             , fill = NA_real_
         ) %>%
         View()
 
-    pop_conversions <- load_pop() %>%
-        transform_pop__eng_totals() %>%
-        transform_pop__model_bands()
+    # pop_conversions <- load_pop() %>%
+    #     transform_pop__eng_totals() %>%
+    #     transform_pop__model_bands()
+
+    invisible(dpm)
+}
+
+#' add health codes to ccg gss geo codes
+#'
+#' uses an internal fuzzy name to ccg health code lookup
+#' matches on specified field containing name and adds the health code in th
+#'
+#' @param lu (data.frame) the data to tag health codes to
+#' @param field_lu_name (character) Name of the field containing the CCG name
+#' @param field_lu_code (character) Name of the field to retunrn health code in
+#'
+#' @example
+#' my_lu <- data.frame(
+#'   source = "example"
+#'   , areaname = "Example CCG"
+#'   , areacode = "E3800999"
+#' )
+#'
+#' my_lu_new <- dpm_transform__create_ccg_gss_health_map(my_lu)
+#'
+#' data.frame(
+#'   source = "example"
+#'   , areaname = "Example CCG"
+#'   , areacode = "E3800999"
+#'   , areacode_health = "SOMETHINGNEW"
+#' )
+#'
+dpm_transform__create_ccg_gss_health_map <- function(
+    lu
+    , field_lu_name = "areaname"
+    , field_lu_code = "areacode_health"
+) {
+    require("dplyr")
+    require("purrr")
+
+    lu_ccg_partial <- fread(input = "
+partial,code_health
+Bass,02Q
+City,04K
+Mans,04E
+Newa,04H
+Nort,04L
+West,04M
+Rush,04N
+"
+    )
+
+    lu_match <- lu_ccg_partial %>%
+        purrr::pmap(
+            function(partial, code_health, this_lu) {
+                this_lu %>%
+                    filter_at(
+                        vars(field_lu_name)
+                        , all_vars(. %like% partial)
+                    ) %>%
+                    mutate(!!field_lu_code := code_health)
+            }
+            , this_lu = lu %>% select_at(vars(field_lu_name))
+        ) %>% bind_rows()
+
+    lu <- merge(lu, lu_match, by = field_lu_name, all.x = TRUE, all.y = FALSE)
+
+    # guarantee field_lu_code is added (can be missing if no matches)
+    if (!(field_lu_code %in% names(lu_new))) {
+        lu <- lu %>% mutate(!!field_lu_code := NA_character_)
+    }
+
+    return(lu)
 }
