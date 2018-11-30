@@ -1,9 +1,20 @@
 #' Download disease models from PHE fingertips
 #'
 #'  Two sets - fingertips and diabetes separate.
+#'
+#'  This script makes the raw data files available.  Further processing is done
+#'  within the package including maing the datasets available as ackage data
+#'  items.
+#'
 #'  Combine for later processing and merging into QOFe
 #'
-#'
+#' DM:
+#' "./data-raw/phe-dm/Diabetes_prevalence_estimates_for_CCGs_by_GP_registered_populations.xlsx"
+#' FT:
+#' "./data-raw/phe-dm/ft_data__raw.csv"
+#' "./data-raw/phe-dm/ft_meta__raw.csv"
+#' POP:
+#' ./data-raw/phe-dm/*MYEB1*.csv
 
 setnames.clean <- function(x) {
     setnames(x, gsub("\\.*$", "", make.names(tolower(colnames(x)))))
@@ -112,6 +123,8 @@ download_dm <- function(bForceOverwrite = FALSE) {
 #'
 #' https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland
 #'
+#' \code{*MYEB*.csv}
+#'
 download_pop <- function(
     bForceDownload = FALSE
     , bForceUnzip = FALSE
@@ -168,33 +181,46 @@ download_pop <- function(
 #'
 save_ft <- function(
     ft
-    , bWriteData = TRUE
-    , bWriteMeta = TRUE
-    , prefix = ""
+    , prefix = "__raw"
 ) {
     require("data.table")
+    require("purrr")
 
     these_csvs <- c(
         ft_meta = paste0("./data-raw/phe-dm/ft_meta", prefix, ".csv")
         , ft_data = paste0("./data-raw/phe-dm/ft_data", prefix, ".csv")
     )
 
-    if (bWriteMeta) {
-        cat("INFO: save_ft: saving", these_csvs["ft_meta"], "...", "\n")
-        fwrite(ft$ft_meta, these_csvs["ft_meta"])
-    }
+    list(x = ft, y = these_csvs) %>%
+        purrr::pwalk(function(x, y) {
+            cat("INFO: save_ft: saving", y, "...", "\n")
+            fwrite(x, y)
+        })
 
-    if (bWriteData) {
-        cat("INFO: save_ft: saving", these_csvs["ft_data"], "...", "\n")
-        fwrite(ft$ft_data, these_csvs["ft_data"])
-    }
+    invisible(these_csvs)
+}
 
-    return(TRUE)
+save_dm <- function(
+    dm
+    , this_csv = "./data-raw/phe-dm/dm_data__raw.csv"
+) {
+    cat("INFO: save_dm: saving", this_csv, "...", "\n")
+    fwrite(dm, this_csv)
+
+    invisible(this_csv)
+}
+
+load_dm <- function(
+    this_csv = "./data-raw/phe-dm/dm_data__raw.csv"
+) {
+    cat("INFO: load_dm: loading", this_csv, "...", "\n")
+
+    fread(this_csv)
 }
 
 #' load the ft meta and data
 #'
-load_ft <- function(prefix = "") {
+load_ft <- function(prefix = "__raw") {
     require("data.table")
 
     these_csvs <- c(
@@ -216,22 +242,6 @@ load_ft <- function(prefix = "") {
     )
 }
 
-#' load the diabetes data
-#'
-load_dm <- function() {
-    require("data.table")
-
-    this_csv <- "./data-raw/phe-dm/dm_data.csv"
-
-    cat("INFO: load_dm: loading", this_csv, "...", "\n")
-    if (file.exists(this_csv)) {
-        fread(this_csv)
-    } else {
-        cat("WARNING: load_dm: file not found", "\n")
-        NULL
-    }
-}
-
 load_pop <- function() {
     require("data.table")
 
@@ -251,9 +261,7 @@ load_pop <- function() {
 #' Function to grab xl and put into an R object for later manipulation.
 #'
 #'
-extract_dm <- function(
-    bWriteCSV = TRUE
-) {
+extract_dm <- function() {
     require("readxl")
     require("data.table", warn.conflicts = FALSE)
     require("dplyr", warn.conflicts = FALSE)
@@ -268,24 +276,17 @@ extract_dm <- function(
             cat("INFO: reading \\", x, "/", "...", "\n")
             read_xlsx(path = y, sheet = x, range = "b12:e256") %>%
                 setDT() %>%
-                setnames(c("org_name", "org_code", "numerator", "value")) %>%
+                setnames(c("areaname", "areacode", "numerator", "value")) %>%
                 mutate(period = as.numeric(x))
         }
         , this_xlsx
     ) %>%
         bind_rows() %>%
-        filter(!is.na(org_name)) %>%
+        filter(!is.na(areaname)) %>%
         mutate(
             denominator = numerator / value
             , multiplier = 1
         )
-
-    if (bWriteCSV) {
-        this_csv <- "./data-raw/phe-dm/dm_data.csv"
-
-        cat("INFO: extract_dm: saving", this_csv, "...", "\n")
-        fwrite(rv, this_csv)
-    }
 
     invisible(rv)
 }
@@ -589,53 +590,25 @@ transform_combine <- function(
 #'  - add CCG totals
 #'  - restore
 #'
-main__download_ft <- function(
-    bDownload = FALSE
-    , bAddCCGs = FALSE
-    , bWriteCSV = FALSE
+dpm__download_prevmodel <- function(
+    bRefreshDownloads = FALSE
+    , bForceDownload = FALSE
 ) {
+    require("dplyr")
 
-    if (!any(c(bDownload, bAddCCGs, bWriteCSV))) {
-        ft <- load_ft()
-
-    } else {
-
-        if (bDownload) {
-            ft <- download_ft(bWriteCSV = TRUE)
-        } else {
-            ft <- load_ft(prefix = "__raw")
-        }
-
-        if (bAddCCGs) {
-            ft <- transform_ft__add_ccgs(ft, bWriteCSV = bWriteCSV)
-        }
-    }
-
-    invisible(ft)
-}
-
-#' Load diabetes dataset
-#'
-#' Process if necessary, or just load existing.
-#'
-main__download_dm <- function(
-    bForceDownload = FALSE
-    , bWriteCSV = FALSE
-) {
-
-    if (!any(c(bForceDownload, bWriteCSV))) {
-        rv <- load_dm()
-
-    } else {
+    if (bRefreshDownloads | bForceDownload) {
+        download_ft(bWriteCSV = TRUE)
         download_dm(bForceOverwrite = bForceDownload)
-        rv <- extract_dm(bWriteCSV = bWriteCSV)
-
-        if (bWriteCSV)
-            rv <- load_dm()
+        extract_dm() %>% save_dm()
     }
 
-    invisible(rv)
+    ft <- load_ft()
+    dm <- load_dm()
+
+    invisible(list(ft = ft, dm = dm))
 }
+
+
 
 main__load_dpm <- function() {
     require("dplyr")
